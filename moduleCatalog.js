@@ -1,3 +1,5 @@
+import moduleLibrary from './moduleLibrary.js';
+
 const moduleCatalog = {
 	orb: {
 		tier1: [

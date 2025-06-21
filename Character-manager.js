@@ -1,5 +1,9 @@
-import moduleLibrary from "./moduleLibrary";
-import moduleCatalog from "./moduleCatalog";
+import moduleLibrary from './moduleLibrary.js';
+import moduleCatalog from './moduleCatalog.js';
+
+//import moduleLibrary from './moduleLibrary.js';
+//import moduleCatalog from './moduleCatalog.js';
+
 
 //global variables
 let activeCharacter = {};
@@ -839,6 +843,7 @@ function updateSEDisplay() {
 	// Attach tooltip events to module buttons
 function attachTooltipToModuleButtons() {
 		document.querySelectorAll(".module-button").forEach(button => {
+				
 				const moduleName = button.dataset.module;
 				const module = moduleLibrary.find(m => m.name === moduleName);
 				const restriction = moduleCatalog[activeCatalog][button.dataset.tier]
