@@ -1,14 +1,11 @@
 import moduleLibrary from './moduleLibrary.js';
 import moduleCatalog from './moduleCatalog.js';
 
-//import moduleLibrary from './moduleLibrary.js';
-//import moduleCatalog from './moduleCatalog.js';
-
-
 //global variables
 let activeCharacter = {};
-
 let activeCatalog = "";
+window.showSection = showSection;
+window.showCatalog = showCatalog;
 
 const jobEffects = [
 	"Tras tirar tus stats, puedes reemplazar una de ellas por un 5.",
