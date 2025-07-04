@@ -1578,6 +1578,9 @@ function toggleCollapse(e) {
 
 // Skill creation/editing form
 function createSkillForm(skill = {}, index) {
+		let currentSkill = { ...skill }; // Local copy for new skills
+		let isNew = index === undefined || index < 0;
+
 		skill = Object.assign({ name: "", restrictions: [], stats: ["mig", "dex"], description: "", modules: [], moduleRestrictions: {} }, skill);
 
 		const form = document.createElement("div");
@@ -1591,7 +1594,7 @@ function createSkillForm(skill = {}, index) {
 		form.appendChild(nameInput);
 
 		// Stat selection (only two selects)
-		const stats = ["mig", "dex", "int", "stl", "wlp"];
+		const stats = ["mig", "dex", "int", "wlp", "stl"];
 		const statContainer = document.createElement("div");
 		statContainer.className = "stat-selection";
 
@@ -1657,6 +1660,8 @@ function createSkillForm(skill = {}, index) {
 		const moduleSlots = document.createElement("div");
 		moduleSlots.className = "module-slots";
 
+	    let currentModules;
+
 		function updateModuleSlots() {
 		moduleSlots.innerHTML = "";
 		const newRestrictions = restrictionSelects.map(s => s.value);
@@ -1689,9 +1694,9 @@ function createSkillForm(skill = {}, index) {
 						moduleSlot.addEventListener("click", e => {
 								if (!moduleSlot.classList.contains("dragging")) {
 										e.stopPropagation();
-					const existingSelectors = document.querySelectorAll('.module-selector');
-					existingSelectors.forEach(selector => selector.remove());
-										showModuleSelection(moduleSlot, saveSkill, skill, index);
+										const existingSelectors = document.querySelectorAll('.module-selector');
+										existingSelectors.forEach(selector => selector.remove());
+								        showModuleSelection(moduleSlot, saveSkill, skill, index, currentModules);
 								}
 						});
 						moduleSlots.appendChild(moduleSlot);
@@ -1710,11 +1715,12 @@ function createSkillForm(skill = {}, index) {
 		// Save button
 		const saveButton = document.createElement("button");
 		saveButton.textContent = "Save";
+
 	function saveSkill(skill, index) {
 		const modules = Array.from(moduleSlots.children).map(slot => slot.dataset.module).filter(m => m);
 		const restrictions = restrictionSelects.map(s => s.value);
 
-		const newSkill = {
+		currentSkill = {
 			name: nameInput.value,
 			stats: Array.from(statContainer.querySelectorAll("select")).map(s => s.value),
 			restrictions,
@@ -1725,16 +1731,25 @@ function createSkillForm(skill = {}, index) {
 		};
 
 		if (!activeCharacter.skills) activeCharacter.skills = [];
-		if (index > -1) activeCharacter.skills[index] = newSkill;
-		else activeCharacter.skills.push(newSkill);
+		if (!isNew) {
+			activeCharacter.skills[index] = currentSkill;
+			saveCharacterData();
+			updateSEDisplay();
+    	}
 
-		saveCharacterData();
-		updateSEDisplay();
 	}
 
 	// Update save button click event
 	saveButton.addEventListener("click", () => {
 		saveSkill(skill, index);
+		if (isNew) {
+			if (!activeCharacter.skills) activeCharacter.skills = [];
+			activeCharacter.skills.push(currentSkill);
+			index = activeCharacter.skills.length - 1; // Set index for future edits
+			isNew = false;
+    	}
+		saveCharacterData();
+	    updateSEDisplay();
 		renderSkills();
 	});
 		form.appendChild(saveButton);
@@ -1774,7 +1789,10 @@ function editSkill(index) {
 }
 
 // Update module selection to only show learned modules
-function showModuleSelection(slot, saveSkill, skill, index) {
+function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
+	// Create the module selector
+	const moduleSelector = document.createElement("div");
+	moduleSelector.className = "module-selector";
 		const selector = document.createElement("div");
 		selector.className = "module-selector";
 
@@ -1784,6 +1802,8 @@ function showModuleSelection(slot, saveSkill, skill, index) {
 				const tierKey = `tier${tier}`;
 				tiers[tier] = activeCharacter.modules[tierKey] || [];
 		}
+		
+
 
 		// Create remove option
 		const removeOption = document.createElement("div");
@@ -1832,9 +1852,8 @@ function showModuleSelection(slot, saveSkill, skill, index) {
 										slot.dataset.category = module.category;
 										slot.classList.remove("empty");
 										selector.remove();
-					saveSkill(skill, index);
+										saveSkill(skill, index);
 								});
-
 								selector.appendChild(moduleOption);
 						});
 				}
