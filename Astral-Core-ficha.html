@@ -123,19 +123,24 @@
 				</div>
 				<div class="summary-top-right">
 					<div class="character-image">
-						<span>Image</span>
+						<img id="charImageDisplay" src=""  />
+						<input type="file" id="charImageInput" accept="image/*" style="display:none;">
+						<button id="charImageButton">Upload Character Image</button>
 					</div>
 				</div>
 			</div>
 
 			<!-- Perks -->
+			 
 			<div class="summary-perks">
-				<h4 class="summary-title">Perks</h4>
-				<div class="archetype">
-					<strong>Archetype Name:</strong>
-					<div class="perk-list">
-						<label>Perk Names</label>
-						<label>Another perk name</label>
+			<h4 class="summary-title">Perks</h4>
+				<div id="summary-perks">
+					<div class="archetype">
+						<strong>Archetype Name:</strong>
+						<div class="perk-list">
+							<label>Perk Names</label>
+							<label>Another perk name</label>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -143,7 +148,7 @@
 			<!-- Skills -->
 			<div class="summary-skills">
 				<h4 class="summary-title">Skills</h4>
-				<div class="skill-list">
+				<div class="skill-list" id="summary-skills">
 					<div class="skill">
 						<strong>Skill Name</strong>
 						<div>Modules</div>
@@ -289,7 +294,11 @@
 			<div class="stat">
 			</div>
 			<div id="selfCoreContent">
-        <!-- Modules and perks will be dynamically loaded here -->	
+        <!-- Modules and perks are dynamically loaded here -->	
+				<div id="notesContainer">
+					<h3>Notes</h3>
+					<textarea class="notes-textarea" id="notes-section" placeholder="Write character details here..."></textarea>
+				</div>
 			</div>
 
         </div>		
@@ -303,13 +312,13 @@
 
 			<div id="catalogNav">
 				<!-- Tabs for switching between different Astral Cores -->
-				<button id="orbButton" onclick="showCatalog('orb')">Cult of the Orb</button>
-				<button id="lunaCourtButton" onclick="showCatalog('lunaCourt')">Court of Luna</button>
-				<button onclick="showCatalog('express')">Zephyr Express</button>
-				<button onclick="showCatalog('vita')">Vita Karma</button>
-				<button onclick="showCatalog('wiccrat')">Wiccrat Curse</button>
-				<button onclick="showCatalog('umbra')">Umbra Employment Agency</button>
-		<!--	<button onclick="showCatalog('karma')">Karma Dance</button>		-->
+				<button id="architectButton" onclick="showCatalog('architect')">Architect</button>
+				<button id="lunaCourtButton" onclick="showCatalog('paladin')">Paladín oscuro</button>
+				<button onclick="showCatalog('repartidor')">Repartidor</button>
+				<button onclick="showCatalog('sacrificio')">Sacrificio</button>
+				<button onclick="showCatalog('bruja')">Bruja</button>
+				<button onclick="showCatalog('invocador')">Invocador</button>
+				<button onclick="showCatalog('evocador')">Evocador</button>		
 				<button onclick="showCatalog('abisso')">Catalogo Abisal</button>
 				
 			</div>

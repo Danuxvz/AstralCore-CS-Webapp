@@ -602,7 +602,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		const skillForm = createSkillForm();
 		document.getElementById("skillsList").appendChild(skillForm);
 	});
-	
+
+
+	setupCharacterImage();
 	calculateAvailableJobs();
 	loadSelfCoreContent();
 	loadOriginPerks();
@@ -1294,23 +1296,6 @@ function attachTooltipToPerkButtons() {
 		}
 	});
 }
-	
-function unlockStatUpgrade(coreName, tier) {
-	const statUpgrades = moduleCatalog[coreName].statUpgrades[tier];
-	if (!statUpgrades || statUpgrades.length === 0) return;
-
-	if (!activeCharacter.statUpgrades) activeCharacter.statUpgrades = {};
-	if (!activeCharacter.statUpgrades[coreName]) activeCharacter.statUpgrades[coreName] = {};
-	if (!activeCharacter.statUpgrades[coreName][tier]) activeCharacter.statUpgrades[coreName][tier] = [];
-
-	// Get the next stat upgrade in order
-	const nextStatUpgrade = statUpgrades[activeCharacter.statUpgrades[coreName][tier].length];
-	if (nextStatUpgrade) {
-		activeCharacter.statUpgrades[coreName][tier].push(nextStatUpgrade);
-		console.log("Unlocked Stat Upgrade:", nextStatUpgrade.name);
-		saveCharacterData();
-	}
-}
 
 function updatePerkAvailability(coreName, tier) {
 	const modulesInTier = activeCharacter.modules[tier].filter(m => 
@@ -1350,10 +1335,18 @@ function updatePerkAvailability(coreName, tier) {
 //Selfcore section		
 function loadSelfCoreContent() {
     const selfCoreContent = document.getElementById("selfCoreContent");
-    selfCoreContent.innerHTML = "";
+
+    // Clear ONLY the dynamic parts, not the notes
+    Array.from(selfCoreContent.children).forEach(child => {
+        if (child.id !== "notesContainer") {
+            child.remove();
+        }
+    });
 
     if (!activeCharacter.modules && !activeCharacter.perks) {
-        selfCoreContent.innerHTML = "<p>No modules or perks learned yet.</p>";
+        const msg = document.createElement("p");
+        msg.textContent = "No modules or perks learned yet.";
+        selfCoreContent.insertBefore(msg, document.getElementById("notesContainer"));
         return;
     }
 
@@ -1429,7 +1422,7 @@ function loadSelfCoreContent() {
             moduleTable.appendChild(moduleRow);
             return moduleTable;
         }, 'modules');
-        selfCoreContent.appendChild(moduleSection);
+        selfCoreContent.insertBefore(moduleSection, document.getElementById("notesContainer"));
     }
 
     // ===== PERKS SECTION =====
@@ -1478,35 +1471,24 @@ function loadSelfCoreContent() {
 
             return container;
         }, 'perks');
-        selfCoreContent.appendChild(perkSection);
+        selfCoreContent.insertBefore(perkSection, document.getElementById("notesContainer"));
     }
 
-    // ===== NOTES SECTION =====
-    const notesSection = document.createElement("div");
-    notesSection.className = "notes-section";
-
-    const notesTitle = document.createElement("h3");
-    notesTitle.textContent = "Notes";
-    notesSection.appendChild(notesTitle);
-
-    const notesTextarea = document.createElement("textarea");
-    notesTextarea.className = "notes-textarea";
-    notesTextarea.placeholder = "Write your notes here...";
+    // ===== NOTES SECTION (persistent) =====
+    const notesTextarea = document.getElementById("notes-section");
     notesTextarea.value = activeCharacter.notes || "";
 
-    notesTextarea.addEventListener("input", e => {
+    notesTextarea.oninput = e => {
         activeCharacter.notes = e.target.value;
-		saveCharacterData();
-    });
-
-    notesSection.appendChild(notesTextarea);
-    selfCoreContent.appendChild(notesSection);
+        saveCharacterData();
+    };
 
     // Add toggle handlers
     document.querySelectorAll('.collapsible-header').forEach(header => {
         header.addEventListener('click', toggleCollapse);
     });
 }
+
 
 function createPerkList(perks) {
     const list = document.createElement("ul");
@@ -1820,9 +1802,11 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 		let firstTier = true;
 		for (let tier = 1; tier <= 5; tier++) {
 				const tierModules = tiers[tier].filter(m =>
-						m.catalogs.some(catalog =>
-								moduleCatalog[catalog][`tier${tier}`].some(cm => cm.name === m.name)
-						)
+					m.catalogs.some(catalog =>
+						moduleCatalog[catalog] && 
+						moduleCatalog[catalog][`tier${tier}`] &&
+						moduleCatalog[catalog][`tier${tier}`].some(cm => cm.name === m.name)
+					)
 				);
 
 				if (tierModules.length > 0) {
@@ -1859,13 +1843,20 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 		document.body.appendChild(selector);
 
 		// Get viewport dimensions and bounding rectangle of the slot
+		selector.style.visibility = "hidden";
+		selector.style.position = "absolute";
+		selector.style.left = "0px";
+		selector.style.top = "0px";
+
+		const selectorWidth = selector.offsetWidth;
+		const selectorHeight = selector.offsetHeight;
+
+
 		const viewportWidth = window.innerWidth;
 		const viewportHeight = window.innerHeight;
 		const rect = slot.getBoundingClientRect();
 		let mouseX = rect.left + window.scrollX;
 		let mouseY = rect.bottom + window.scrollY;
-		const selectorWidth = 500;
-		const selectorHeight = 300;
 
 		// Adjust horizontal position
 		if (mouseX + selectorWidth > viewportWidth) {
@@ -1875,15 +1866,16 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 		}
 
 		// Adjust vertical position
-		if (mouseY + selectorHeight > viewportHeight + window.scrollY) {
-				mouseY = rect.top+window.scrollY - selectorHeight - 10;
+		if (mouseY + selectorHeight > viewportHeight) {
+			mouseY = rect.top + window.scrollY - selectorHeight - 10;
 		} else {
-				mouseY = Math.max(mouseY, 10);
+			mouseY = rect.bottom + window.scrollY + 10;
 		}
+
 
 		selector.style.left = `${mouseX}px`;
 		selector.style.top = `${mouseY}px`;
-		selector.style.position = "absolute";
+		selector.style.visibility = "visible";
 		selector.style.zIndex = "1000";
 
 		// Close selector when clicking outside
@@ -2408,14 +2400,12 @@ function showRestrictionPopup(icon, moduleName, moduleSlot) {
 
 
 //Summary
-
 function renderSummary() {
   if (!activeCharacter) return;
-    // Get current and max values
+	
+	// Stats
 	const currentHpInput = document.getElementById("currentHp");
     const currentEpInput = document.getElementById("currentEp");
-    const hpSpan = document.getElementById("hp");
-    const epSpan = document.getElementById("ep");
 
 	const recalculated = calculateSecondaryStats(
     activeCharacter.stats,
@@ -2423,11 +2413,12 @@ function renderSummary() {
     activeCharacter.permanentBonuses || {}
 	);
 
-	const maxHp = recalculated.hp.value;
-	const maxEp = recalculated.ep.value;
+	const maxHp = recalculated.hp.value+recalculated.hp.temp;
+	const maxEp = recalculated.ep.value+recalculated.ep.temp;
 
     let currentHp = parseInt(currentHpInput.value) ||18 ;
     let currentEp = parseInt(currentEpInput.value)|| 6;
+
 
     // Calculate percentage
     const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
@@ -2439,4 +2430,160 @@ function renderSummary() {
 
     if (hpBar) hpBar.style.width = hpPercent + "%";
     if (epBar) epBar.style.width = epPercent + "%";
+
+	// Update Summary of Perks
+
+
+	//Update Summary of Skills
+	renderSkillsSummary();
+	renderPerksSummary();
+}
+
+function renderSkillsSummary() {
+    const summarySkills = document.getElementById("summary-skills");
+    summarySkills.innerHTML = "";
+
+    if (!activeCharacter.skills || activeCharacter.skills.length === 0) {
+        summarySkills.innerHTML = "<div class='no-skills'>No skills learned yet</div>";
+        return;
+    }
+
+    activeCharacter.skills.forEach(skill => {
+        if (!skill.stats) skill.stats = ["mig", "dex"];
+
+        const skillDiv = document.createElement("div");
+        skillDiv.className = "summary-skill";
+
+        // Header container: name + restrictions
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "skill-header";
+
+        // Name
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "skill-name";
+        nameDiv.textContent = skill.name;
+
+        headerDiv.appendChild(nameDiv);
+
+        // Restrictions
+        if (skill.restrictions && skill.restrictions.length > 0) {
+            const restrictionDiv = document.createElement("div");
+            restrictionDiv.className = "skill-restriction";
+            restrictionDiv.textContent = `${skill.restrictions.join(", ")}`;
+            restrictionDiv.style.marginLeft = "10px";
+            headerDiv.appendChild(restrictionDiv);
+        }
+
+        // Stats
+        const statsDiv = document.createElement("div");
+        statsDiv.className = "skill-stats";
+        const stat1 = skill.stats[0] || "mig";
+        const stat2 = skill.stats[1] || "dex";
+        const moduleMod = (skill.modules.filter(m => m === "Apuntar").length * 2);
+        const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
+        const totalATK = baseAtk + moduleMod;
+        statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
+                               `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
+
+        // Modules
+        const modulesDiv = document.createElement("div");
+        modulesDiv.className = "skill-modules";
+        skill.modules.forEach(m => {
+            const module = moduleLibrary.find(mod => mod.name === m);
+            const span = document.createElement("span");
+            span.className = "module-slot";
+            span.textContent = module ? module.emote : "?";
+            modulesDiv.appendChild(span);
+        });
+
+        skillDiv.appendChild(headerDiv);
+        skillDiv.appendChild(statsDiv);
+        skillDiv.appendChild(modulesDiv);
+
+        summarySkills.appendChild(skillDiv);
+    });
+}
+
+function renderPerksSummary() {
+    const summaryPerks = document.getElementById("summary-perks");
+    summaryPerks.innerHTML = "";
+
+    if (!activeCharacter.perks || activeCharacter.perks.length === 0) {
+        summaryPerks.innerHTML = "<div class='no-perks'>No perks learned yet</div>";
+        return;
+    }
+
+    // Get unique catalogs/archetypes
+    const catalogs = [...new Set(activeCharacter.perks.map(p => p.catalog || "Origen"))];
+
+    catalogs.forEach(catalog => {
+        const archetypeDiv = document.createElement("div");
+        archetypeDiv.className = "archetype";
+
+        const archetypeTitle = document.createElement("strong");
+        archetypeTitle.textContent = catalog.charAt(0).toUpperCase() + catalog.slice(1);
+        archetypeDiv.appendChild(archetypeTitle);
+
+        const perkListDiv = document.createElement("div");
+        perkListDiv.className = "perk-list";
+
+        // Filter perks for this catalog and exclude restrictions
+        const filteredPerks = activeCharacter.perks
+            .filter(p => (p.catalog || "Origen") === catalog && p.type !== "restriction");
+
+        filteredPerks.forEach(perk => {
+            const label = document.createElement("label");
+            label.textContent = perk.name;
+            perkListDiv.appendChild(label);
+        });
+
+        archetypeDiv.appendChild(perkListDiv);
+        summaryPerks.appendChild(archetypeDiv);
+    });
+}
+
+
+
+function setupCharacterImage() {
+    const charImageButton = document.getElementById("charImageButton");
+    const charImageInput = document.getElementById("charImageInput");
+    const charImageDisplay = document.getElementById("charImageDisplay");
+
+    if (!charImageButton || !charImageInput || !charImageDisplay) return;
+
+    // Load saved image on page load
+    const savedImage = localStorage.getItem("charImage");
+    if (savedImage) {
+        charImageDisplay.src = savedImage;
+        charImageDisplay.style.display = "block";
+        charImageButton.style.display = "none";
+    } else {
+        charImageDisplay.style.display = "none";
+        charImageButton.style.display = "inline-block";
+    }
+
+    // Click button to open file picker
+    charImageButton.addEventListener("click", () => {
+        charImageInput.click();
+    });
+
+    // Click image to replace
+    charImageDisplay.addEventListener("click", () => {
+        charImageInput.click();
+    });
+
+    // Handle image selection
+    charImageInput.addEventListener("change", () => {
+        const file = charImageInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            charImageDisplay.src = e.target.result;
+            charImageDisplay.style.display = "block";
+            charImageButton.style.display = "none";
+            localStorage.setItem("charImage", e.target.result);
+        };
+        reader.readAsDataURL(file);
+    });
 }

@@ -1,7 +1,7 @@
 import moduleLibrary from './moduleLibrary.js';
 
 const moduleCatalog = {
-	orb: {
+	architect: {
 		tier1: [
 			{ name: "Físico", restriction: null },
 			{ name: "Psíquico", restriction: null },
@@ -191,7 +191,7 @@ const moduleCatalog = {
 			],
 			},
 	},
-	lunaCourt: {
+	paladin: {
 		tier1: [
 			{ name: "Oscuridad", restriction: null},
 			{ name: "Rayo", restriction: null},
@@ -381,7 +381,7 @@ const moduleCatalog = {
 			],
 		},
 	},	
-	express: {
+	repartidor: {
 		tier1: [
 			{ name: "Viento", restriction: null},
 			{ name: "Rayo", restriction: null},
@@ -566,7 +566,7 @@ const moduleCatalog = {
 			],
 		},
 	},	
-	vita: {
+	sacrificio: {
 		tier1: [
 			{ name: "Fuego", restriction: null},
 			{ name: "Físico", restriction: null},
@@ -755,7 +755,7 @@ const moduleCatalog = {
 
 		},
 	},
-	wiccrat: {
+	bruja: {
 		tier1: [
 			{ name: "Rayo", restriction: null},
 			{ name: "Fuego", restriction: null},
@@ -924,7 +924,7 @@ const moduleCatalog = {
 			],
 		},
 	},
-	umbra: {
+	invocador: {
 		tier1: [
 			{ name: "Psíquico", restriction: null},
 			{ name: "Oscuridad", restriction: null},
@@ -1087,24 +1087,33 @@ const moduleCatalog = {
 			],
 		},
 	},
-/*	karma: {
+	evocador: {
 		tier1: [
-			{ name: "Fuego", restriction: null},
+			{ name: "placeholder", restriction: null},
 		],
 		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ name: "WLP +1", description: "Gain +1 WLP." },
 			],
 			tier2: [],
+			tier3: [
+				{ name: "WLP +2", description: "Gain +2 WLP." }
+			]
 		},
 		perks: {
 			tier1: [
-				{ name: "Night Vision", description: "Gain enhanced vision in darkness." },
+				{ name: "Gimmick", type: "perk", description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." },
 			],
-			tier2: [],
+			tier2: [
+				{name:"Gimmick Set", type: "perk", description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."}
+			],
+			tier3: [
+				{name:"Gimmick Draw", type: "perk", description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."}
+			]
 		},
-	}, 	*/
+	}, 	
 	abisso: {
 		tier1: moduleLibrary
 		.filter((module, index, arr) => {
