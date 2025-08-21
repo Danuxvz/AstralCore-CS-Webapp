@@ -399,9 +399,9 @@ function populateCharacterData(data) {
 
 	// Populate CE/SE
 	document.getElementById("ce").value = data.ce || 0;
-	document.getElementById("ce").textContent = data.ce || 0;
+	document.getElementById("ceDisplay").textContent = data.ce || 0;
 	document.getElementById("sp").value = data.sp || 0;
-	document.getElementById("sp").textContent = data.sp || 0;
+	document.getElementById("spDisplay").textContent = data.sp || 0;
 	updateCEDisplay();
 	syncExperienceInputs();
 	loadSelfCoreContent();
