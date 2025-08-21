@@ -398,10 +398,6 @@ function populateCharacterData(data) {
 	activeCharacter.notes = data.notes || "";
 
 	// Populate CE/SE
-	document.getElementById("ce").value = data.ce || 0;
-	document.getElementById("ceDisplay").textContent = data.ce || 0;
-	document.getElementById("sp").value = data.sp || 0;
-	document.getElementById("spDisplay").textContent = data.sp || 0;
 	updateCEDisplay();
 	syncExperienceInputs();
 	loadSelfCoreContent();
@@ -798,8 +794,10 @@ function loadJobs(jobsData) {
 function updateCEDisplay() {
 	const totalCE = activeCharacter.ce || 0;
 	const usedCE = calculateUsedCE();
+	document.getElementById("ceDisplay").textContent = totalCE || 0;
 	document.getElementById("ceCounter").textContent = 
 		`${usedCE} CE / ${totalCE} CE max`;
+	
 }
 
 // Update calculateUsedCE function
@@ -831,6 +829,8 @@ function calculateUsedSP() {
 	
 function updateSPDisplay() {
 	const totalSP = activeCharacter.sp || 0;
+	document.getElementById("spDisplay").textContent = totalSP || 0;
+
 	const usedSP = calculateUsedSP();
 	document.getElementById("spCounter").textContent = 
 		`${usedSP} SP / ${totalSP} SP max`;

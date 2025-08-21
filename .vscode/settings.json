@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/8878af76-f417-48a5-aa6a-b71f33ffb556/resourceGroups/AstralCore_group/providers/Microsoft.Web/sites/AstralCore",
+    "appService.deploySubpath": "."
+}
