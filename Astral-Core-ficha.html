@@ -25,9 +25,10 @@
 <br>
 
     <div class="sheet">
-		
+		<!-- Navegation between sections -->
         <nav>
             <ul>
+				<li><a href="#" onclick="showSection('summary')">Summary</a></li>
                 <li><a href="#" onclick="showSection('stats')">Stats</a></li>
                 <li><a href="#" onclick="showSection('skills')">Skills</a></li>
 				<li><a href="#" onclick="showSection('core')">Self Core</a></li>
@@ -35,80 +36,197 @@
             </ul>
         </nav>
 
-		
+		<!-- Content sections -->
+		<div id="summary" class="section">
+			<!-- Character name + CE/SP -->
+			<div class="summary-top">
+				<div class="summary-top-left">
+					<div class="summary-header">
+						<h1 class="summary-name" id="charName">Character Name</h1>
+						<div class="summary-ce-sp">
+						<div><strong>CE:</strong> <span class="number" id="ce">0</span></div>
+						<div><strong>SP:</strong> <span class="number" id="sp">0</span></div>
+						</div>
+					</div>
 
-	<div id="stats" class="section">
-		<div class="character-name">
-			<input type="text" id="charName" placeholder="Name">
-			
-		</div>
+					<!-- HP/EP bars -->
+					<div class="summary-bars">
+						<div class="summary-bar-label"><strong>HP:</strong></div>
+						<div class="summary-hp">
+							<div class="bar-fill red" style="width: 100%">
+								<div class="bar-calculations">
+									<input class="summary-input" type="number" placeholder="18" id="currentHp"> / <span id="hp">0</span></div>
+								</div>
+						</div>
+					</div>
+					<div class="summary-bars">
+						<div class="summary-bar-label"><strong>EP:</strong></div>
+						<div class="summary-ep">
+							<div class="bar-fill blue" style="width: 100%">
+								<div class="bar-calculations">
+								<input class="summary-input" type="number" placeholder="6" id="currentEp"> / <span id="ep">0</span></div>
+							</div>
+						</div>
+					</div>
 
-		<div class="stat">
-			<strong>SE:</strong> <input type="number" id="se" class="temp-input">
-			<strong>CE:</strong> <input type="number" id="ce" class="temp-input">
-		</div>
-		<br>
-		
-		
-		<h2>Stats</h2>
-		<div class="stat-values">
-			<div class="main-stats">
-				<div class="stat">
-					<label for="migDice"><strong>MIG:</strong></label>
-					<select id="migDice">
-						<option value="6">d6</option>
-						<option value="8">d8</option>
-						<option value="10">d10</option>
-						<option value="12">d12</option>
-					</select>
-					<input type="number" id="migTemp" placeholder="0" class="temp-input">
-				</div>
-				<div class="stat">
-					<label for="dexDice"><strong>DEX:</strong></label>
-					<select id="dexDice">
-						<option value="6">d6</option>
-						<option value="8">d8</option>
-						<option value="10">d10</option>
-						<option value="12">d12</option>
-					</select>
-					<input type="number" id="dexTemp" placeholder="0" class="temp-input">
-				</div>
+					<!-- Primary stats -->
+					<div class="summary-stats primary">
+						<div class="stat">
+							<div class="dice" id="migDice">1</div>
+							<span>MIG</span>
+						</div>
+						<div class="stat">
+							<div class="dice" id="dexDice">2</div>
+							<span>DEX</span>
+						</div>
+						<div class="stat">
+							<div class="dice" id="wlpDice">3</div>
+							<span>WLP</span>
+						</div>
+						<div class="stat">
+							<div class="dice" id="intDice">4</div>
+							<span>INT</span>
+						</div>
+						<div class="stat">
+							<div class="dice" id="stlDice">5</div>
+							<span>STL</span>
+						</div>
+					</div>
 
-				<div class="stat">
-					<label for="wlpDice"><strong>WLP:</strong></label>
-					<select id="wlpDice">
-						<option value="6">d6</option>
-						<option value="8">d8</option>
-						<option value="10">d10</option>
-						<option value="12">d12</option>
-					</select>
-					<input type="number" id="wlpTemp" placeholder="0" class="temp-input">
+					<!-- Secondary stats -->
+					<div class="summary-stats secondary">
+						<div class="stat">
+							<div class="value" id="df">0</div>
+							<span>Def. F</span>
+						</div>
+						<div class="stat">
+							<div class="value" id="dm">0</div>
+							<span>Def. M</span>
+						</div>
+						<div class="stat">
+							<div class="value" id="impr">0</div>
+							<span>IMPR</span>
+						</div>
+						<div class="stat">
+							<div class="value" id="mov">0</div>
+							<span>MOV</span>
+						</div>
+						<div class="stat">
+							<div class="value" id="dmg">0</div>
+							<span>DMG</span>
+						</div>
+						<div class="stat">
+							<div class="value" id="atk">0</div>
+							<span>ATK</span>
+						</div>
+					</div>
 				</div>
-				<div class="stat">
-					<label for="intDice"><strong>INT: </strong></label>
-					<select id="intDice">
-						<option value="6">d6</option>
-						<option value="8">d8</option>
-						<option value="10">d10</option>
-						<option value="12">d12</option>
-					</select>
-					<input type="number" id="intTemp" placeholder="0" class="temp-input">
+				<div class="summary-top-right">
+					<div class="character-image">
+						<span>Image</span>
+					</div>
 				</div>
-				<div class="stat">
-					<label for="stlDice"><strong>STL:</strong></label>
-					<select id="stlDice">
-						<option value="6">d6</option>
-						<option value="8">d8</option>
-						<option value="10">d10</option>
-						<option value="12">d12</option>
-					</select>
-					<input type="number" id="stlTemp" placeholder="0" class="temp-input">
-				</div>
-
 			</div>
+
+			<!-- Perks -->
+			<div class="summary-perks">
+				<h4 class="summary-title">Perks</h4>
+				<div class="archetype">
+					<strong>Archetype Name:</strong>
+					<div class="perk-list">
+						<label>Perk Names</label>
+						<label>Another perk name</label>
+					</div>
+				</div>
+			</div>
+
+			<!-- Skills -->
+			<div class="summary-skills">
+				<h4 class="summary-title">Skills</h4>
+				<div class="skill-list">
+					<div class="skill">
+						<strong>Skill Name</strong>
+						<div>Modules</div>
+						<div>Restrictions</div>
+					</div>
+					<div class="skill">
+						<strong>Skill Name 2</strong>
+						<div>Modules</div>
+						<div>Restrictions</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+
+		<div id="stats" class="section">
+			<div class="character-name">
+				<input type="text" id="charName" placeholder="Name">
+			</div>
+
+			<div class="stat">
+				<strong>SP:</strong> <input type="number" id="sp" class="temp-input">
+				<strong>CE:</strong> <input type="number" id="ce" class="temp-input">
+			</div>
+			<br>
 			
-			
-			<div class="secondary-stats">
+			<h2>Stats</h2>
+			<div class="stat-values">
+				<div class="main-stats">
+					<div class="stat">
+						<label for="migDice"><strong>MIG:</strong></label>
+						<select id="migDice">
+							<option value="6">d6</option>
+							<option value="8">d8</option>
+							<option value="10">d10</option>
+							<option value="12">d12</option>
+						</select>
+						<input type="number" id="migTemp" placeholder="0" class="temp-input">
+					</div>
+					<div class="stat">
+						<label for="dexDice"><strong>DEX:</strong></label>
+						<select id="dexDice">
+							<option value="6">d6</option>
+							<option value="8">d8</option>
+							<option value="10">d10</option>
+							<option value="12">d12</option>
+						</select>
+						<input type="number" id="dexTemp" placeholder="0" class="temp-input">
+					</div>
+					<div class="stat">
+						<label for="wlpDice"><strong>WLP:</strong></label>
+						<select id="wlpDice">
+							<option value="6">d6</option>
+							<option value="8">d8</option>
+							<option value="10">d10</option>
+							<option value="12">d12</option>
+						</select>
+						<input type="number" id="wlpTemp" placeholder="0" class="temp-input">
+					</div>
+					<div class="stat">
+						<label for="intDice"><strong>INT: </strong></label>
+						<select id="intDice">
+							<option value="6">d6</option>
+							<option value="8">d8</option>
+							<option value="10">d10</option>
+							<option value="12">d12</option>
+						</select>
+						<input type="number" id="intTemp" placeholder="0" class="temp-input">
+					</div>
+					<div class="stat">
+						<label for="stlDice"><strong>STL:</strong></label>
+						<select id="stlDice">
+							<option value="6">d6</option>
+							<option value="8">d8</option>
+							<option value="10">d10</option>
+							<option value="12">d12</option>
+						</select>
+						<input type="number" id="stlTemp" placeholder="0" class="temp-input">
+					</div>
+				</div>
+					
+				<div class="secondary-stats">
 				<div class="stat">
 					<strong>HP:</strong> <span id="hp"> 0 (0)</span>
 					<input type="number" id="hpTemp" class="temp-input" placeholder="0">
@@ -126,48 +244,44 @@
 					<input type="number" id="dmTemp" class="temp-input" placeholder="0">
 				</div>
 				<div class="stat">
-					<strong>IMPR.:</strong> <span id="impr"> 0 (0)</span>
-					<input type="number" id="imprTemp" class="temp-input" placeholder="0">
-				</div>
-				<div class="stat">
-					<strong>MOV:</strong> <span id="mov"> 0 (0)</span>
-					<input type="number" id="movTemp" class="temp-input" placeholder="0">
-				</div>
-				<div class="stat">
-					<strong>ATK:</strong> <span id="atk"> 0 (0)</span>
-					<input type="number" id="atkTemp" class="temp-input" placeholder="0">
-				</div>
-				<div class="stat">
-					<strong>DMG:</strong> <span id="dmg"> 0 (0)</span>
-					<input type="number" id="dmgTemp" class="temp-input" placeholder="0">
-				</div>
+						<strong>IMPR.:</strong> <span id="impr"> 0 (0)</span>
+						<input type="number" id="imprTemp" class="temp-input" placeholder="0">
+					</div>
+					<div class="stat">
+						<strong>MOV:</strong> <span id="mov"> 0 (0)</span>
+						<input type="number" id="movTemp" class="temp-input" placeholder="0">
+					</div>
+					<div class="stat">
+						<strong>ATK:</strong> <span id="atk"> 0 (0)</span>
+						<input type="number" id="atkTemp" class="temp-input" placeholder="0">
+					</div>
+					<div class="stat">
+						<strong>DMG:</strong> <span id="dmg"> 0 (0)</span>
+						<input type="number" id="dmgTemp" class="temp-input" placeholder="0">
+					</div>
+					
+				</div>			
 				
-			</div>			
+			</div>
 			
+			<div class="jobs">
+			<h2>Jobs</h2>
+			<p>Available Jobs: <span id="availableJobs">0</span></p>
+			<button id="addJob">+ Add a Job</button>
+			<div id="jobsList"></div>
+			</div>
+
 		</div>
-		
-	<div class="jobs">
-		<h2>Jobs</h2>
-		<p>Available Jobs: <span id="availableJobs">0</span></p>
-		<button id="addJob">+ Add a Job</button>
-		<div id="jobsList"></div>
-	</div>
 
-
-	</div>
-
-		
-		
 		
 		<div id="skills" class="section">
 			<h2>Skills</h2>
 			<div class="stat">
-    	    <span id="seCounter">0 SE used / 0 SE available</span>
+    	    <span id="spCounter">0 SP used / 0 SP available</span>
 			</div>
 			<div id="skillsList"></div>
 			<button id="addSkill">+ Add Skill</button>
 		</div>		
-
 
 		
         <div id="core" class="section">
@@ -179,7 +293,8 @@
 			</div>
 
         </div>		
-				
+			
+		
         <div id="catalog" class="section">
 			<h2>Astral Cores</h2>
 			<div class="stat">
@@ -217,8 +332,10 @@
 		</div>
 	</div>
 
-<script type="module" src="Character-manager.js"></script>
 
+
+
+<script type="module" src="Character-manager.js"></script>
 
 </body>
 </html>

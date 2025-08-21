@@ -124,7 +124,7 @@ document.getElementById("newCharacter").addEventListener("click", () => {
 			tier1: [], tier2: [], tier3: [], tier4: [], tier5: [],
 		},
 		perks: [],
-		se: 0,
+		sp: 0,
 		ce: 0,
 	};
 
@@ -313,7 +313,7 @@ function gatherCharacterData() {
 			tier5: [],
 		},
 		perks: activeCharacter.perks || [],
-		se: parseInt(document.getElementById("se") ? document.getElementById("se").value : 0) || 0,
+		sp: parseInt(document.getElementById("sp") ? document.getElementById("sp").value : 0) || 0,
 		ce: parseInt(document.getElementById("ce") ? document.getElementById("ce").value : 0) || 0,
 		permanentBonuses: activeCharacter.permanentBonuses || {},
 		notes: activeCharacter.notes || "",
@@ -329,14 +329,16 @@ function populateCharacterData(data) {
 	// Set character name
 	const charNameInput = document.getElementById("charName");
 	charNameInput.value = data.name || "";
-
+	charNameInput.textContent = data.name || "";
 	// Populate primary stats (flat structure)
 	["mig", "dex", "int", "stl", "wlp"].forEach((stat) => {
 		const diceElement = document.getElementById(stat + "Dice");
 		const tempElement = document.getElementById(stat + "Temp");
 
 		if (diceElement) {
-			diceElement.value = data.stats?.[stat]?.dice || 8; // Default to 8
+			diceElement.value = data.stats?.[stat]?.dice || 8;
+			diceElement.textContent = data.stats?.[stat]?.dice || 8;
+			
 		} else {
 			console.warn("Element " + stat + "Dice not found!");
 		}
@@ -402,24 +404,21 @@ function populateCharacterData(data) {
 
 	// Populate CE/SE
 	document.getElementById("ce").value = data.ce || 0;
-	document.getElementById("se").value = data.se || 0;
+	document.getElementById("ce").textContent = data.ce || 0;
+	document.getElementById("sp").value = data.sp || 0;
+	document.getElementById("sp").textContent = data.sp || 0;
 	updateCEDisplay();
 	syncExperienceInputs();
 	loadSelfCoreContent();
-	updateSEDisplay();
+	updateSPDisplay();
 	updateStatUpgrades();
 	loadOriginPerks();
 
-
-	// Populate jobs
 	loadJobs(data.jobs || []);
 	calculateAvailableJobs();
-
-	// Populate skills
 	renderSkills();
-
-	// Load learned modules for the character
 	loadLearnedModules();
+	renderSummary();
 }
 
 function populateCharacterSelector() {
@@ -520,7 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				tier5: [],			
 			},
 			perks:[],
-			se: { value: 0, temp: 0 },
+			sp: { value: 0, temp: 0 },
 			ce: { value: 0, temp: 0 },
 			permanentBonuses: {},
 			statUpgrades: {},
@@ -588,15 +587,18 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.warn("Add Job button not found.");
 	}
 	
-	// Attach event listeners for CE and SE inputs across all sections
-	document.querySelectorAll('#ce, #se, #ceCore, #seSkills').forEach(input => {
+	document.getElementById("currentHp").addEventListener("input", renderSummary);
+	document.getElementById("currentEp").addEventListener("input", renderSummary);
+
+	// Attach event listeners for CE and SP inputs across all sections
+	document.querySelectorAll('#ce, #sp, #ceCore, #spSkills').forEach(input => {
 		input.addEventListener("change", () => {
 			activeCharacter.secondaryStats.ce = parseInt(document.getElementById("ce").value) || 0;
-			activeCharacter.secondaryStats.se = parseInt(document.getElementById("se").value) || 0;
+			activeCharacter.secondaryStats.sp = parseInt(document.getElementById("sp").value) || 0;
 			saveCharacterData();
 			syncExperienceInputs();
 			updateCEDisplay();
-			updateSEDisplay();
+			updateSPDisplay();
 		});
 	});
 	
@@ -609,7 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	calculateAvailableJobs();
 	loadSelfCoreContent();
 	loadOriginPerks();
-	updateSEDisplay();
+	updateSPDisplay();
 });
 
 function calculateAvailableJobs() {
@@ -817,7 +819,7 @@ function calculateUsedCE() {
 
 function syncExperienceInputs() {
 	const ceValue = activeCharacter.ce || 0;
-	const seValue = activeCharacter.se || 0;
+	const seValue = activeCharacter.sp || 0;
 	
 	document.querySelectorAll('[id^="ce"], [id^="se"]').forEach(input => {
 		if(input.id.includes("ce")) input.value = ceValue;
@@ -825,16 +827,16 @@ function syncExperienceInputs() {
 	});
 }
 
-function calculateUsedSE() {
+function calculateUsedSP() {
 	if (!activeCharacter.skills) return 0;
 	return activeCharacter.skills.reduce((total, skill) => total + (skill.cost || 0), 0);
 }
 	
-function updateSEDisplay() {
-	const totalSE = activeCharacter.se || 0;
-	const usedSE = calculateUsedSE();
-	document.getElementById("seCounter").textContent = 
-		`${usedSE} SE / ${totalSE} SE max`;
+function updateSPDisplay() {
+	const totalSP = activeCharacter.sp || 0;
+	const usedSP = calculateUsedSP();
+	document.getElementById("spCounter").textContent = 
+		`${usedSP} SP / ${totalSP} SP max`;
 }
 
 	// Attach tooltip events to module buttons
@@ -1499,7 +1501,7 @@ function loadSelfCoreContent() {
 
     notesTextarea.addEventListener("input", e => {
         activeCharacter.notes = e.target.value;
-        saveCharacterData();
+		saveCharacterData();
     });
 
     notesSection.appendChild(notesTextarea);
@@ -1734,7 +1736,7 @@ function createSkillForm(skill = {}, index) {
 		if (!isNew) {
 			activeCharacter.skills[index] = currentSkill;
 			saveCharacterData();
-			updateSEDisplay();
+			updateSPDisplay();
     	}
 
 	}
@@ -1749,7 +1751,7 @@ function createSkillForm(skill = {}, index) {
 			isNew = false;
     	}
 		saveCharacterData();
-	    updateSEDisplay();
+	    updateSPDisplay();
 		renderSkills();
 	});
 		form.appendChild(saveButton);
@@ -1906,7 +1908,7 @@ function deleteSkill(index) {
 	activeCharacter.skills.splice(index, 1);
 	saveCharacterData(); 
 	renderSkills();
-	updateSEDisplay();
+	updateSPDisplay();
 }	
 
 //Render Skill list
@@ -2402,3 +2404,42 @@ function showRestrictionPopup(icon, moduleName, moduleSlot) {
 		document.addEventListener("click", clickHandler);
 }
 
+
+
+
+
+
+
+
+
+//Summary
+
+function renderSummary() {
+  if (!activeCharacter) return;
+    // Get current and max values
+	const currentHpInput = document.getElementById("currentHp");
+    const currentEpInput = document.getElementById("currentEp");
+    const hpSpan = document.getElementById("hp");
+    const epSpan = document.getElementById("ep");
+
+    const maxHp = activeCharacter.secondaryStats?.hp?.value || 0;
+    const maxEp = activeCharacter.secondaryStats?.ep?.value || 0;
+
+    let currentHp = parseInt(currentHpInput.value) ||18 ;
+    let currentEp = parseInt(currentEpInput.value)|| 6;
+
+    // Update spans
+    hpSpan.textContent = maxHp;
+    epSpan.textContent = maxEp;
+
+    // Calculate percentage
+    const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
+    const epPercent = maxEp ? (currentEp / maxEp) * 100 : 0;
+
+    // Update bar widths
+    const hpBar = document.querySelector(".summary-hp .bar-fill");
+    const epBar = document.querySelector(".summary-ep .bar-fill");
+
+    if (hpBar) hpBar.style.width = hpPercent + "%";
+    if (epBar) epBar.style.width = epPercent + "%";
+}
