@@ -207,70 +207,55 @@ function saveCharacterData() {
 
 // Utility function for calculating secondary stats
 function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBonuses = {}) {
-	// Compute base values
-	const hpBase = 3 * (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.mig.temp || 0));
-	const epBase = parseInt(stats.wlp.dice || 8, 10) + parseInt(stats.wlp.temp || 0);
-	const dfBase = parseInt(stats.dex.dice || 8, 10) + parseInt(stats.dex.temp || 0);
-	const dmBase = parseInt(stats.int.dice || 8, 10) + parseInt(stats.int.temp || 0);
-	const imprBase = Math.max(
-		0,
-		Math.floor(
-			(parseInt(stats.stl.dice || 8, 10) + parseInt(stats.stl.temp || 0) - 6) / 2
-		)
-	);
-	const movBase = Math.floor(
-		(parseInt(stats.mig.dice || 8, 10) +
-			parseInt(stats.dex.dice || 8, 10) +
-			parseInt(stats.mig.temp || 0) +
-			parseInt(stats.dex.temp || 0)) /
-			2
-	);
+    const hpBase = 3 * (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.mig.temp || 0));
+    const epBase = parseInt(stats.wlp.dice || 8, 10) + parseInt(stats.wlp.temp || 0);
+    const dfBase = parseInt(stats.dex.dice || 8, 10) + parseInt(stats.dex.temp || 0);
+    const dmBase = parseInt(stats.int.dice || 8, 10) + parseInt(stats.int.temp || 0);
+    const imprBase = Math.max(
+        0,
+        Math.floor((parseInt(stats.stl.dice || 8, 10) + parseInt(stats.stl.temp || 0) - 6) / 2)
+    );
+    const movBase = Math.floor(
+        (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.dex.dice || 8, 10) +
+         parseInt(stats.mig.temp || 0) + parseInt(stats.dex.temp || 0)) / 2
+    );
 
-	// Apply permanent bonuses
-	const hpTotal = hpBase + (activeCharacter.permanentBonuses?.hp || 0);
-	const epTotal = epBase + (activeCharacter.permanentBonuses?.ep || 0);
-	const dfTotal = dfBase + (activeCharacter.permanentBonuses?.df || 0);
-	const dmTotal = dmBase + (activeCharacter.permanentBonuses?.dm || 0);
-	const imprTotal = imprBase + (activeCharacter.permanentBonuses?.impr || 0);
-	const movTotal = movBase + (activeCharacter.permanentBonuses?.mov || 0);
-	const atkTotal = (activeCharacter.permanentBonuses?.atk || 0);
-	const dmgTotal = (activeCharacter.permanentBonuses?.dmg || 0);
-	console.log(epTotal);
-		return {
-		hp: {
-			value: hpBase + (permanentBonuses.hp || 0),
-			temp: currentSecondaryStats.hp?.temp || 0
-		},
-		ep: {
-			value: epBase + (permanentBonuses.ep || 0),
-			temp: currentSecondaryStats.ep?.temp || 0
-		},
-		df: {
-			value: dfBase + (permanentBonuses.df || 0),
-			temp: currentSecondaryStats.df?.temp || 0
-		},
-		dm: {
-			value: dmBase + (permanentBonuses.dm || 0),
-			temp: currentSecondaryStats.dm?.temp || 0
-		},
-		impr: {
-			value: imprBase + (permanentBonuses.impr || 0),
-			temp: currentSecondaryStats.impr?.temp || 0
-		},
-		mov: {
-			value: movBase + (permanentBonuses.mov || 0),
-			temp: currentSecondaryStats.mov?.temp || 0
-		},
-		atk: {
-			value: (permanentBonuses.atk || 0),
-			temp: currentSecondaryStats.atk?.temp || 0
-		},
-		dmg: {
-			value: (permanentBonuses.dmg || 0),
-			temp: currentSecondaryStats.dmg?.temp || 0
-		}
-	};
+    return {
+        hp: {
+            value: hpBase + (permanentBonuses.hp || 0),
+            temp: currentSecondaryStats.hp?.temp || 0
+        },
+        ep: {
+            value: epBase + (permanentBonuses.ep || 0),
+            temp: currentSecondaryStats.ep?.temp || 0
+        },
+        df: {
+            value: dfBase + (permanentBonuses.df || 0),
+            temp: currentSecondaryStats.df?.temp || 0
+        },
+        dm: {
+            value: dmBase + (permanentBonuses.dm || 0),
+            temp: currentSecondaryStats.dm?.temp || 0
+        },
+        impr: {
+            value: imprBase + (permanentBonuses.impr || 0),
+            temp: currentSecondaryStats.impr?.temp || 0
+        },
+        mov: {
+            value: movBase + (permanentBonuses.mov || 0),
+            temp: currentSecondaryStats.mov?.temp || 0
+        },
+        atk: {
+            value: permanentBonuses.atk || 0,
+            temp: currentSecondaryStats.atk?.temp || 0
+        },
+        dmg: {
+            value: permanentBonuses.dmg || 0,
+            temp: currentSecondaryStats.dmg?.temp || 0
+        }
+    };
 }
+
 
 // Gather character data for export
 function gatherCharacterData() {
@@ -329,15 +314,15 @@ function populateCharacterData(data) {
 	// Set character name
 	const charNameInput = document.getElementById("charName");
 	charNameInput.value = data.name || "";
-	charNameInput.textContent = data.name || "";
+	document.getElementById("charNameDisplay").textContent = data.name || "";
 	// Populate primary stats (flat structure)
 	["mig", "dex", "int", "stl", "wlp"].forEach((stat) => {
 		const diceElement = document.getElementById(stat + "Dice");
 		const tempElement = document.getElementById(stat + "Temp");
+		const displayElement = document.getElementById(stat + "DiceDisplay");
 
 		if (diceElement) {
 			diceElement.value = data.stats?.[stat]?.dice || 8;
-			diceElement.textContent = data.stats?.[stat]?.dice || 8;
 			
 		} else {
 			console.warn("Element " + stat + "Dice not found!");
@@ -347,6 +332,12 @@ function populateCharacterData(data) {
 			tempElement.value = data.stats?.[stat]?.temp || 0; // Default to 0
 		} else {
 			console.warn("Element " + stat + "Temp not found!");
+		}
+
+		if (displayElement) {
+			displayElement.textContent = data.stats?.[stat]?.dice || 0;
+		} else {
+			console.warn("Element " + stat + "Display not found!");
 		}
 	});
 
@@ -360,10 +351,10 @@ function populateCharacterData(data) {
 	["hp", "ep", "df", "dm", "impr", "mov", "atk", "dmg"].forEach((stat) => {
 		const valueElement = document.getElementById(stat);
 		const tempElement = document.getElementById(stat + "Temp");
+		const displayElement = document.getElementById(stat + "Display");
 
 		// Get base value from calculation
 		const baseValue = recalculatedSecondaryStats[stat]?.value || 0;
-		const permanentBonus = data.permanentBonuses?.[stat] || 0;
 		const tempValue = recalculatedSecondaryStats[stat]?.temp || 0;
 		const total = baseValue + tempValue;
 
@@ -373,6 +364,10 @@ function populateCharacterData(data) {
 
 		if (tempElement) {
 			tempElement.value = tempValue;
+		}
+
+		if (displayElement) {
+			displayElement.textContent = total;
 		}
 	});
 
@@ -2422,15 +2417,17 @@ function renderSummary() {
     const hpSpan = document.getElementById("hp");
     const epSpan = document.getElementById("ep");
 
-    const maxHp = activeCharacter.secondaryStats?.hp?.value || 0;
-    const maxEp = activeCharacter.secondaryStats?.ep?.value || 0;
+	const recalculated = calculateSecondaryStats(
+    activeCharacter.stats,
+    activeCharacter.secondaryStats,
+    activeCharacter.permanentBonuses || {}
+	);
+
+	const maxHp = recalculated.hp.value;
+	const maxEp = recalculated.ep.value;
 
     let currentHp = parseInt(currentHpInput.value) ||18 ;
     let currentEp = parseInt(currentEpInput.value)|| 6;
-
-    // Update spans
-    hpSpan.textContent = maxHp;
-    epSpan.textContent = maxEp;
 
     // Calculate percentage
     const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
