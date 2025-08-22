@@ -404,7 +404,7 @@ function populateCharacterData(data) {
 	updateSPDisplay();
 	updateStatUpgrades();
 	loadOriginPerks();
-
+	
 	loadJobs(data.jobs || []);
 	calculateAvailableJobs();
 	renderSkills();
@@ -437,42 +437,49 @@ function populateCharacterSelector() {
 }
 
 function updateStatUpgrades() {
-	activeCharacter.permanentBonuses = {}; // Reset bonuses
+    activeCharacter.permanentBonuses = {};
 
-	Object.keys(moduleCatalog).forEach(catalogName => {
-		const catalog = moduleCatalog[catalogName];
-		if (!catalog.statUpgrades) return;
+    Object.keys(moduleCatalog).forEach(catalogName => {
+        const catalog = moduleCatalog[catalogName];
+        if (!catalog.statUpgrades) return;
 
-		Object.keys(catalog.statUpgrades).forEach(tierKey => {
-			const tier = tierKey;
-			const statUpgradeList = catalog.statUpgrades[tier];
-			if (!statUpgradeList) return;
+        Object.keys(catalog.statUpgrades).forEach(tierKey => {
+            const statUpgradeList = catalog.statUpgrades[tierKey];
+            if (!statUpgradeList) return;
 
-			// Count modules in this catalog and tier
-			const modulesInTier = activeCharacter.modules[tier] || [];
-			const moduleCount = modulesInTier.filter(module => 
-				module.catalogs.includes(catalogName)
-			).length;
+            // Count perks in this catalog and tier
+            const perksInTier = activeCharacter.perks.filter(p =>
+                p.catalog === catalogName && p.tier === tierKey
+            ).length;
 
-			const earnedUpgrades = Math.floor(moduleCount / 3);
+            for (let i = 0; i < perksInTier; i++) {
+                const upgradeIndex = i % statUpgradeList.length;
+                const upgrade = statUpgradeList[upgradeIndex];
+                const match = upgrade.name.match(/(HP|EP|MOV|DF|DM|IMPR|ATK|DMG)\s*\+(\d+)/i);
 
-			for (let i = 0; i < earnedUpgrades; i++) {
-				const upgradeIndex = i % statUpgradeList.length;
-				const upgrade = statUpgradeList[upgradeIndex];
-				const match = upgrade.name.match(/(HP|EP|MOV|DF|DM|IMPR|ATK|DMG)\s+\+(\d+)/i);
-				
-				if (match) {
-					const stat = match[1].toLowerCase();
-					const amount = parseInt(match[2], 10);
-					activeCharacter.permanentBonuses[stat] = (activeCharacter.permanentBonuses[stat] || 0) + amount;
-				}
-			}
-		});
-	});
+                if (match) {
+                    const stat = match[1].toLowerCase();
+                    const amount = parseInt(match[2], 10);
+                    activeCharacter.permanentBonuses[stat] = (activeCharacter.permanentBonuses[stat] || 0) + amount;
+                }
+            }
 
-	saveCharacterData();
-	
+            const upgradesRow = document.querySelector(`#catalogContent .collapsible-section[data-tier="${tierKey}"] .stat-upgrades-row`);
+            if (upgradesRow) {
+                upgradesRow.querySelectorAll(".stat-upgrade").forEach((el, index) => {
+                    if (index < perksInTier) {
+                        el.classList.add("unlocked");
+                    } else {
+                        el.classList.remove("unlocked");
+                    }
+                });
+            }
+        });
+    });
+
+    saveCharacterData();
 }
+
 	
 document.addEventListener("DOMContentLoaded", () => {
 	const characterSelector = document.getElementById("characterSelector");
@@ -790,7 +797,6 @@ function loadJobs(jobsData) {
 }
 
 
-
 function updateCEDisplay() {
 	const totalCE = activeCharacter.ce || 0;
 	const usedCE = calculateUsedCE();
@@ -880,7 +886,7 @@ function learnModule(coreName, tier, moduleName, restriction) {
 		activeCharacter.modules[tier] = [];
 	}
 
-	const tierModules = activeCharacter.modules[tier];
+	const tierModules = activeCharacter.modules[tier] || [];
 	const module = moduleLibrary.find(m => m.name === moduleName);
 	const catalogModule = moduleCatalog[coreName][tier].find(m => m.name === moduleName);
 
@@ -930,6 +936,16 @@ function learnModule(coreName, tier, moduleName, restriction) {
 	}
 
 	// Save the updated character data
+
+	if (activeCharacter.sharedUnlocks === undefined) {
+    activeCharacter.sharedUnlocks = 0; // how many perks can currently be unlocked
+	}
+
+
+
+
+
+
 
 	// Update UI
 	updateCEDisplay();
@@ -1053,10 +1069,9 @@ function loadCatalogContent(coreName) {
                             const upgradesRow = document.createElement("div");
                             upgradesRow.className = "stat-upgrades-row";
 
-                            const modulesInTier = activeCharacter.modules[tierKey]?.filter(m =>
-                                m.catalogs.includes(coreName)
-                            ).length || 0;
-                            const earnedUpgrades = Math.floor(modulesInTier / 3);
+							const perksInTier = activeCharacter.perks.filter(p =>
+								p.catalog === coreName && p.tier === tierKey).length || 0;
+							const earnedUpgrades = perksInTier;
                             const availableUpgrades = catalog.statUpgrades[tierKey];
 
                             availableUpgrades.forEach((upgrade, index) => {
@@ -1088,6 +1103,8 @@ function loadCatalogContent(coreName) {
                         perkContainer.appendChild(perkTitle);
                         perkContainer.appendChild(document.createElement("br"));
 
+						updatePerkAvailability(coreName, tierKey);
+
                         perks.forEach(perk => {
                             const perkButton = document.createElement("button");
                             perkButton.className = "perk-button";
@@ -1108,6 +1125,9 @@ function loadCatalogContent(coreName) {
                                 perkButton.classList.add("learned");
                             }
 
+							
+
+
                             perkButton.addEventListener("click", () => {
                                 const index = activeCharacter.perks.findIndex(p =>
                                     p.name === perk.name && p.catalog === coreName && p.tier === tierKey
@@ -1123,6 +1143,8 @@ function loadCatalogContent(coreName) {
                                 }
                                 saveCharacterData();
                                 updatePerkAvailability(coreName, tierKey);
+								updateStatUpgrades()
+								populateCharacterData(activeCharacter);
                             });
 
                             perkContainer.appendChild(perkButton);
@@ -1133,8 +1155,11 @@ function loadCatalogContent(coreName) {
                     return tierContent;
                 },
                 `catalog-${coreName}-${tierKey}`
+
+				
             );
             catalogContent.appendChild(tierSection);
+			updatePerkAvailability(coreName, tierKey);
         }
     });
 
@@ -1298,13 +1323,10 @@ function attachTooltipToPerkButtons() {
 }
 
 function updatePerkAvailability(coreName, tier) {
-	const modulesInTier = activeCharacter.modules[tier].filter(m => 
-		m.catalogs.includes(coreName)
-	).length;
+	const modulesInTier = activeCharacter.modules[tier]?.length || 0;
 
 	const perksAvailable = Math.floor(modulesInTier / 3);
-	const existingPerks = activeCharacter.perks.filter(p => 
-		p.catalog === coreName && p.tier === tier
+	const existingPerks = activeCharacter.perks.filter(p => p.tier === tier
 	).length;
 
 	const availablePerks = Math.max(perksAvailable - existingPerks, 0);
@@ -1329,6 +1351,8 @@ function updatePerkAvailability(coreName, tier) {
 	}
 	loadSelfCoreContent();
 }
+
+
 
 
 

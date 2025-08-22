@@ -2,57 +2,9 @@ import moduleLibrary from './moduleLibrary.js';
 
 const moduleCatalog = {
 	architect: {
-		tier1: [
-			{ name: "Físico", restriction: null },
-			{ name: "Psíquico", restriction: null },
-			{ name: "Tierra", restriction: null },
-			{ name: "Luz", restriction: null },
-			{ name: "Prestidigitación 1", restriction: null },
-			{ name: "Pausa", restriction: null },
-			{ name: "Identificar 1", restriction: null },
-			{ name: "Traje", restriction: "Modificas la vestimenta del objetivo actual para convertirla en una version tunica de su traje que mantiene las mismas propiedades" },
-			{ name: "Bolsillo Dimensional", restriction: "Los objetivos deben ser objetos. Solo puedes acumular un máximo de 1 casilla en volumen dentro del espacio" },
-			{ name: "Inmovilizar 1", restriction: "El objetivo solo puede usar su MOV para acercarse al usuario de la skill"},
-			{ name: "Alterar Emoción", restriction: "Solo puede ser usado para darle emociones positivas" },
-			{ name: "Proyectil 1", restriction: "Rango Magico" },
-			{ name: "Área 1", restriction: "Rango Magico" },
-			{ name: "Área Remota 1", restriction: "Rango Magico" },
-			{ name: "Orbe 1", restriction: "Rango Magico" },
-		],
-		tier2: [
-			{ name: "Terraformar 2", restriction: null },
-			{ name: "Prestidigitación 2", restriction: null },
-			{ name: "Inmovilizar 2", restriction: null },
-			{ name: "Ceguera Selectiva", restriction: null },
-			{ name: "Oferta de Trabajo", restriction: "+1 PE coste de activación" },
-			{ name: "Cura 2", restriction: "Solo afecta a objetos o estructuras inanimadas. Este requeimiento no puede ser negado"},
-			{ name: "Dispel", restriction: "+1 PE coste de activación" },
-			{ name: "Desplazar 2", restriction: "El objetivo no puede ser forzado a entrar en terreno dañino" },
-			{ name: "Vínculo Telepático", restriction: "+2 PE coste de activación. Puedes expandir la duración indefinidamente utilizando una acción durante tu turno." },
-			{ name: "Invertir Movimiento 2", restriction: "Solo puedes activarlo cuando el objetivo se aleja." },
-			{ name: "Mover 2", restriction: "El movimiento debe acercar el objetivo al usuario" },
-			{ name: "Origen 2", restriction: null },
-			{ name: "Exclusión 2", restriction: null },
-			{ name: "Proyectil 2", restriction: "Rango Magico" },
-			{ name: "Línea 2", restriction: "Rango Magico" },
-		],
-		tier3: [
-				{ name: "Santuario", restriction: null },
-				{ name: "Inmovilizar 3", restriction: null },
-				{ name: "Levitar", restriction: "Este efecto termina si el objetivo recibe daño de tierra" },
-				{ name: "Percepción Remota", restriction: "Requiere una esfera de cristal, dentro de la cual se proyecta la imagen." },
-				{ name: "Aumento de Alcance", restriction: null },
-				{ name: "Terraformar 3", restriction: null },
-				{ name: "Reflejar", restriction: null },
-				{ name: "Efecto Ilusorio", restriction: null },
-				{ name: "Invertir Movimiento 3", restriction: "Solo puede ser usado cuando el objetivo se acerca." },
-				{ name: "Escudo 3", restriction: "+2 PE al coste de activación. Solo puedes aumentar la defensa mágica." },
-				{ name: "Restringir 3", restriction: null },
-				{ name: "Orden 3", restriction: "Debes declarar la acción escogida vocalmente, solo las criaturas que te puedan escuchar y entender son afectadas por este rango." },
-				{ name: "Objetivo Multiple 3", restriction: "Rango Magico, +1 PE coste de activación" },
-				{ name: "Área 3", restriction: "Rango Magico" },
-				{ name: "Objetivo 3", restriction:	"Rango Mágico, para activar este rango debes tener un objeto personal de gran importancia, o una parte del cuerpo (Ex. pelo, uña, diente) del objetivo, el cual es consumido al activar esta skill."},
-			],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		perks: {
 			tier1: [
 				{ name: "Acceso al Tier 2", 
@@ -192,58 +144,9 @@ const moduleCatalog = {
 			},
 	},
 	paladin: {
-		tier1: [
-			{ name: "Oscuridad", restriction: null},
-			{ name: "Rayo", restriction: null},
-			{ name: "Prestidigitación 1", restriction: null},
-			{ name: "Secundaria Añadida", restriction: null},
-			{ name: "Inmovilizar 1", restriction: null},
-			{ name: "Identificar Herida", restriction: null},
-			{ name: "Alterar Emoción", restriction: "La emocion debe ser terror"},
-			{ name: "Movimiento Añadido", restriction: "Solo puedes utilizar el movimiento para acercarte en direccion a uno de los objetivos de rango de skill."},
-			{ name: "Mensaje", restriction: "El objetivo debe ser un animal no humanoide."},
-			{ name: "Traje", restriction: "Debe ser una prenda de ropa que hayas vestido en el pasado."},
-			{ name: "Transformar", restriction: "+1 PE Coste de activación."},
-			{ name: "Nocturna", restriction: "+1 PE Coste de activación. Solo afecta al rango self."},
-			{ name: "Toque", restriction: "Rango Físico"},
-			{ name: "Proyectil 1", restriction: "Rango Físico"},
-			{ name: "Área 1", restriction: "Rango Magico. No eres afectado por este rango, el area debe estar centrada en el usuario"},
-			{ name: "Línea 1", restriction: "Rango Físico"},
-		],
-		tier2: [
-			{ name: "Apuntar", restriction: null},
-			{ name: "Mover 2", restriction: null},
-			{ name: "Cura 2", restriction: "+1 al coste de PE. Solo afecta al rango self."},
-			{ name: "Vuelo", restriction: "Solo puede ser aplicado al	rango self. Este efecto termina al recibir daño."},
-			{ name: "Incrementar Defensa 2", restriction: "No puede ser añadido añadido a una skill mas de una vez"},
-			{ name: "Origen 2", restriction: null},
-			{ name: "Teletransportar 2", restriction: null},
-			{ name: "Oferta de Trabajo", restriction: null},
-			{ name: "Debuff 2", restriction: null},
-			{ name: "Resistencia Elemental", restriction: "+2 al coste de PE. Solo puedes escoger entre frio, Físico o oscuridad."},
-			{ name: "Reducir Daño 2", restriction: "+2 PE, En vez de elemento, puedes escoger entre rango magico o Físico."},
-			{ name: "Proyectil 2", restriction: "Rango Magico"},
-			{ name: "Objetivo 2", restriction: "Rango Magico. El objetivo debe tener contacto visual con el usuario (estar conciente de la presencia del usuario, y poder verlo."},
-			{ name: "Detectar 2", restriction: "Si tienes una orden legal contra una criatura en particular, este efecto no puede fallar."},
-			{ name: "Resistencia Añadida", restriction: "+1 al coste de PE"},
-		],
-		tier3: [
-			{ name: "Ataque Efectivo", restriction: null },
-			{ name: "Buff 3", restriction: "Solo se puede aplicar al rango self" },
-			{ name: "Incrementar Defensa 3", restriction: "+2 al coste de PE" },
-			{ name: "Inmovilizar 3", restriction: null },
-			{ name: "Ininterrumpido", restriction: null },
-			{ name: "Superioridad", restriction: "Requiere de un documento o licencia oficial de la corte que confirme tu identidad" },
-			{ name: "Identificar 3", restriction: "Descubres el historial criminal del objetivo" },
-			{ name: "Reducir Daño 3", restriction: "+1 al coste de PE" },
-			{ name: "Escudo 3", restriction: "+1 al coste de PE" },
-			{ name: "Santuario", restriction: "No puede ser aplicado al rango self" },
-			{ name: "Área 3", restriction: "Rango mágico, No eres afectado por este rango, esta área siempre está centrada en el usuario" },
-			{ name: "Familiar 3", restriction: "El familiar es débil al daño de luz" },
-			{ name: "Contraataque", restriction: "-1 acción en tu siguiente turno. También puedes activar este módulo cuando un aliado a rango de toque sufre daño" },
-			{ name: "Orden 3", restriction: "+1 al coste de PE" },
-			{ name: "Origen Añadido", restriction: "+2 al coste de PE, Mientras este módulo esté activo, tu apariencia cambia a una obviamente mágica." },
-		],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ 
@@ -382,53 +285,9 @@ const moduleCatalog = {
 		},
 	},	
 	repartidor: {
-		tier1: [
-			{ name: "Viento", restriction: null},
-			{ name: "Rayo", restriction: null},
-			{ name: "Físico", restriction: null},
-			{ name: "Hielo", restriction: null},
-			{ name: "Prestidigitación 1", restriction: null},
-			{ name: "Spiderwalk", restriction: null},
-			{ name: "Movimiento Añadido", restriction: "+1 al coste de PE."},
-			{ name: "Bolsillo Dimensional", restriction: "+1 al coste de PE. Requiere de una mochila o bolsa. Solo puedes guardar cosas que quepan por la boca de la bolsa."},
-			{ name: "Mensaje", restriction: null},
-			{ name: "Dibujar", restriction: "Requiere de un escáner"},
-			{ name: "Teletransportar Objeto 1", restriction: "Además de objetos equipados, al usar este modulo también puedes enviar objetos guardados en tu 🎒."},
-			{ name: "Identificar 1", restriction: "Requiere un escáner. Puedes identificar al dueño legal del objetivo, si tiene alguno."},
-			{ name: "Toque", restriction: "Rango Físico"},
-			{ name: "Línea 1", restriction: "Rango Físico."},
-			{ name: "Objetivo 1", restriction: "Rango Magico. Requiere de un escáner"},
-		],
-		tier2: [
-			{ name: "Mover 2", restriction: null},
-			{ name: "Terraformar 2", restriction: null},
-			{ name: "Velocidad 2", restriction: null},
-			{ name: "Detectar 2", restriction: null},
-			{ name: "Movimiento Adicional", restriction: null},
-			{ name: "Resistencia Añadida", restriction: "+1 al coste de PE"},
-			{ name: "Incrementar Defensa 2", restriction: "Solo afecta a la defensa fisica. No puede ser añadido añadido a una skill mas de una vez."},
-			{ name: "Apuntar", restriction: null},
-			{ name: "Prestidigitación 2", restriction: null},
-			{ name: "Desplazar 2", restriction: null},
-			{ name: "Vuelo", restriction: "+1 al coste de PE por objetivo afectado."},
-			{ name: "Teletransportar 2", restriction: "+1 al coste de PE. Requiere una mochila o bolsa, de la cual sacas el objeto."},
-			{ name: "Vínculo Telepático", restriction: "El objetivo y los usuarios deben tener un audicular equipado."},
-			{ name: "Línea 2", restriction: "Rango magico, requiere un escaner."},
-			{ name: "Objetivo Multiple 2", restriction: "Rango magico. Requiere de un escáner"},
-		],
-		tier3: [
-			{ name: "Levitar", restriction: null},
-			{ name: "Aumento de Alcance", restriction: null},
-			{ name: "Teletransportar 3", restriction: "+1 al coste de PE."},
-			{ name: "Movimiento Instantaneo", restriction: "+1 al coste de PE. Solo puede ser aplicado al rango self."},
-			{ name: "Reducir Daño 3", restriction: "null"},
-			{ name: "Rastro de Efectos", restriction: null},
-			{ name: "Contraataque", restriction: "+3 al coste de PE"},
-			{ name: "Familiar 3", restriction: null},
-			{ name: "Escudo 3", restriction: "+2 al coste de PE"},
-			{ name: "Acierto Certero", restriction: "+1 al coste de PE"},
-			{ name: "Placeholder", restriction: null},
-		],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ 
@@ -567,57 +426,9 @@ const moduleCatalog = {
 		},
 	},	
 	sacrificio: {
-		tier1: [
-			{ name: "Fuego", restriction: null},
-			{ name: "Físico", restriction: null},
-			{ name: "Luz", restriction: null},
-			{ name: "Identificar Herida", restriction: null},
-			{ name: "Debuff 1", restriction: null},
-			{ name: "Buff 1", restriction: "Solo puedes aplicar este efecto con rangos de toque o área, el efecto termina si el objetivo sale del area o se separa de tu rango de toque."},
-			{ name: "Pausa", restriction: null},
-			{ name: "Cura 1", restriction: "Requiere un kit de primeros auxilios. Un objetivo solo puede ser afectado por este modulo 1 vez por escena."},
-			{ name: "Dibujar", restriction: "Si tu objetivo es una criatura que hayas afectado con los modulos 🩹 o 🤕 en la escena actual, este modulo acierta automaticamente"},
-			{ name: "Ración", restriction: "+1 al coste de PE."},
-			{ name: "Alterar Emoción", restriction: null},
-			{ name: "Inmovilizar 1", restriction: "Requiere un rollo de vendajes"},
-			{ name: "Toque", restriction: "Rango Magico o Físico (decidido en creación.)"},
-			{ name: "Área Remota 1", restriction: "Rango Magico."},
-			{ name: "Área 1", restriction: "Rango Magico."},
-			{ name: "Objetivo 1", restriction: "Rango Magico. El objetivo debe estar afectado por 🪧"},
-		],
-		tier2: [
-			{ name: "Prestidigitación 2", restriction: null},
-			{ name: "Cura 2", restriction: "+1 PE."},
-			{ name: "Dispel", restriction: "+1 PE."},
-			{ name: "Resistencia Añadida", restriction: "+1 PE."},
-			{ name: "Resistencia Elemental", restriction: "+2 al coste de PE, Solo puedes escoger, fuego, luz, oscuridad, o hielo."},
-			{ name: "Apuntar", restriction: null},
-			{ name: "Detectar 2", restriction: "Este efecto acierta automaticamente contra objetivos con la Marca del Fénix."},
-			{ name: "Incrementar Defensa 2", restriction: "No puede añadirse mas de una copia de este modulo a la misma skill."},
-			{ name: "Vuelo", restriction: "Solo puede ser aplicado al rango self. Este efecto termina cuando el objetivo recibe daño."},
-			{ name: "Exclusión 2", restriction: null},
-			{ name: "Línea 2", restriction: "Rango Físico"},
-			{ name: "Imbuir Criatura", restriction: null},
-			{ name: "Objetivo 2", restriction: "Rango Magico, el objetivo debe estar afectado por tu Karma Sign"},
-			{ name: "Placeholder", restriction: null},
-			{ name: "Placeholder", restriction: null},
-			
-		],
-		tier3: [
-			{ name: "Santuario", restriction: null},
-			{ name: "Levitar", restriction: "Este efecto termina inmediatamente si el objetivo recibe daño de hielo"},
-			{ name: "Buff 3", restriction: "+1 al coste de PE por objetivo afectado"},
-			{ name: "Superioridad", restriction: "El objetivo debe estar bajo el efecto de tu Karma Sign."},
-			{ name: "Reducir Daño 3", restriction: "+1 al coste de PE por objetivo afectado"},
-			{ name: "Orden 3", restriction: "+2 al coste de PE"},
-			{ name: "Contraataque", restriction: "+1 al coste de PE. El unico objetivo de esta skill debe ser la criatura que te causo el daño."},
-			{ name: "Enjambre de Proyectiles Vivientes", restriction: "Rango Magico"},
-			{ name: "Área 3", restriction: "Rango Magico"},
-			{ name: "Placeholder", restriction: null},
-			{ name: "Placeholder", restriction: null},
-			{ name: "Placeholder", restriction: null},
-
-		],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ 
@@ -756,52 +567,9 @@ const moduleCatalog = {
 		},
 	},
 	bruja: {
-		tier1: [
-			{ name: "Rayo", restriction: null},
-			{ name: "Fuego", restriction: null},
-			{ name: "Físico", restriction: null},
-			{ name: "Secundaria Añadida", restriction: null},
-			{ name: "Identificar Herida", restriction: "Si es aplicado sobre un objeto, aprendes cualquier problema mundano que esté afectando su funcionamiento."},
-			{ name: "Pausa", restriction: null},
-			{ name: "Buff 1", restriction: "Este efecto termina en el momento en el que el objetivo reciba daño."},
-			{ name: "Ilusión Aromatica", restriction: null},
-			{ name: "Crear 1", restriction: null},
-			{ name: "Proyectil Viviente 1", restriction: "Rango Físico, requiere un coponente, que es consumido como munición."},
-			{ name: "Línea 1", restriction: "Rango Físico, requiere un coponente, que es consumido como munición."},
-			{ name: "Transformar", restriction: "En vez de al usuario, "},
-			{ name: "Placeholder", restriction: null},
-			{ name: "Placeholder", restriction: null},
-			{ name: "Placeholder", restriction: null},
-		],
-		tier2: [
-			{ name: "Transformar 2", restriction: "+1 al coste de PE por cada criatura afectada. No tienes que pagar este coste al afectar objetos."},
-			{ name: "Incrementar Defensa 2", restriction: "+1 al coste de PE"},
-			{ name: "Resistencia Elemental", restriction: null},
-			{ name: "Invertir Movimiento 2", restriction: null},
-			{ name: "Dispel", restriction: null},
-			{ name: "Cura 2", restriction: "+1 al coste de PE por cada objetivo afectado."},
-			{ name: "Velocidad 2", restriction: null},
-			{ name: "Olvido Selectivo", restriction: "+1 al coste de PE"},
-			{ name: "Exclusión 2", restriction: null},
-			{ name: "Línea 2", restriction: "Rango Físico, requiere un coponente, que es consumido como munición."},
-			{ name: "Crear 2", restriction: "Rango Magico, +2 al coste de PE"},
-			{ name: "Imbuir Criatura", restriction: "Rango Magico"},
-			{ name: "Aura", restriction: null},
-
-		],
-		tier3: [
-			{ name: "Furia", restriction: null},			
-			{ name: "Buff 3", restriction: null},			
-			{ name: "Incrementar Defensa 3", restriction: "+1 al coste de PE por objetivo afectado"},			
-			{ name: "Olvido", restriction: null},			
-			{ name: "Ceguera Selectiva", restriction: null},			
-			{ name: "Levitar", restriction: null},			
-			{ name: "Reducir Daño 3", restriction: "Puedes elegir 2 elementos en lugar de solo 1."},			
-			{ name: "Origen Añadido", restriction: "+2 al coste de PE por objetivo afectado"},			
-			{ name: "Restringir 3", restriction: "+1 al coste de PE por objetivo afectado"},			
-			{ name: "Imperceptible", restriction: null},			
-			{ name: "Acierto Certero", restriction: "+2 al coste de PE"},			
-		],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ 
@@ -925,31 +693,9 @@ const moduleCatalog = {
 		},
 	},
 	invocador: {
-		tier1: [
-			{ name: "Psíquico", restriction: null},
-			{ name: "Oscuridad", restriction: null},
-			{ name: "Luz", restriction: null},
-			{ name: "Prestidigitación 1", restriction: null},
-			{ name: "Secundaria Añadida", restriction: null},
-			{ name: "Cura 1", restriction: "+1 al coste de PE, puedes ignorar este coste al utilizarlo con una invocación como unico objetivo."},
-			{ name: "Traje", restriction: "+1 al coste de PE, puedes ignorar este coste al utilizarlo con una invocación como unico objetivo"},
-			{ name: "Toque", restriction: "Rango Magico"},
-			{ name: "Proyectil Viviente 1", restriction: "Rango Magico"},
-		],
-		tier2: [
-			{ name: "Oferta de Trabajo", restriction: "+1 al coste de PE, puedes ignorar este coste al utilizarlo con una invocación como unico objetivo"},
-			{ name: "Vínculo Telepático", restriction: "+1 al coste de PE, puedes ignorar este coste al utilizarlo con una invocación como unico objetivo"},
-			{ name: "Desplazar 2", restriction: "+1 al coste de PE."},
-			{ name: "Mover 2", restriction: null},
-			{ name: "Resistencia Añadida", restriction: null},
-		],
-		tier3: [
-			{ name: "Placeholder", restriction: null},			
-			{ name: "Placeholder", restriction: null},			
-			{ name: "Placeholder", restriction: null},			
-			{ name: "Familiar 3", restriction: null},			
-			{ name: "Placeholder", restriction: null},			
-		],
+		tier1: [],
+		tier2: [],
+		tier3: [],
 		statUpgrades: {
 			tier1: [
 				{ 
@@ -1088,9 +834,7 @@ const moduleCatalog = {
 		},
 	},
 	evocador: {
-		tier1: [
-			{ name: "placeholder", restriction: null},
-		],
+		tier1: [],
 		tier2: [],
 		tier3: [],
 		statUpgrades: {
@@ -1123,7 +867,7 @@ const moduleCatalog = {
 					 index <= lastModuleIndex && 
 					 !module.name.startsWith("Placeholder");
 		})
-		.map(module => ({ name: module.name, restriction: "Abissal" })),
+		.map(module => ({ name: module.name })),
 			tier2: moduleLibrary
 		.filter((module, index, arr) => {
 			const firstModuleIndex = arr.findIndex(m => m.name === "Cura 2");
@@ -1132,7 +876,7 @@ const moduleCatalog = {
 				 index <= lastModuleIndex && 
 				 !module.name.startsWith("Placeholder");
 		})
-		.map(module => ({ name: module.name, restriction: "Abissal" })),
+		.map(module => ({ name: module.name })),
 			tier3: moduleLibrary
 		.filter((module, index, arr) => {
 			const firstModuleIndex = arr.findIndex(m => m.name === "Ataque Efectivo");
@@ -1141,7 +885,7 @@ const moduleCatalog = {
 				 index <= lastModuleIndex && 
 				 !module.name.startsWith("Placeholder");
 		})
-		.map(module => ({ name: module.name, restriction: "Abissal" })),
+		.map(module => ({ name: module.name})),
 			tier4: moduleLibrary
 		.filter((module, index, arr) => {
 			const firstModuleIndex = arr.findIndex(m => m.name === "Acción Forzada");
@@ -1150,7 +894,7 @@ const moduleCatalog = {
 				 index <= lastModuleIndex && 
 				 !module.name.startsWith("Placeholder");
 		})
-		.map(module => ({ name: module.name, restriction: "Abissal" })),
+		.map(module => ({ name: module.name})),
 			tier5: moduleLibrary
 		.filter((module, index, arr) => {
 			const firstModuleIndex = arr.findIndex(m => m.name === "Pregunta");
@@ -1159,130 +903,13 @@ const moduleCatalog = {
 				 index <= lastModuleIndex && 
 				 !module.name.startsWith("Placeholder");
 		})
-		.map(module => ({ name: module.name, restriction: "Abissal" })),
+		.map(module => ({ name: module.name})),
 		perks: {
-			tier1: [
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
+			tier1: [],
+			tier2: [],
+			tier3: [],
 				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-			],
-			tier2: [
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-				{ name: "Desventaja", 
-				 description: "Escoge una desventaja de los Perks de Origen.", 
-				 type: "perk" 
-				},
-			],
-			tier3: [
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-				{
-				name: "Desventaja", 
-				description: "Escoge una desventaja de los Perks de Origen.", 
-				type: "perk" 
-				},
-			],
-				},
-		statUpgrades: {
-				tier1: [
-						{ name: "HP -3"},
-						{ name: "HP -3"},
-						{ name: "HP -3"},
-						{ name: "HP -3"},
-						{ name: "EP -1"},
-				],
-				tier2: [
-						{ name: "HP -3"},
-						{ name: "HP -4"},
-						{ name: "EP -2"},
-						{ name: "HP -4"},
-						{ name: "HP -5"},
-				],
-				tier3: [
-						{ name: "HP -4"},
-						{ name: "HP -5"},
-						{ name: "Stat DOWN!"},
-						{ name: "HP -5"},
-						{ name: "HP -5"},
-				],
-				tier4: [
-						{ name: "HP -4"},
-						{ name: "HP -5"},
-						{ name: "Stat DOWN!"},
-						{ name: "HP -5"},
-						{ name: "HP -5"},
-				],
-				tier5: [
-						{ name: "HP -4"},
-						{ name: "HP -5"},
-						{ name: "Stat DOWN!"},
-						{ name: "HP -5"},
-						{ name: "HP -5"},
-				],
-			},
+		statUpgrades: {},
 		},
 	origen: {
 		ventajas: [
