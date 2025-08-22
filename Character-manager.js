@@ -1529,7 +1529,6 @@ function loadSelfCoreContent() {
     });
 }
 
-
 function createPerkList(perks) {
     const list = document.createElement("ul");
     list.className = "perks-list";

@@ -1031,7 +1031,44 @@ const moduleCatalog = {
 				name: module.name,
 				restrictions: module.restrictions || []
 			})),
-		// Repeat for tier3, tier4, tier5...
+		tier3: moduleLibrary
+			.filter((module, index, arr) => {
+				const firstModuleIndex = arr.findIndex(m => m.name === "Ataque Efectivo");
+				const lastModuleIndex = arr.findIndex(m => m.name === "Acierto Certero");
+				return index >= firstModuleIndex &&
+					index <= lastModuleIndex &&
+					!module.name.startsWith("Placeholder");
+			})
+			.map(module => ({
+				name: module.name,
+				restrictions: module.restrictions || []
+			})),
+		tier4: moduleLibrary
+			.filter((module, index, arr) => {
+				const firstModuleIndex = arr.findIndex(m => m.name === "Acción Forzada");
+				const lastModuleIndex = arr.findIndex(m => m.name === "Irresistible");
+				return index >= firstModuleIndex &&
+					index <= lastModuleIndex &&
+					!module.name.startsWith("Placeholder");
+			})
+			.map(module => ({
+				name: module.name,
+				restrictions: module.restrictions || []
+			})),
+		tier5: moduleLibrary
+			.filter((module, index, arr) => {
+				const firstModuleIndex = arr.findIndex(m => m.name === "Pregunta");
+				const lastModuleIndex = arr.findIndex(m => m.name === "Ataque Múltiple");
+				return index >= firstModuleIndex &&
+					index <= lastModuleIndex &&
+					!module.name.startsWith("Placeholder");
+			})
+			.map(module => ({
+				name: module.name,
+				restrictions: module.restrictions || []
+			})),
+
+
 		perks: {
 			tier1: [],
 			tier2: [],

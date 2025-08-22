@@ -561,7 +561,7 @@ const moduleLibrary = [
 		category: "Especial",
 		description: "Cuando una criatura aparte del usuario improvise una skill, puedes utilizar esta skill, pero la criatura en cuestión debe ser el único objetivo.",
 		emote: "📛",
-		restrictions: "+2 al coste de EP"
+		restrictions: "+2 al coste de EP",
 	},
 
 
