@@ -225,54 +225,63 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Afectan a un objetivo a distancia de toque.",
 		emote: "👊",
+		restrictions: "Fisico o Magico"
 	},
 	{
 		name: "Proyectil 1",
 		category: "Rango",
 		description: "Disparas un proyectil que viaja una distancia de 15 casillas.",
 		emote: "🗡️",
+		restrictions: "Fisico o Mágico"
 	},
 	{
 		name: "Área 1",
 		category: "Rango",
 		description: "Afectas a un área de 3x3 casillas.",
 		emote: "🔴",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Orbe 1",
 		category: "Rango",
 		description: "Afectas a un área esférica diminuta que se origina flotando a distancia de 2 casillas o menos de ti. El área se mantiene siempre a la misma distancia y posición relativa a ti.",
 		emote: "🏐",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Área Remota 1",
 		category: "Rango",
 		description: "Afectas un área de una casilla que se origina a 5 casillas o menos de ti.",
 		emote: "🔹",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Línea 1",
 		category: "Rango",
 		description: "Afectas a un área lineal que se extiende hasta una distancia de 3 casillas, y se origina desde el usuario.",
 		emote: "🍡",
+		restrictions: "Fisico"
 	},
 	{
 		name: "Objetivo 1",
 		category: "Rango",
 		description: "Afectas a un objetivo a 12 casillas o menos de ti.",
 		emote: "👉",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Proyectil Viviente 1",
 		category: "Rango",
 		description: "Invocas a 1 proyectil viviente que contiene los módulos dentro de este rango. <br>Los Proyectiles vivientes tienen un MOV de 7, HR+5 de HP,y al final de cada uno de sus turnos pierden -5 HP. <br>En combate toman su turno directamente después de ti, y únicamente pueden usar acciones para intentar impactar contra un objetivo, haciendo una tirada de ataque con las stats de esta skill. En un acierto, el proyectil desaparece y los efectos son aplicados. ",
 		emote: "🐝",
+		restrictions: "Fisico o Magico"
 	},
 	{
 		name: "Crear 1",
 		category: "Rango",
 		description: "Creas un objeto que contiene el resto de módulos dentro de este rango. Cualquier criatura puede usar una acción para consumir el objeto creado, y activar esta skill como el usuario.",
 		emote: "🎁",
+		restrictions: "Mágico"
 	},
 	
 	// Especiales
@@ -287,6 +296,7 @@ const moduleLibrary = [
 		category: "Especial",
 		description: "Se activa automáticamente bajo luz de luna. Efectos terminan bajo luz solar.",
 		emote: "🌃",
+		restrictions: "+2 Coste de PE"
 	},
 	
 	// 2 Skill Points Modules
@@ -295,6 +305,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo recupera 10 HP.",
 		emote: "🩹",
+		restrictions: "+2 al coste de PE"
 	},
 	{
 	name: "Prestidigitación 2",
@@ -343,6 +354,8 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Terminas un efecto que haya sido aplicado sobre el objetivo durante esta escena.",
 		emote: "🧯",
+		restrictions: "+1 al coste de PE"
+
 	},
 	{
 		name: "Invertir Movimiento 2",
@@ -355,6 +368,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Reduces el tamaño de dado de una de las stats (definida durante creación) por la escena.",
 		emote: "🧑‍🦽",
+		restrictions: "+1 al coste de PE"
 	},
 	{
 		name: "Vuelo",
@@ -367,6 +381,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Por el resto de la escena, el objetivo puede realizar una acción de movimiento gratuita adicional una vez por turno.",
 		emote: "🏃‍♂️",
+		restrictions: "El objetivo pierde 2 PE cuando este efecto termina",
 	},
 	{
 		name: "Mover 2",
@@ -433,6 +448,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo aumenta su defensa física o mágica (definido en creación) en +1 por el resto de la escena.",
 		emote: "⛑️",
+		restrictions: "No puedes añadir múltiples copias de este módulo a una skill",
 	},
 	{
 		name: "Resistencia Añadida",
@@ -458,6 +474,13 @@ const moduleLibrary = [
 		description: "Creas una superficie navegable en el suelo bajo el objetivo. <br>La superficie cubre todas las casillas directamente bajo el objetivo, flota en sitio aún sin soportes, y se puede navegar a una velocidad de movimiento normal, aunque haya terreno difícil bajo ella.",
 		emote: "🪜",
 	},
+	{
+		name: "Iniciativa 2",
+		category: "Efecto",
+		description: "El objetivo repite su tirada de iniciativa, y reemplaza su iniciativa actual con el nuevo resultado. Si un objetivo está tomando su turno en el momento en el que es afectado, este continúa con su turno con normalidad, y solo cambia su iniciativa hasta el inicio de la siguiente ronda.",
+		emote: "🚦",
+	},
+
 	
 	// Rangos
 	{
@@ -465,30 +488,35 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Afectas a un área lineal que se extiende hasta 6 casillas.",
 		emote: "➡️",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Proyectil 2",
 		category: "Rango",
 		description: "Disparas un proyectil que viaja 25 casillas.",
 		emote: "🏹",
+		restrictions: "Físico"
 	},
 	{
 		name: "Conexión Eléctrica",
 		category: "Rango",
-		description: "Afectas objetivos a menos de 5 casillas de conexiones eléctricas que toques.",
+		description: "Afectas objetivos a menos de 5 casillas de conexiones eléctricas que conecten a distancia de toque de ti.",
 		emote: "🔌",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Objetivo 2",
 		category: "Rango",
 		description: "Afectas a un objetivo que puedas ver.",
 		emote: "👁️",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Objetivo Multiple 2",
 		category: "Rango",
 		description: "Afectas a 2 objetivos a 8 casillas o menos.",
 		emote: "✌️",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Crear 2",
@@ -504,6 +532,12 @@ const moduleLibrary = [
 	},
 	
 	// Especiales
+	{
+		name: "Reacción 2",
+		category: "Especial",
+		description: "Una vez por ronda, puedes consumir una acción del próximo turno para activar fuera de turno.",
+		emote: "⏰",
+	},
 	{
 		name: "Apuntar",
 		category: "Especial",
@@ -527,7 +561,9 @@ const moduleLibrary = [
 		category: "Especial",
 		description: "Cuando una criatura aparte del usuario improvise una skill, puedes utilizar esta skill, pero la criatura en cuestión debe ser el único objetivo.",
 		emote: "📛",
+		restrictions: "+2 al coste de EP"
 	},
+
 
 	// 3 Skill Points Modules
 	{
@@ -535,6 +571,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Para cálculos de HR en esta skill, puedes sumar el resultado de ambas stats.",
 		emote: "👹",
+		restrictions: "+ 1 PE"
 	},
 	{
 		name: "Furia",
@@ -553,6 +590,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Aumentan defensa física o mágica (definido en creación) en +2 por la escena.",
 		emote: "🪖",
+		restrictions: "+1 al coste de EP"
 	},
 	{
 		name: "Efecto Ilusorio",
@@ -587,8 +625,9 @@ const moduleLibrary = [
 	{
 		name: "Escudo 3",
 		category: "Efecto",
-		description: "Aumentas la defensa física o mágica (definido en creación) hasta el inicio del siguiente turno en +4. (Este efecto cuenta como instantáneo).",
+		description: "Aumentas la defensa física o mágica (definido en creación) hasta el inicio del siguiente turno en +5. (Este efecto cuenta como instantáneo).",
 		emote: "🛡️",
+		restrictions: "+2 al coste de EP"
 	},
 	{
 		name: "Terraformar 3",
@@ -674,6 +713,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Hasta el final de la escena, el objetivo recibe los efectos de 1 perk racial.",
 		emote: "🧬",
+		restrictions: "+2 al coste de EP"
 	},
 	{
 		name: "Restringir 3",
@@ -682,42 +722,56 @@ const moduleLibrary = [
 		emote: "🕺",
 	},
 
+	{
+		name: "Iniciativa 3",
+		category: "Efecto",
+		description: "Intercambia libremente los valores de iniciativa entre los objetivos afectados. Si uno de los objetivos está tomando su turno en el momento en el que es afectado, este continúa con su turno con normalidad, y solo cambia su iniciativa al inicio de la siguiente ronda.",
+		emote: "🚏",
+	},
+
+
 		// Rangos
 	{
 		name: "Lluvia de Proyectiles",
 		category: "Rango",
 		description: "Disparas 5 proyectiles a distintos objetivos desde el cielo.",
 		emote: "🌧️",
+		restrictions: "Físico"
 	},
 	{
 		name: "Aura",
 		category: "Rango",
 		description: "Afectas a todos los objetivos a rango de toque.",
 		emote: "🌀",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Área 3",
 		category: "Rango",
 		description: "Afectas área de 5x5 casillas.",
 		emote: "🔶",
+		restrictions: "Físico o Mágico"
 	},
 	{
 		name: "Objetivo Multiple 3",
 		category: "Rango",
 		description: "Afectas a todos los objetivos que a 5 casillas o menos de ti que estés viendo.",
 		emote: "👀",
+		restrictions: "Mágico"
 	},	
 	{
 		name: "Objetivo 3",
 		category: "Rango",
 		description: "Afectas objetivos aunque no puedas verlos.",
 		emote: "🐑",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Enjambre de Proyectiles Vivientes",
 		category: "Rango",
 		description: "Invocas 3 proyectiles vivientes con módulos.",
 		emote: "🍯",
+		restrictions: "Físico o Mágico"
 	},
 	{
 		name: "Familiar 3",
@@ -736,21 +790,31 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Hasta el final de este turno, con cada paso que das usando tu MOV, dejas atrás esta área de efecto en cada casilla que abandonas.",
 		emote: "👣",
+		restrictions: "Mágico"
 	},
 	{
 		name: "Orden 3",
 		category: "Rango",
 		description: "Escoge una acción secundaria (Definida durante creacion). Todas las criaturas en escena que escuchen tu voz deben utilizar la secundaria escogida antes del final de sus turnos, o ser automáticamente afectados por este rango. Para propósitos de este rango, el HR se considera un 5.",
 		emote: "🫡",
+		restrictions: "Mágico"
 	},
 
 
 	// Especiales
 	{
+		name: "Reacción 5",
+		category: "Especial",
+		description: "Una vez por ronda, puedes consumir +2 PE para activar esta skill fuera de tu turno.",
+		emote: "⏲️",
+	},
+
+	{
 		name: "Contraataque",
 		category: "Especial",
 		description: "Una skill con este módulo se activa automáticamente al sufrir daño.",
 		emote: "🌵",
+		restrictions: "+ 1 al coste de EP"
 	},
 	{
 		name: "Reflejar",
@@ -819,12 +883,6 @@ const moduleLibrary = [
 	},
 	
 	// Especiales
-	{
-		name: "Reacción 4",
-		category: "Especial",
-		description: "Una vez por ronda, consumes acción del próximo turno para activar fuera de turno.",
-		emote: "⏰",
-	},
 	{
 		name: "Skill Dinámica",
 		category: "Especial",

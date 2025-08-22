@@ -24,7 +24,7 @@ const moduleCatalog = {
 				 type: "restriction", slots:"+1"
 				},
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 del Culto al Orbe.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
@@ -217,8 +217,8 @@ const moduleCatalog = {
 		},
 		perks: {
 			tier1: [
-				{ name: "Acceso al Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de la Corte De Luna.", 
+				{ name: "Paladín Oscuro al Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Paladín oscuro.", 
 				 type: "perk" 
 				},
 				{ name: "Transformación", 
@@ -234,13 +234,13 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},				
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 de la Corte De Luna.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
 			tier2: [
-				{ name: "Acceso al Tier 3", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de la Corte De Luna.", 
+				{ name: "Paladín Oscuro Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Paladín oscuro.", 
 				 type: "perk" 
 				},
 				{ name: "Bendición De Luna", 
@@ -256,12 +256,12 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+2"
 				},				
 				{ name: "Maestria 2", 
-				 description: "Ganas maestría en un módulo Tier 2 de la Corte De Luna.", 
+				 description: "Ganas maestría en un módulo Tier 2.", 
 				 type: "perk" 
 				},
 			],
 			tier3: [
-				{ name: "Acceso al Tier 2", 
+				{ name: "Paladín oscuro Tier 4", 
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de la Corte De Luna.", 
 				 type: "perk" 
 				},
@@ -358,8 +358,8 @@ const moduleCatalog = {
 		},
 		perks: {
 			tier1: [
-				{ name: "Acceso al Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Zephyr Express.", 
+				{ name: "Repartidor Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Repartidor.", 
 				 type: "perk" 
 				},
 				{ name: "Nimble", 
@@ -375,13 +375,13 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},				
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 del Zephyr Express.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
 			tier2: [
-				{ name: "Acceso al Tier 3", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Zephyr Express.", 
+				{ name: "Repartidor Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Repartidor.", 
 				 type: "perk" 
 				},
 				{ name: "Disengage", 
@@ -397,13 +397,13 @@ const moduleCatalog = {
 				 type: "perk",
 				},				
 				{ name: "Maestria 2", 
-				 description: "Ganas maestría en un módulo Tier 2 del Zephyr Express.", 
+				 description: "Ganas maestría en un módulo Tier 2.", 
 				 type: "perk" 
 				},
 			],
 			tier3: [
-				{ name: "Acceso al Tier 4", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Zephyr Express.", 
+				{ name: "Repartidor Tier 4", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Repartidor.", 
 				 type: "perk" 
 				},
 				{ name: "Dart", 
@@ -499,8 +499,8 @@ const moduleCatalog = {
 		},
 		perks: {
 			tier1: [
-				{ name: "Acceso al Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Vita Karma.", 
+				{ name: "Sacrificio Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
 				{ name: "Firma de Karma", 
@@ -515,13 +515,13 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1",
 				},
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 de Vita Karma.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
 			tier2: [
-				{ name: "Acceso al Tier 3", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Vita Karma.", 
+				{ name: "Sacrificio Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
@@ -542,8 +542,8 @@ const moduleCatalog = {
 				},
 			],
 			tier3: [
-				{ name: "Acceso al Tier 4", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Vita Karma.", 
+				{ name: "Sacrificio Tier 4", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
@@ -559,7 +559,7 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+2"
 				},				
 				{ name: "Maestria 3", 
-				 description: "Ganas maestría en un módulo Tier 3 de Vita Karma.", 
+				 description: "Ganas maestría en un módulo Tier 3.", 
 				 type: "perk" 
 				},
 			],
@@ -625,8 +625,8 @@ const moduleCatalog = {
 		},
 		perks: {
 			tier1: [
-				{ name: "Acceso al Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Wiccrat's Curse.", 
+				{ name: "Bruja Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Bruja.", 
 				 type: "perk" 
 				},
 				{ name: "Tools of Trade", 
@@ -642,13 +642,13 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},				
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 de Wiccrat's Curse.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
 			tier2: [
-				{ name: "Acceso al Tier 3", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Wiccrat's Curse.", 
+				{ name: "Bruja Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Bruja.", 
 				 type: "perk" 
 				},
 				{ name: "Not Built For This", 
@@ -669,8 +669,8 @@ const moduleCatalog = {
 				},
 			],
 			tier3: [
-				{ name: "Acceso al Tier 4", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Wiccrat's Curse.", 
+				{ name: "Bruja Tier 4", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Bruja.", 
 				 type: "perk" 
 				},
 				{ name: "Deconstruct", 
@@ -766,8 +766,8 @@ const moduleCatalog = {
 		},
 		perks: {
 			tier1: [
-				{ name: "Acceso al Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Umbra Employment Agency.", 
+				{ name: "Invocador Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de invocador.", 
 				 type: "perk" 
 				},
 				{ name: "Beneficios Materiales", 
@@ -783,13 +783,13 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},				
 				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1 de Umbra Employment Agency.", 
+				 description: "Ganas maestría en un módulo Tier 1.", 
 				 type: "perk" 
 				},
 			],
 			tier2: [
-				{ name: "Acceso al Tier 3", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Umbra Employment Agency.", 
+				{ name: "Invocador Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Invocador.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
@@ -806,6 +806,178 @@ const moduleCatalog = {
 				},				
 				{ name: "Maestria 2", 
 				 description: "Ganas maestría en un módulo Tier 2 de Umbra Employment Agency.", 
+				 type: "perk" 
+				},
+			],
+			tier3: [
+				{ name: "Invocador Tier 4", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Invocador.", 
+				 type: "perk" 
+				},
+				{ name: "Worker's Wrongs [+3 ☐ ]", 
+				 description: "Este modulo debe incluir una invocacion. Cada vez que una criatura invocada por esta skill es reducida a 0 HP, debes pagar -1 PE. No puedes usar una skill con esta restriccion si tienes 0 PE restante.", 
+				 type: "restriction", slots: "+2"
+				},				
+				{ name: "Maestria 3", 
+				 description: "Ganas maestría en un módulo Tier 3 de Umbra Employment Agency.", 
+				 type: "perk" 
+				},
+			],
+		},
+	},
+	evocador: {
+		tier1: [],
+		tier2: [],
+		tier3: [],
+		statUpgrades: {
+			tier1: [
+				{ name: "HP +2"},
+				{ name: "DMG +1"},
+				{ name: "HP +2"},
+				{ name: "EP +1"},
+				{ name: "IMPR +1"}
+			],
+			tier2: [],
+			tier3: [
+				{ name: "HP +4"},
+				{ name: "EP +1"},
+				{ name: "STAT UP!", description: "Aumenta un dado de Stat en un tamaño." }
+			]
+		},
+		perks: {
+			tier1: [
+				{ name: "Evocador Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
+				 type: "perk" 
+				},
+				{ name: "Gimmick", type: "perk", description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." },
+			],
+			tier2: [
+				{ name: "Evocador Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
+				 type: "perk" 
+				},
+				{name:"Gimmick Set", type: "perk", description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."}
+			],
+			tier3: [
+				{ name: "Evocador Tier 4", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
+				 type: "perk" 
+				},
+				{name:"Gimmick Draw", type: "perk", description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."}
+			]
+		},
+	},
+	alquimista: {
+		tier1: [],
+		tier2: [],
+		tier3: [],
+		statUpgrades: {
+			tier1: [
+				{ name: "HP +2", 
+					description: "Permanent +1 to Max HP"
+				},
+				{ name: "ATK +1", 
+					description: "Permanent +2 to Max HP"
+				},
+				{ name: "EP +1", 
+					description: "Permanent +1 to Max Energy Points"
+				},
+				{
+				name: "HP +3", 
+					description: "Permanent +3 to Max HP"
+				},
+				{ 
+				name: "Job +1", 
+					description: "Permanent +1 to the amount of jobs you can learn"
+				}
+			],
+			tier2: [
+				{ 
+					name: "HP +3", 
+					description: "Permanent +3 to Max HP"
+				},
+				{ 
+					name: "EP +1", 
+				},
+				{ 
+					name: "DM +1", 
+					description: "Permanent +1 to Magical Defense"
+				},
+				{
+					name: "ATK +1 ", 
+				},
+				{ 
+					name: "Oficio +1", 
+					description: "Permanent +1 to the amount of jobs you can have"
+				}
+			],
+			tier3: [
+				{ 
+					name: "HP +4", 
+					description: "Permanent +4 to Max HP"
+				},
+				{ 
+					name: "EP +1", 
+					description: "Permanent +1 to Max Energy Points"
+				},				
+				{ 
+					name: "Stat Up!", 
+					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+				},
+				{
+					name: "HP +4", 
+					description: "Permanent +4 to Max HP"
+				},
+				{ 
+					name: "ATK +2"
+				}
+			],			
+		},
+		perks: {
+			tier1: [
+				{ name: "Alquimista Tier 2", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks deAlquimista.", 
+				 type: "perk" 
+				},
+				{ name: "Fabricate", 
+				 description: "Durante las escenas de descanso, puedes crear hasta 3 cantidad de objetos consumibles como lo harias en una escena de laboratorio", 
+				 type: "perk", 
+				},				
+				{ name: "Handy", 
+				 description: `Al utilizar tus skils, puedes sustituir cualquier restricción de tus módulos por "consume un material de tu inventario que incluya este modulo.`, 
+				 type: "perk" 
+				},
+				{ name: "Formulaic [+1 ☐ ]", 
+				 description: "No puedes improvisar con esta skill.", 
+				 type: "restriction", slots: "+1"
+				},
+				{ name: "Fragile [+1 ☐ ]", 
+				 description: "Si fallas una tirada de ataque con esta skill, recibes lr de daño.", 
+				 type: "restriction", slots: "+1"
+				},
+
+
+			],
+			tier2: [
+				{ name: "Alquimista Tier 3", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Alquimista.", 
+				 type: "perk" 
+				},
+				{ name: "Reciclaje", 
+				 description: `Al utilizar un objeto consumible, recuperas el material "Scraps" el cual contiene 1 de los módulos del objeto consumido.`, 
+				 type: "perk" 
+				},
+				{ name: "Gourmet", 
+				 description: `Al crear un objeto consumible usando el perk de "Fabricate" puedes designarlo como un "Efímero", haciendo que el consumible, ademas de su efecto habitual, cure 20 HP o recupere 2 EP al usuario del objeto. <br> Los Efímeros son inmediatamente consumidos al inicio de tu siguiente escena de descanso sin aplicar ningún efecto.`, 
+				 type: "perk" 
+				},
+				{ name: "SpellCard [+2 ☐ ]", 
+				 description: "solo puedes usar esta skill mientras tengas el equivalente en módulos a la skill en objetos en tu inventario. Los objetos son consumidos al usar esta skill", 
+				 type: "restriction", slots: "+2"
+				},				
+				{ name: "Maestria 2", 
+				 description: "Ganas maestría en un módulo Tier 2.", 
 				 type: "perk" 
 				},
 			],
@@ -833,84 +1005,41 @@ const moduleCatalog = {
 			],
 		},
 	},
-	evocador: {
-		tier1: [],
-		tier2: [],
-		tier3: [],
-		statUpgrades: {
-			tier1: [
-				{ name: "WLP +1", description: "Gain +1 WLP." },
-			],
-			tier2: [],
-			tier3: [
-				{ name: "WLP +2", description: "Gain +2 WLP." }
-			]
-		},
-		perks: {
-			tier1: [
-				{ name: "Gimmick", type: "perk", description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." },
-			],
-			tier2: [
-				{name:"Gimmick Set", type: "perk", description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."}
-			],
-			tier3: [
-				{name:"Gimmick Draw", type: "perk", description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."}
-			]
-		},
-	}, 	
+
 	abisso: {
 		tier1: moduleLibrary
-		.filter((module, index, arr) => {
-			const firstModuleIndex = arr.findIndex(m => m.name === "Físico");
-			const lastModuleIndex = arr.findIndex(m => m.name === "Nocturna");
-			return index >= firstModuleIndex && 
-					 index <= lastModuleIndex && 
-					 !module.name.startsWith("Placeholder");
-		})
-		.map(module => ({ name: module.name })),
-			tier2: moduleLibrary
-		.filter((module, index, arr) => {
-			const firstModuleIndex = arr.findIndex(m => m.name === "Cura 2");
-			const lastModuleIndex = arr.findIndex(m => m.name === "Interceptar");
-			return index >= firstModuleIndex && 
-				 index <= lastModuleIndex && 
-				 !module.name.startsWith("Placeholder");
-		})
-		.map(module => ({ name: module.name })),
-			tier3: moduleLibrary
-		.filter((module, index, arr) => {
-			const firstModuleIndex = arr.findIndex(m => m.name === "Ataque Efectivo");
-			const lastModuleIndex = arr.findIndex(m => m.name === "Acierto Certero");
-			return index >= firstModuleIndex && 
-				 index <= lastModuleIndex && 
-				 !module.name.startsWith("Placeholder");
-		})
-		.map(module => ({ name: module.name})),
-			tier4: moduleLibrary
-		.filter((module, index, arr) => {
-			const firstModuleIndex = arr.findIndex(m => m.name === "Acción Forzada");
-			const lastModuleIndex = arr.findIndex(m => m.name === "Irresistible");
-			return index >= firstModuleIndex && 
-				 index <= lastModuleIndex && 
-				 !module.name.startsWith("Placeholder");
-		})
-		.map(module => ({ name: module.name})),
-			tier5: moduleLibrary
-		.filter((module, index, arr) => {
-			const firstModuleIndex = arr.findIndex(m => m.name === "Pregunta");
-			const lastModuleIndex = arr.findIndex(m => m.name === "Ataque Múltiple");
-			return index >= firstModuleIndex && 
-				 index <= lastModuleIndex && 
-				 !module.name.startsWith("Placeholder");
-		})
-		.map(module => ({ name: module.name})),
+			.filter((module, index, arr) => {
+				const firstModuleIndex = arr.findIndex(m => m.name === "Físico");
+				const lastModuleIndex = arr.findIndex(m => m.name === "Nocturna");
+				return index >= firstModuleIndex &&
+					index <= lastModuleIndex &&
+					!module.name.startsWith("Placeholder");
+			})
+			.map(module => ({
+				name: module.name,
+				restrictions: module.restrictions || []
+			})),
+		tier2: moduleLibrary
+			.filter((module, index, arr) => {
+				const firstModuleIndex = arr.findIndex(m => m.name === "Cura 2");
+				const lastModuleIndex = arr.findIndex(m => m.name === "Interceptar");
+				return index >= firstModuleIndex &&
+					index <= lastModuleIndex &&
+					!module.name.startsWith("Placeholder");
+			})
+			.map(module => ({
+				name: module.name,
+				restrictions: module.restrictions || []
+			})),
+		// Repeat for tier3, tier4, tier5...
 		perks: {
 			tier1: [],
 			tier2: [],
 			tier3: [],
-				},
-		statUpgrades: {},
 		},
+		statUpgrades: {},
+	},
+
 	origen: {
 		ventajas: [
 		{

@@ -302,6 +302,7 @@ function gatherCharacterData() {
 		ce: parseInt(document.getElementById("ce") ? document.getElementById("ce").value : 0) || 0,
 		permanentBonuses: activeCharacter.permanentBonuses || {},
 		notes: activeCharacter.notes || "",
+		image: activeCharacter.image || ""
 	};
 
 	return characterData;
@@ -844,18 +845,34 @@ function updateSPDisplay() {
 
 	// Attach tooltip events to module buttons
 function attachTooltipToModuleButtons() {
-		document.querySelectorAll(".module-button").forEach(button => {
-				
-				const moduleName = button.dataset.module;
-				const module = moduleLibrary.find(m => m.name === moduleName);
-				const restriction = moduleCatalog[activeCatalog][button.dataset.tier]
-						.find(m => m.name === moduleName).restriction || null;
+	document.querySelectorAll(".module-button").forEach(button => {
+		const moduleName = button.dataset.module;
+		const module = moduleLibrary.find(m => m.name === moduleName);
 
-				if (module) {
-						button.addEventListener("mouseenter", () => showTooltip(module, restriction, button));
-						button.addEventListener("mouseleave", hideTooltip);
+		if (!module) return;
+
+		button.addEventListener("mouseenter", () => {
+			let restriction = null;
+
+			if (activeCharacter.skills) {
+				for (const skill of activeCharacter.skills) {
+					if (skill.modules.includes(moduleName) && skill.moduleRestrictions?.[moduleName]) {
+						restriction = skill.moduleRestrictions[moduleName];
+						break;
+					}
 				}
+			}
+
+			if (!restriction) {
+				restriction = moduleCatalog[activeCatalog]?.[button.dataset.tier]
+					?.find(m => m.name === moduleName)?.restriction || null;
+			}
+
+			showTooltip(module, restriction, button);
 		});
+
+		button.addEventListener("mouseleave", hideTooltip);
+	});
 }
 
 // Show selected catalog
@@ -963,7 +980,6 @@ function loadLearnedModules() {
 		activeCharacter.modules[tier].forEach((moduleData) => {
 			moduleData.name;
 			moduleData.description;
-			moduleData.restrictions.length > 0 ? moduleData.restrictions.join(", ") : "None";
 		});
 	});
 
@@ -1329,7 +1345,7 @@ function updatePerkAvailability(coreName, tier) {
 	const existingPerks = activeCharacter.perks.filter(p => p.tier === tier
 	).length;
 
-	const availablePerks = Math.max(perksAvailable - existingPerks, 0);
+	const availablePerks = Math.max(perksAvailable+1 - existingPerks, 0);
 
 	// Target the PERK SECTION TITLE instead of tier title
 	const perkTitle = document.querySelector(`#catalogContent .perkTitle[data-tier="${tier}"]`);
@@ -1342,7 +1358,7 @@ function updatePerkAvailability(coreName, tier) {
 			perkTitle.appendChild(badge);
 		}
 
-		badge.textContent = availablePerks > 0 ? `${availablePerks} perk${availablePerks !== 1 ? 's' : ''} disponible!` : "";
+		badge.textContent = availablePerks > 0 ? `${availablePerks} perk${availablePerks !== 1 ? 's' : ''} disponible${availablePerks !== 1 ? 's' : ''}!` : "";
 		badge.style.color = "green";
 
 		if (availablePerks <= 0) {
@@ -1666,45 +1682,72 @@ function createSkillForm(skill = {}, index) {
 	    let currentModules;
 
 		function updateModuleSlots() {
-		moduleSlots.innerHTML = "";
-		const newRestrictions = restrictionSelects.map(s => s.value);
-		const totalSlots = getTotalSlots({ restrictions: newRestrictions });
-		const storedSkill = (index > -1) ? activeCharacter.skills[index] : skill;
-		currentModules = [...(storedSkill.modules || [])].slice(0, totalSlots);
+			moduleSlots.innerHTML = "";
+			const newRestrictions = restrictionSelects.map(s => s.value);
+			const totalSlots = getTotalSlots({ restrictions: newRestrictions });
+			const storedSkill = (index > -1) ? activeCharacter.skills[index] : skill;
+			currentModules = [...(storedSkill.modules || [])].slice(0, totalSlots);
 
-				for (let i = 0; i < totalSlots; i++) {
-						const moduleSlot = document.createElement("div");
-						moduleSlot.className = "module-slot";
+			for (let i = 0; i < totalSlots; i++) {
+				const moduleSlot = document.createElement("div");
+				moduleSlot.className = "module-slot";
 
-						if (currentModules[i]) {
-								const module = moduleLibrary.find(m => m.name === currentModules[i]);
-								moduleSlot.textContent = module ? module.emote : "?";
-								moduleSlot.dataset.module = currentModules[i];
-								moduleSlot.dataset.category = module ? module.category : "";
-						} else {
-								moduleSlot.textContent = "+";
-								moduleSlot.classList.add("empty");
-								moduleSlot.dataset.module = "";
-						}
+				if (currentModules[i]) {
+					const moduleName = currentModules[i];
+					const module = moduleLibrary.find(m => m.name === moduleName);
+					moduleSlot.textContent = module ? module.emote : "?";
+					moduleSlot.dataset.module = moduleName;
+					moduleSlot.dataset.category = module ? module.category : "";
 
-						moduleSlot.draggable = true;
-						moduleSlot.addEventListener("dragstart", handleDragStart);
-						moduleSlot.addEventListener("dragover", handleDragOver);
-						moduleSlot.addEventListener("drop", handleDrop);
-						moduleSlot.addEventListener("dragend", handleDragEnd);
-						moduleSlot.addEventListener("mouseenter", handleModuleHover);
-						moduleSlot.addEventListener("mouseleave", handleModuleUnhover);
-						moduleSlot.addEventListener("click", e => {
-								if (!moduleSlot.classList.contains("dragging")) {
-										e.stopPropagation();
-										const existingSelectors = document.querySelectorAll('.module-selector');
-										existingSelectors.forEach(selector => selector.remove());
-								        showModuleSelection(moduleSlot, saveSkill, skill, index, currentModules);
-								}
-						});
-						moduleSlots.appendChild(moduleSlot);
+					// --- MODULE RESTRICTION ICON ---
+					const skillElement = moduleSlot.closest(".skill");
+					const skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
+					const currentRestriction = storedSkill.moduleRestrictions?.[moduleName];
+
+					const restrictionIcon = document.createElement("div");
+					restrictionIcon.className = "restriction-icon";
+					restrictionIcon.textContent = "R";
+					restrictionIcon.title = currentRestriction || "None";
+
+					if (!currentRestriction) {
+						restrictionIcon.style.opacity = 0; // hide if none
+						moduleSlot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
+						moduleSlot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
+					}
+
+					restrictionIcon.addEventListener("click", (e) => {
+						e.stopPropagation();
+						showGenericModuleRestrictions(restrictionIcon, storedSkill, moduleName);
+					});
+
+					moduleSlot.appendChild(restrictionIcon);
+				} else {
+					moduleSlot.textContent = "+";
+					moduleSlot.classList.add("empty");
+					moduleSlot.dataset.module = "";
 				}
+
+				// --- DRAG & CLICK EVENTS ---
+				moduleSlot.draggable = true;
+				moduleSlot.addEventListener("dragstart", handleDragStart);
+				moduleSlot.addEventListener("dragover", handleDragOver);
+				moduleSlot.addEventListener("drop", handleDrop);
+				moduleSlot.addEventListener("dragend", handleDragEnd);
+				moduleSlot.addEventListener("mouseenter", handleModuleHover);
+				moduleSlot.addEventListener("mouseleave", handleModuleUnhover);
+				moduleSlot.addEventListener("click", e => {
+					if (!moduleSlot.classList.contains("dragging")) {
+						e.stopPropagation();
+						const existingSelectors = document.querySelectorAll('.module-selector');
+						existingSelectors.forEach(selector => selector.remove());
+						showModuleSelection(moduleSlot, saveSkill, skill, index, currentModules);
+					}
+				});
+
+				moduleSlots.appendChild(moduleSlot);
+			}
 		}
+		
 		updateModuleSlots();
 		restrictionSelects.forEach(select => select.addEventListener("change", updateModuleSlots));
 		form.appendChild(moduleSlots);
@@ -1729,7 +1772,7 @@ function createSkillForm(skill = {}, index) {
 			restrictions,
 			description: descriptionInput.value,
 			modules,
-			cost: calculateSkillCost(modules, restrictions),
+			cost: calculateSkillCost(modules, restrictions, skill.moduleRestrictions),
 			moduleRestrictions: skill.moduleRestrictions
 		};
 
@@ -1913,6 +1956,98 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 	
 }
 
+function showGenericModuleRestrictions(icon, skill, moduleName) {
+    if (!skill) return;
+
+    // Remove any existing popup for this module
+    document.querySelectorAll(`.restriction-popup[data-module="${moduleName}"]`).forEach(p => p.remove());
+
+    if (!skill.moduleRestrictions) skill.moduleRestrictions = {};
+
+    const currentRestriction = skill.moduleRestrictions[moduleName] || null;
+
+    const restrictions = [
+        { name: "None", type: "" },
+        { name: "+1 PE coste de activación", type: "-1 SP" },
+        { name: "Requiere un objeto específico como material", type:"-1 SP" },
+        { name: "Solo afecta a objetivos que hayan recibido daño", type:"-1 SP" },
+        { name: "El área debe estar centrada en el usuario", type: "-1 SP" },
+        { name: "No afecta a objetos inanimados", type: "-1 SP" },
+        { name: "Solo afecta a objetos o estructuras inanimadas", type: "-2 SP" },
+        { name: "Requiere un componente menor, que es consumido", type:"-2 SP" },
+        { name: "Este efecto termina si el objetivo recibe daño de un elemento (escogido durante creación)", type:"-2 SP" },
+        { name: "Mientras este módulo está activo, tu apariencia cambia a una obviamente mágica", type:"-2 SP" },
+        { name: "El objetivo debe estar afectado por otro módulo especificado en creación", type:"-3 SP" },
+        { name: "Solo afecta a un objetivo si te ha hecho daño en esta escena", type:"-3 SP" },
+        { name: "Este efecto termina cuando el objetivo recibe daño", type:"-3 SP" }
+    ];
+
+    const popup = document.createElement("div");
+    popup.className = "restriction-popup";
+    popup.dataset.module = moduleName; // track popup per module
+    popup.innerHTML = "<strong>Select Restriction:</strong><br>";
+
+    restrictions.forEach(r => {
+        const label = document.createElement("label");
+        label.className = "restriction-option";
+
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `restriction-${moduleName}`;
+        input.value = r.name;
+        input.checked = currentRestriction?.name === r.name;
+
+        input.addEventListener("change", () => {
+            if (!skill.moduleRestrictions) skill.moduleRestrictions = {};
+
+            if (r.name.toLowerCase() === "none") {
+                delete skill.moduleRestrictions[moduleName];
+                icon.title = "";
+            } else {
+                skill.moduleRestrictions[moduleName] = r;
+                icon.title = `${r.name} (${r.type})`;
+            }
+
+            const newCost = calculateSkillCost(
+                skill.modules || [],
+                skill.restrictions || [],
+                skill.moduleRestrictions
+            );
+            skill.cost = newCost;
+
+            saveCharacterData();
+        });
+
+        label.appendChild(input);
+
+        const labelText = r.name.toLowerCase() === "none"
+            ? "None"
+            : `${r.name} (${r.type})`;
+
+        label.appendChild(document.createTextNode(labelText));
+        popup.appendChild(label);
+        popup.appendChild(document.createElement("br"));
+    });
+
+    document.body.appendChild(popup);
+
+    const rect = icon.getBoundingClientRect();
+    popup.style.position = "absolute";
+    popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    popup.style.left = `${rect.left + window.scrollX}px`;
+    popup.style.zIndex = "1000";
+
+    // Close popup on outside click
+    const clickHandler = e => {
+        if (!popup.contains(e.target)) {
+            popup.remove();
+            document.removeEventListener("click", clickHandler);
+        }
+    };
+    document.addEventListener("click", clickHandler);
+}
+
+
 // Delete skill
 function deleteSkill(index) {
 	if (!activeCharacter.skills) return;
@@ -1969,7 +2104,12 @@ function renderSkills() {
 
 				const costDiv = document.createElement("div");
 				costDiv.className = "skill-cost";
-				costDiv.textContent = `Cost: ${skill.cost} SE`;
+				const liveCost = calculateSkillCost(
+					skill.modules || [],
+					skill.restrictions || [],
+					skill.moduleRestrictions || {}
+				);
+				costDiv.textContent = `Cost: ${liveCost} SE`;
 
 				headerDiv.appendChild(nameDiv);
 
@@ -2083,7 +2223,12 @@ function handleModuleHover(e) {
 	// Show tooltip with active restriction
 	let restrictionText = "None";
 	if (skillRestriction) {
-		restrictionText = skillRestriction + " (selected)";
+		// If it’s an object, show its fields
+		if (typeof skillRestriction === "object") {
+			restrictionText = `${skillRestriction.name} (${skillRestriction.type}) (selected)`;
+		} else {
+			restrictionText = `${skillRestriction} (selected)`;
+		}
 	} else if (baseRestrictions.length > 0) {
 		restrictionText = baseRestrictions.join(", ") + " (available)";
 	}
@@ -2153,31 +2298,34 @@ function getTotalSlots(skill) {
 }
 
 // Calculate skill cost
-function calculateSkillCost(modules, restrictions = []) {
-		const moduleCount = {}; // Track occurrences of each module
-		let cost = modules.reduce((total, moduleName) => {
-				moduleCount[moduleName] = (moduleCount[moduleName] || 0) + 1;
-				
-				for (const [tierKey, tierModules] of Object.entries(activeCharacter.modules)) {
-						const module = tierModules.find(m => m.name === moduleName);
-						if (module) {
-								const tier = parseInt(tierKey.replace("tier", ""), 10);
-								const additionalCost = tier + moduleCount[moduleName] - 1;
-								return total + additionalCost;
-						}
-				}
+function calculateSkillCost(modules, restrictions = [], moduleRestrictions = {}) {
+    let cost = modules.reduce((total, moduleName) => {
+        const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
+            (activeCharacter.modules[tk] || []).some(m => m.name === moduleName)
+        );
+        const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
+        return total + tierNum;
+    }, 0);
 
-				console.warn("Module \"" + moduleName + "\" not found. Defaulting to tier 1.");
-				return total + 1;
-		}, 0);
-	console.log(restrictions)
-		
-		if (restrictions.includes("Ineficiente [+2 ☐ ]")) {
-				cost *= 2;
-		}
+    // Skill-wide restriction multiplier
+    if (restrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
 
-		return cost;
+    // Per-module discounts (supports {name,type} objects OR legacy strings)
+    modules.forEach(m => {
+        const r = moduleRestrictions?.[m];
+        if (!r) return;
+        const type = (typeof r === "object" && r.type) ? r.type : r; // fallback for strings
+        if (typeof type === "string") {
+            if (type.includes("-1 SP")) cost -= 1;
+            else if (type.includes("-2 SP")) cost -= 2;
+            else if (type.includes("-3 SP")) cost -= 3;
+        }
+    });
+
+    return Math.max(cost, 0);
 }
+
+
 
 function handleDragStart(e) {
 	const moduleSlot = e.target;
@@ -2575,39 +2723,40 @@ function setupCharacterImage() {
 
     if (!charImageButton || !charImageInput || !charImageDisplay) return;
 
-    // Load saved image on page load
-    const savedImage = localStorage.getItem("charImage");
-    if (savedImage) {
-        charImageDisplay.src = savedImage;
-        charImageDisplay.style.display = "block";
-        charImageButton.style.display = "none";
-    } else {
-        charImageDisplay.style.display = "none";
-        charImageButton.style.display = "inline-block";
-    }
+    const updateImageDisplay = () => {
+        if (!activeCharacter || !activeCharacter.image) {
+            charImageDisplay.src = "";
+            charImageDisplay.style.display = "none";
+            charImageButton.style.display = "inline-block";
+        } else {
+            charImageDisplay.src = activeCharacter.image;
+            charImageDisplay.style.display = "block";
+            charImageButton.style.display = "none";
+        }
+    };
 
-    // Click button to open file picker
-    charImageButton.addEventListener("click", () => {
-        charImageInput.click();
-    });
+    // Initial display
+    updateImageDisplay();
 
-    // Click image to replace
-    charImageDisplay.addEventListener("click", () => {
-        charImageInput.click();
-    });
+    // Click button or image to open file picker
+    charImageButton.addEventListener("click", () => charImageInput.click());
+    charImageDisplay.addEventListener("click", () => charImageInput.click());
 
     // Handle image selection
     charImageInput.addEventListener("change", () => {
         const file = charImageInput.files[0];
-        if (!file) return;
+        if (!file || !activeCharacter) return;
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            charImageDisplay.src = e.target.result;
-            charImageDisplay.style.display = "block";
-            charImageButton.style.display = "none";
-            localStorage.setItem("charImage", e.target.result);
+            activeCharacter.image = e.target.result;
+            updateImageDisplay();
+            saveCharacterData();
         };
         reader.readAsDataURL(file);
     });
+
+    // Update display whenever the character selector changes
+    document.getElementById("characterSelector").addEventListener("change", updateImageDisplay);
 }
+
