@@ -603,9 +603,31 @@ document.addEventListener("DOMContentLoaded", () => {
 	
 	// Add skill button
 	document.getElementById("addSkill").addEventListener("click", () => {
-		const skillForm = createSkillForm();
-		document.getElementById("skillsList").appendChild(skillForm);
-	});
+    if (!activeCharacter.skills) activeCharacter.skills = [];
+
+    // Create a blank skill object
+    const newSkill = {
+        name: "",
+        restrictions: [],
+        stats: ["mig", "dex"],
+        description: "",
+        modules: [],
+        moduleRestrictions: {}
+    };
+
+    // Push immediately to character skills so it has an index
+    activeCharacter.skills.push(newSkill);
+    const index = activeCharacter.skills.length - 1;
+
+    // Create the form for this skill
+    const skillForm = createSkillForm(newSkill, index);
+
+    // Append form to DOM
+    document.getElementById("skillsList").appendChild(skillForm);
+
+    // Optional: render immediately if renderSkills shows saved versions
+    renderSkills();
+});
 
 
 	setupCharacterImage();
@@ -1596,209 +1618,188 @@ function toggleCollapse(e) {
 
 // Skill creation/editing form
 function createSkillForm(skill = {}, index) {
-		let currentSkill = { ...skill }; // Local copy for new skills
-		let isNew = index === undefined || index < 0;
+    // Determine if this is a new skill
+    let isNew = index === undefined || index < 0;
 
-		skill = Object.assign({ name: "", restrictions: [], stats: ["mig", "dex"], description: "", modules: [], moduleRestrictions: {} }, skill);
+    // Default skill structure
+    const defaultSkill = {
+        name: "",
+        restrictions: [],
+        stats: ["mig", "dex"],
+        description: "",
+        modules: [],
+        moduleRestrictions: {}
+    };
+    const currentSkill = { ...defaultSkill, ...skill };
 
-		const form = document.createElement("div");
-		form.className = "skill-form";
+    // --- Form container ---
+    const form = document.createElement("div");
+    form.className = "skill-form";
 
-		// Name input
-		const nameInput = document.createElement("input");
-		nameInput.type = "text";
-		nameInput.placeholder = "Skill Name";
-		nameInput.value = skill.name;
-		form.appendChild(nameInput);
+    // --- Name input ---
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Skill Name";
+    nameInput.value = currentSkill.name;
+    form.appendChild(nameInput);
 
-		// Stat selection (only two selects)
-		const stats = ["mig", "dex", "int", "wlp", "stl"];
-		const statContainer = document.createElement("div");
-		statContainer.className = "stat-selection";
+    // --- Stats selection ---
+    const stats = ["mig", "dex", "int", "wlp", "stl"];
+    const statContainer = document.createElement("div");
+    statContainer.className = "stat-selection";
+    for (let i = 0; i < 2; i++) {
+        const select = document.createElement("select");
+        stats.forEach(stat => {
+            const option = document.createElement("option");
+            option.value = stat;
+            option.textContent = stat.toUpperCase();
+            select.appendChild(option);
+        });
+        select.value = currentSkill.stats[i] || stats[i];
+        statContainer.appendChild(select);
+        if (i === 0) statContainer.appendChild(document.createTextNode(" + "));
+    }
+    form.appendChild(statContainer);
 
-		for (let i = 0; i < 2; i++) {
-				const select = document.createElement("select");
-				stats.forEach(stat => {
-						const option = document.createElement("option");
-						option.value = stat;
-						option.textContent = stat.toUpperCase();
-						select.appendChild(option);
-				});
-				select.value = skill.stats[i] || stats[i]; // Use provided skill stats or default ones
-				statContainer.appendChild(select);
-				if (i === 0) statContainer.appendChild(document.createTextNode(" + "));
-		}
-		
-		form.appendChild(statContainer);
+    // --- Restriction selects ---
+    const restrictionContainer = document.createElement("div");
+    restrictionContainer.className = "restriction-container";
 
-		// Restriction Handling
-		const restrictionContainer = document.createElement("div");
-		restrictionContainer.className = "restriction-container";
+    const hasMasoquista = activeCharacter.perks?.some(p => p.name === "Masoquista");
+    const numRestrictions = hasMasoquista ? 2 : 1;
 
-		const hasMasoquista = activeCharacter.perks?.some(p => p.name === "Masoquista" && p.type === "perk");
-		const numRestrictions = hasMasoquista ? 2 : 1;
+    const restrictionOptions = [
+        { value: "", text: "No Restriction" },
+        { value: "Doble [+2 ☐ ]", text: "Acción doble [+2 ☐ ]" },
+        { value: "+1 PE [+1 ☐ ]", text: "Consumir Energía - 1 PE [+1 ☐ ]" },
+        { value: "+3 PE [+2 ☐ ]", text: "Consumir Energía - 3 PE [+2 ☐ ]" },
+        { value: "+6 PE [+3 ☐ ]", text: "Consumir Energía - 6 PE [+3 ☐ ]" },
+        { value: "+10 PE [+4 ☐ ]", text: "Consumir Energía - 10 PE [+4 ☐ ]" }
+    ];
 
-		const restrictions = [
-				{ value: "", text: "No Restriction" },
-				{ value: "Doble [+2 ☐ ]", text: "Acción doble [+2 ☐ ]" },
-				{ value: "+1 PE [+1 ☐ ]", text: "Consumir Energía - 1 PE [+1 ☐ ]" },
-				{ value: "+3 PE [+2 ☐ ]", text: "Consumir Energía - 3 PE [+2 ☐ ]" },
-				{ value: "+6 PE [+3 ☐ ]", text: "Consumir Energía - 6 PE [+3 ☐ ]" },
-				{ value: "+10 PE [+4 ☐ ]", text: "Consumir Energía - 10 PE [+4 ☐ ]" }
-		];
+    activeCharacter.perks?.forEach(p => {
+        if (p.type === "restriction") restrictionOptions.push({ value: p.name, text: p.name });
+    });
 
-		activeCharacter.perks?.forEach(perk => {
-				if (perk.type === "restriction") {
-						restrictions.push({ value: perk.name, text: `${perk.name}` });
-				}
-		});
+    const restrictionSelects = [];
+    for (let i = 0; i < numRestrictions; i++) {
+        const select = document.createElement("select");
+        restrictionOptions.forEach(opt => {
+            const option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.text;
+            select.appendChild(option);
+        });
+        select.value = currentSkill.restrictions[i] || "";
+        restrictionContainer.appendChild(select);
+        restrictionSelects.push(select);
+    }
+    form.appendChild(restrictionContainer);
 
-		activeCharacter.skillRestrictions?.forEach(restriction => {
-				if (!restrictions.some(r => r.value === restriction)) {
-						restrictions.push({ value: restriction, text: `${restriction} (+1 Module)` });
-				}
-		});
+    // --- Module slots ---
+    const moduleSlots = document.createElement("div");
+    moduleSlots.className = "module-slots";
 
-		const restrictionSelects = [];
-		for (let i = 0; i < numRestrictions; i++) {
-				const select = document.createElement("select");
-				restrictions.forEach(({ value, text }) => {
-						const option = document.createElement("option");
-						option.value = value;
-						option.textContent = text;
-						select.appendChild(option);
-				});
-				select.value = skill.restrictions[i] || "";
-				restrictionContainer.appendChild(select);
-				restrictionSelects.push(select);
-		}
-		form.appendChild(restrictionContainer);
+    function updateModuleSlots() {
+        moduleSlots.innerHTML = "";
+        const newRestrictions = restrictionSelects.map(s => s.value);
+        const totalSlots = getTotalSlots({ restrictions: newRestrictions });
+        const skillData = (index > -1) ? activeCharacter.skills[index] : currentSkill;
+        const currentModules = [...(skillData.modules || [])].slice(0, totalSlots);
 
-		// Module slots container
-		const moduleSlots = document.createElement("div");
-		moduleSlots.className = "module-slots";
+        for (let i = 0; i < totalSlots; i++) {
+            const slot = document.createElement("div");
+            slot.className = "module-slot";
 
-	    let currentModules;
+            if (currentModules[i]) {
+                const moduleName = currentModules[i];
+                const module = moduleLibrary.find(m => m.name === moduleName);
+                slot.textContent = module ? module.emote : "?";
+                slot.dataset.module = moduleName;
+                slot.dataset.category = module ? module.category : "";
 
-		function updateModuleSlots() {
-			moduleSlots.innerHTML = "";
-			const newRestrictions = restrictionSelects.map(s => s.value);
-			const totalSlots = getTotalSlots({ restrictions: newRestrictions });
-			const storedSkill = (index > -1) ? activeCharacter.skills[index] : skill;
-			currentModules = [...(storedSkill.modules || [])].slice(0, totalSlots);
+                // --- Restriction icon ---
+                const restrictionIcon = document.createElement("div");
+                restrictionIcon.className = "restriction-icon";
+                const currentRestriction = skillData.moduleRestrictions?.[moduleName];
+                restrictionIcon.textContent = "R";
+                restrictionIcon.title = currentRestriction || "None";
+                if (!currentRestriction) restrictionIcon.style.opacity = 0;
+                slot.appendChild(restrictionIcon);
+            } else {
+                slot.textContent = "+";
+                slot.classList.add("empty");
+            }
 
-			for (let i = 0; i < totalSlots; i++) {
-				const moduleSlot = document.createElement("div");
-				moduleSlot.className = "module-slot";
+            // --- Drag & click events ---
+            slot.draggable = true;
+            slot.addEventListener("dragstart", handleDragStart);
+            slot.addEventListener("dragover", handleDragOver);
+            slot.addEventListener("drop", handleDrop);
+            slot.addEventListener("dragend", handleDragEnd);
+            slot.addEventListener("mouseenter", handleModuleHover);
+            slot.addEventListener("mouseleave", handleModuleUnhover);
+            slot.addEventListener("click", e => {
+                if (!slot.classList.contains("dragging")) {
+                    e.stopPropagation();
+                    document.querySelectorAll(".module-selector").forEach(sel => sel.remove());
+                    showModuleSelection(slot, saveSkill, currentSkill, index, currentModules);
+                }
+            });
 
-				if (currentModules[i]) {
-					const moduleName = currentModules[i];
-					const module = moduleLibrary.find(m => m.name === moduleName);
-					moduleSlot.textContent = module ? module.emote : "?";
-					moduleSlot.dataset.module = moduleName;
-					moduleSlot.dataset.category = module ? module.category : "";
+            moduleSlots.appendChild(slot);
+        }
+    }
+    restrictionSelects.forEach(select => select.addEventListener("change", updateModuleSlots));
+    updateModuleSlots();
+    form.appendChild(moduleSlots);
 
-					// --- MODULE RESTRICTION ICON ---
-					const skillElement = moduleSlot.closest(".skill");
-					const skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
-					const currentRestriction = storedSkill.moduleRestrictions?.[moduleName];
+    // --- Description ---
+    const descriptionInput = document.createElement("textarea");
+    descriptionInput.placeholder = "Skill Description";
+    descriptionInput.value = currentSkill.description;
+    form.appendChild(descriptionInput);
 
-					const restrictionIcon = document.createElement("div");
-					restrictionIcon.className = "restriction-icon";
-					restrictionIcon.textContent = "R";
-					restrictionIcon.title = currentRestriction || "None";
+    // --- Save button ---
+    const saveButton = document.createElement("button");
+    saveButton.textContent = "Save";
 
-					if (!currentRestriction) {
-						restrictionIcon.style.opacity = 0; // hide if none
-						moduleSlot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
-						moduleSlot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
-					}
+    function saveSkill() {
+        const modules = Array.from(moduleSlots.children)
+            .map(slot => slot.dataset.module)
+            .filter(Boolean);
+        const restrictions = restrictionSelects.map(s => s.value);
 
-					restrictionIcon.addEventListener("click", (e) => {
-						e.stopPropagation();
-						showGenericModuleRestrictions(restrictionIcon, storedSkill, moduleName);
-					});
+        Object.assign(currentSkill, {
+            name: nameInput.value,
+            stats: Array.from(statContainer.querySelectorAll("select")).map(s => s.value),
+            restrictions,
+            description: descriptionInput.value,
+            modules,
+            cost: calculateSkillCost(modules, restrictions, currentSkill.moduleRestrictions)
+        });
 
-					moduleSlot.appendChild(restrictionIcon);
-				} else {
-					moduleSlot.textContent = "+";
-					moduleSlot.classList.add("empty");
-					moduleSlot.dataset.module = "";
-				}
+        if (!activeCharacter.skills) activeCharacter.skills = [];
+        if (isNew) {
+            activeCharacter.skills.push(currentSkill);
+            index = activeCharacter.skills.length - 1;
+            isNew = false;
+        } else {
+            activeCharacter.skills[index] = currentSkill;
+        }
 
-				// --- DRAG & CLICK EVENTS ---
-				moduleSlot.draggable = true;
-				moduleSlot.addEventListener("dragstart", handleDragStart);
-				moduleSlot.addEventListener("dragover", handleDragOver);
-				moduleSlot.addEventListener("drop", handleDrop);
-				moduleSlot.addEventListener("dragend", handleDragEnd);
-				moduleSlot.addEventListener("mouseenter", handleModuleHover);
-				moduleSlot.addEventListener("mouseleave", handleModuleUnhover);
-				moduleSlot.addEventListener("click", e => {
-					if (!moduleSlot.classList.contains("dragging")) {
-						e.stopPropagation();
-						const existingSelectors = document.querySelectorAll('.module-selector');
-						existingSelectors.forEach(selector => selector.remove());
-						showModuleSelection(moduleSlot, saveSkill, skill, index, currentModules);
-					}
-				});
+        saveCharacterData();
+        updateSPDisplay();
+    }
 
-				moduleSlots.appendChild(moduleSlot);
-			}
-		}
-		
-		updateModuleSlots();
-		restrictionSelects.forEach(select => select.addEventListener("change", updateModuleSlots));
-		form.appendChild(moduleSlots);
-
-		// Description textarea
-		const descriptionInput = document.createElement("textarea");
-		descriptionInput.placeholder = "Skill Description";
-		descriptionInput.value = skill.description;
-		form.appendChild(descriptionInput);
-
-		// Save button
-		const saveButton = document.createElement("button");
-		saveButton.textContent = "Save";
-
-	function saveSkill(skill, index) {
-		const modules = Array.from(moduleSlots.children).map(slot => slot.dataset.module).filter(m => m);
-		const restrictions = restrictionSelects.map(s => s.value);
-
-		currentSkill = {
-			name: nameInput.value,
-			stats: Array.from(statContainer.querySelectorAll("select")).map(s => s.value),
-			restrictions,
-			description: descriptionInput.value,
-			modules,
-			cost: calculateSkillCost(modules, restrictions, skill.moduleRestrictions),
-			moduleRestrictions: skill.moduleRestrictions
-		};
-
-		if (!activeCharacter.skills) activeCharacter.skills = [];
-		if (!isNew) {
-			activeCharacter.skills[index] = currentSkill;
-			saveCharacterData();
-			updateSPDisplay();
-    	}
-
-	}
-
-	// Update save button click event
 	saveButton.addEventListener("click", () => {
-		saveSkill(skill, index);
-		if (isNew) {
-			if (!activeCharacter.skills) activeCharacter.skills = [];
-			activeCharacter.skills.push(currentSkill);
-			index = activeCharacter.skills.length - 1; // Set index for future edits
-			isNew = false;
-    	}
-		saveCharacterData();
-	    updateSPDisplay();
-		renderSkills();
+		saveSkill();      // save the skill first
+		renderSkills();   // then re-render the skills list
 	});
-		form.appendChild(saveButton);
-		return form;
+
+    form.appendChild(saveButton);
+
+    return form;
 }
 
 // Edit skill
