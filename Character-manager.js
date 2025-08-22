@@ -1719,17 +1719,33 @@ function createSkillForm(skill = {}, index) {
                 slot.dataset.category = module ? module.category : "";
 
                 // --- Restriction icon ---
-                const restrictionIcon = document.createElement("div");
-                restrictionIcon.className = "restriction-icon";
-                const currentRestriction = skillData.moduleRestrictions?.[moduleName];
-                restrictionIcon.textContent = "R";
-                restrictionIcon.title = currentRestriction || "None";
-                if (!currentRestriction) restrictionIcon.style.opacity = 0;
-                slot.appendChild(restrictionIcon);
-            } else {
-                slot.textContent = "+";
-                slot.classList.add("empty");
-            }
+					// --- MODULE RESTRICTION ICON ---
+					const skillElement = slot.closest(".skill");
+					const skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
+					const currentRestriction = skillData.moduleRestrictions?.[moduleName];
+
+					const restrictionIcon = document.createElement("div");
+					restrictionIcon.className = "restriction-icon";
+					restrictionIcon.textContent = "R";
+					restrictionIcon.title = currentRestriction || "None";
+
+					if (!currentRestriction) {
+						restrictionIcon.style.opacity = 0; // hide if none
+						slot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
+						slot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
+					}
+
+					restrictionIcon.addEventListener("click", (e) => {
+						e.stopPropagation();
+						showGenericModuleRestrictions(restrictionIcon, skillData, moduleName);
+					});
+
+					slot.appendChild(restrictionIcon);
+				} else {
+					slot.textContent = "+";
+					slot.classList.add("empty");
+					slot.dataset.module = "";
+				}
 
             // --- Drag & click events ---
             slot.draggable = true;
