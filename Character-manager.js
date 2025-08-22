@@ -1968,6 +1968,7 @@ function showGenericModuleRestrictions(icon, skill, moduleName) {
 
     const restrictions = [
         { name: "None", type: "" },
+		{ name: "Maestria", type:"Maestria" },
         { name: "+1 PE coste de activación", type: "-1 SP" },
         { name: "Requiere un objeto específico como material", type:"-1 SP" },
         { name: "Solo afecta a objetivos que hayan recibido daño", type:"-1 SP" },
@@ -2319,6 +2320,7 @@ function calculateSkillCost(modules, restrictions = [], moduleRestrictions = {})
             if (type.includes("-1 SP")) cost -= 1;
             else if (type.includes("-2 SP")) cost -= 2;
             else if (type.includes("-3 SP")) cost -= 3;
+			else if (type.includes("Maestria")) cost -= tierNum;
         }
     });
 
