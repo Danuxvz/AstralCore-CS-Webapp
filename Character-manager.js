@@ -868,7 +868,7 @@ function attachTooltipToModuleButtons() {
 					?.find(m => m.name === moduleName)?.restriction || null;
 			}
 
-			showTooltip(module, restriction, button);
+			showTooltip(module, module.restrictions, button);
 		});
 
 		button.addEventListener("mouseleave", hideTooltip);
@@ -1436,9 +1436,9 @@ function loadSelfCoreContent() {
                         detailView.className = "module-detail-view";
 
                         let detailContent = `${module.emote} <em>(${module.category}, Tier ${tier})</em> - ${module.description}`;
-                        if (module.restrictions.length) {
-                            detailContent += `<br><strong>Restrictions:</strong> ${module.restrictions.join(", ")}`;
-                        }
+						if (module.restrictions.length) {
+                             detailContent += `<br><strong>Restrictions:</strong> ${module.restrictions}`;
+                         }
                         if (module.effects && module.effects.length) {
                             detailContent += `<div class='sub-effects'><strong>Sub-effects:</strong>`;
                             module.effects.forEach(effect => {

@@ -1017,7 +1017,6 @@ const moduleCatalog = {
 			})
 			.map(module => ({
 				name: module.name,
-				restrictions: module.restrictions || []
 			})),
 		tier2: moduleLibrary
 			.filter((module, index, arr) => {
@@ -1029,7 +1028,6 @@ const moduleCatalog = {
 			})
 			.map(module => ({
 				name: module.name,
-				restrictions: module.restrictions || []
 			})),
 		tier3: moduleLibrary
 			.filter((module, index, arr) => {
@@ -1041,7 +1039,6 @@ const moduleCatalog = {
 			})
 			.map(module => ({
 				name: module.name,
-				restrictions: module.restrictions || []
 			})),
 		tier4: moduleLibrary
 			.filter((module, index, arr) => {
@@ -1053,7 +1050,6 @@ const moduleCatalog = {
 			})
 			.map(module => ({
 				name: module.name,
-				restrictions: module.restrictions || []
 			})),
 		tier5: moduleLibrary
 			.filter((module, index, arr) => {
