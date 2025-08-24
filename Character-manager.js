@@ -23,6 +23,11 @@ function setActiveCharacter(characterId) {
 	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
 	const selectedCharacter = characters[characterId];
 
+	const currentHpInput = document.getElementById("currentHp");
+	const currentEpInput = document.getElementById("currentEp");
+	if (currentHpInput) currentHpInput.value = "";
+	if (currentEpInput) currentEpInput.value = "";
+
 	if (selectedCharacter) {
 		activeCharacter = selectedCharacter;
 		populateCharacterData(selectedCharacter);
@@ -31,6 +36,7 @@ function setActiveCharacter(characterId) {
 		console.error("Character ID not found:", characterId);
 	}
 }
+
 
 // Navigation
 function showSection(sectionId) {
@@ -192,8 +198,7 @@ function saveCharacterData() {
 	// Preserve current temp values when recalculating secondary stats
 	updatedCharacter.secondaryStats = calculateSecondaryStats(
 		updatedCharacter.stats,
-		updatedCharacter.secondaryStats // Pass current secondary stats to retain temp values
-		
+		updatedCharacter.secondaryStats 	
 	);
 
 	activeCharacter = updatedCharacter;
@@ -219,6 +224,11 @@ function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBon
         (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.dex.dice || 8, 10) +
          parseInt(stats.mig.temp || 0) + parseInt(stats.dex.temp || 0)) / 2
     );
+
+	const maxHp = hpBase + (permanentBonuses.hp || 0);
+    const tempHp = currentSecondaryStats.hp?.temp || 0;
+    const totalHp = maxHp + tempHp;
+
 
     return {
         hp: {
@@ -252,7 +262,8 @@ function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBon
         dmg: {
             value: permanentBonuses.dmg || 0,
             temp: currentSecondaryStats.dmg?.temp || 0
-        }
+        },
+		currentHP: currentSecondaryStats.currentHP ?? totalHp
     };
 }
 
@@ -979,11 +990,6 @@ function learnModule(coreName, tier, moduleName, restriction) {
 	if (activeCharacter.sharedUnlocks === undefined) {
     activeCharacter.sharedUnlocks = 0; // how many perks can currently be unlocked
 	}
-
-
-
-
-
 
 
 	// Update UI
@@ -2593,50 +2599,55 @@ function showRestrictionPopup(icon, moduleName, moduleSlot) {
 
 
 
-
-
-
-
-
-
 //Summary
 function renderSummary() {
-  if (!activeCharacter) return;
-	
+	if (!activeCharacter) return;
+
 	// Stats
 	const currentHpInput = document.getElementById("currentHp");
-    const currentEpInput = document.getElementById("currentEp");
+	const currentEpInput = document.getElementById("currentEp");
 
 	const recalculated = calculateSecondaryStats(
-    activeCharacter.stats,
-    activeCharacter.secondaryStats,
-    activeCharacter.permanentBonuses || {}
+		activeCharacter.stats,
+		activeCharacter.secondaryStats,
+		activeCharacter.permanentBonuses || {}
 	);
 
-	const maxHp = recalculated.hp.value+recalculated.hp.temp;
-	const maxEp = recalculated.ep.value+recalculated.ep.temp;
+	const maxHp = recalculated.hp.value + recalculated.hp.temp;
+	const maxEp = recalculated.ep.value + recalculated.ep.temp;
 
-    let currentHp = parseInt(currentHpInput.value) ||18 ;
-    let currentEp = parseInt(currentEpInput.value)|| 6;
+	// Keep secondaryStats as source of truth
+	if (currentHpInput) {
+		activeCharacter.secondaryStats.currentHP =
+		parseInt(currentHpInput.value, 10) || activeCharacter.secondaryStats.currentHP || maxHp;
+	}
+	if (currentEpInput) {
+		activeCharacter.secondaryStats.currentEP =
+		parseInt(currentEpInput.value, 10) || activeCharacter.secondaryStats.currentEP || maxEp;
+	}
 
-
-    // Calculate percentage
-    const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
-    const epPercent = maxEp ? (currentEp / maxEp) * 100 : 0;
-
-    // Update bar widths
-    const hpBar = document.querySelector(".summary-hp .bar-fill");
-    const epBar = document.querySelector(".summary-ep .bar-fill");
-
-    if (hpBar) hpBar.style.width = hpPercent + "%";
-    if (epBar) epBar.style.width = epPercent + "%";
-
-	// Update Summary of Perks
+	const currentHp = activeCharacter.secondaryStats.currentHP;
+	const currentEp = activeCharacter.secondaryStats.currentEP;
 
 
-	//Update Summary of Skills
+	// Calculate percentage
+	const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
+	const epPercent = maxEp ? (currentEp / maxEp) * 100 : 0;
+
+	// Update bar widths
+	const hpBar = document.querySelector(".summary-hp .bar-fill");
+	const epBar = document.querySelector(".summary-ep .bar-fill");
+
+	if (hpBar) hpBar.style.width = hpPercent + "%";
+	if (epBar) epBar.style.width = epPercent + "%";
+
+	// Update summaries
 	renderSkillsSummary();
 	renderPerksSummary();
+
+	if (currentHpInput) currentHpInput.value = currentHp;
+	if (currentEpInput) currentEpInput.value = currentEp;
+
 }
 
 function renderSkillsSummary() {
