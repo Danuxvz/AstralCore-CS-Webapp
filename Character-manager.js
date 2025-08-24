@@ -1366,8 +1366,11 @@ function updatePerkAvailability(coreName, tier) {
 	const perksAvailable = Math.floor(modulesInTier / 3);
 	const existingPerks = activeCharacter.perks.filter(p => p.tier === tier
 	).length;
-
-	const availablePerks = Math.max(perksAvailable+1 - existingPerks, 0);
+	
+	let availablePerks = Math.max(perksAvailable - existingPerks, 0);
+	if (tier == "tier1") {
+	availablePerks = Math.max(perksAvailable + 1 - existingPerks, 0);
+}
 
 	// Target the PERK SECTION TITLE instead of tier title
 	const perkTitle = document.querySelector(`#catalogContent .perkTitle[data-tier="${tier}"]`);
@@ -2327,16 +2330,23 @@ function calculateSkillCost(modules, restrictions = [], moduleRestrictions = {})
     // Skill-wide restriction multiplier
     if (restrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
 
-    // Per-module discounts (supports {name,type} objects OR legacy strings)
-    modules.forEach(m => {
-        const r = moduleRestrictions?.[m];
+    // Per-module discounts
+    modules.forEach(moduleName => {
+        const r = moduleRestrictions?.[moduleName];
         if (!r) return;
-        const type = (typeof r === "object" && r.type) ? r.type : r; // fallback for strings
+        const type = (typeof r === "object" && r.type) ? r.type : r;
+
         if (typeof type === "string") {
             if (type.includes("-1 SP")) cost -= 1;
             else if (type.includes("-2 SP")) cost -= 2;
             else if (type.includes("-3 SP")) cost -= 3;
-			else if (type.includes("Maestria")) cost -= tierNum;
+            else if (type.includes("Maestria")) {
+                const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
+                    (activeCharacter.modules[tk] || []).some(m => m.name === moduleName)
+                );
+                const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
+                cost -= tierNum;
+            }
         }
     });
 
