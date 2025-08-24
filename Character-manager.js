@@ -1,6 +1,7 @@
 import moduleLibrary from './moduleLibrary.js';
 import moduleCatalog from './moduleCatalog.js';
 
+
 //global variables
 let draggedModule = null;
 let activeCharacter = {};
@@ -274,6 +275,28 @@ document.getElementById("deleteCharacter").addEventListener("click", () => {
 		setActiveCharacter(firstCharacterId);
 	}
 });
+
+async function saveCharacterToGitHub(characterData, name) {
+  const token = "GIT_TOKEN";
+  const repo = "Danuxvz/AstralCore-CS-Webapp/tree/Potilandia-Heroes/";
+  const path = `${name}.json`;
+
+  const response = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Save character ${name}`,
+      content: btoa(JSON.stringify(characterData, null, 2)), // base64 encode
+    }),
+  });
+
+  const result = await response.json();
+  console.log("Saved:", result);
+}
+
 
 function saveCharacterData() {
 	console.log("Saving data...");
