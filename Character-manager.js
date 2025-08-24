@@ -2,6 +2,7 @@ import moduleLibrary from './moduleLibrary.js';
 import moduleCatalog from './moduleCatalog.js';
 
 //global variables
+let draggedModule = null;
 let activeCharacter = {};
 let activeCatalog = "";
 window.showSection = showSection;
@@ -15,8 +16,6 @@ const jobEffects = [
 	"Al fallar una tirada enfrentada de tu oficio, puedes gastar 2 PE para convertir el fallo en un acierto.",
 	"Ignoras cualquier desventaja circunstancial que afecte tus tiradas del oficio."
 ];
-
-
 
 
 function setActiveCharacter(characterId) {
@@ -205,66 +204,66 @@ function saveCharacterData() {
 	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
 	characters[selectedCharacterIndex] = activeCharacter;
 	localStorage.setItem("characters", JSON.stringify(characters));
-
+	
 	console.log("Character data saved:", activeCharacter);
 	loadSelfCoreContent();
 }
 
 // Utility function for calculating secondary stats
 function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBonuses = {}) {
-    const hpBase = 3 * (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.mig.temp || 0));
-    const epBase = parseInt(stats.wlp.dice || 8, 10) + parseInt(stats.wlp.temp || 0);
-    const dfBase = parseInt(stats.dex.dice || 8, 10) + parseInt(stats.dex.temp || 0);
-    const dmBase = parseInt(stats.int.dice || 8, 10) + parseInt(stats.int.temp || 0);
-    const imprBase = Math.max(
-        0,
-        Math.floor((parseInt(stats.stl.dice || 8, 10) + parseInt(stats.stl.temp || 0) - 6) / 2)
-    );
-    const movBase = Math.floor(
-        (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.dex.dice || 8, 10) +
-         parseInt(stats.mig.temp || 0) + parseInt(stats.dex.temp || 0)) / 2
-    );
+	const hpBase = 3 * (parseInt(stats.mig.dice || 8, 10) + parseInt(stats.mig.temp || 0));
+	const epBase = parseInt(stats.wlp.dice || 8, 10) + parseInt(stats.wlp.temp || 0);
+	const dfBase = parseInt(stats.dex.dice || 8, 10) + parseInt(stats.dex.temp || 0);
+	const dmBase = parseInt(stats.int.dice || 8, 10) + parseInt(stats.int.temp || 0);
+	const imprBase = Math.max(
+		0,
+		Math.floor((parseInt(stats.stl.dice || 8, 10) + parseInt(stats.stl.temp || 0) - 6) / 2)
+	);
+	const movBase = Math.floor(
+		(parseInt(stats.mig.dice || 8, 10) + parseInt(stats.dex.dice || 8, 10) +
+		parseInt(stats.mig.temp || 0) + parseInt(stats.dex.temp || 0)) / 2
+	);
 
 	const maxHp = hpBase + (permanentBonuses.hp || 0);
-    const tempHp = currentSecondaryStats.hp?.temp || 0;
-    const totalHp = maxHp + tempHp;
+	const tempHp = currentSecondaryStats.hp?.temp || 0;
+	const totalHp = maxHp + tempHp;
 
 
-    return {
-        hp: {
-            value: hpBase + (permanentBonuses.hp || 0),
-            temp: currentSecondaryStats.hp?.temp || 0
-        },
-        ep: {
-            value: epBase + (permanentBonuses.ep || 0),
-            temp: currentSecondaryStats.ep?.temp || 0
-        },
-        df: {
-            value: dfBase + (permanentBonuses.df || 0),
-            temp: currentSecondaryStats.df?.temp || 0
-        },
-        dm: {
-            value: dmBase + (permanentBonuses.dm || 0),
-            temp: currentSecondaryStats.dm?.temp || 0
-        },
-        impr: {
-            value: imprBase + (permanentBonuses.impr || 0),
-            temp: currentSecondaryStats.impr?.temp || 0
-        },
-        mov: {
-            value: movBase + (permanentBonuses.mov || 0),
-            temp: currentSecondaryStats.mov?.temp || 0
-        },
-        atk: {
-            value: permanentBonuses.atk || 0,
-            temp: currentSecondaryStats.atk?.temp || 0
-        },
-        dmg: {
-            value: permanentBonuses.dmg || 0,
-            temp: currentSecondaryStats.dmg?.temp || 0
-        },
+	return {
+		hp: {
+			value: hpBase + (permanentBonuses.hp || 0),
+			temp: currentSecondaryStats.hp?.temp || 0
+		},
+		ep: {
+			value: epBase + (permanentBonuses.ep || 0),
+			temp: currentSecondaryStats.ep?.temp || 0
+		},
+		df: {
+			value: dfBase + (permanentBonuses.df || 0),
+			temp: currentSecondaryStats.df?.temp || 0
+		},
+		dm: {
+			value: dmBase + (permanentBonuses.dm || 0),
+			temp: currentSecondaryStats.dm?.temp || 0
+		},
+		impr: {
+			value: imprBase + (permanentBonuses.impr || 0),
+			temp: currentSecondaryStats.impr?.temp || 0
+		},
+		mov: {
+			value: movBase + (permanentBonuses.mov || 0),
+			temp: currentSecondaryStats.mov?.temp || 0
+		},
+		atk: {
+			value: permanentBonuses.atk || 0,
+			temp: currentSecondaryStats.atk?.temp || 0
+		},
+		dmg: {
+			value: permanentBonuses.dmg || 0,
+			temp: currentSecondaryStats.dmg?.temp || 0
+		},
 		currentHP: currentSecondaryStats.currentHP ?? totalHp
-    };
+	};
 }
 
 
@@ -449,47 +448,47 @@ function populateCharacterSelector() {
 }
 
 function updateStatUpgrades() {
-    activeCharacter.permanentBonuses = {};
+	activeCharacter.permanentBonuses = {};
 
-    Object.keys(moduleCatalog).forEach(catalogName => {
-        const catalog = moduleCatalog[catalogName];
-        if (!catalog.statUpgrades) return;
+	Object.keys(moduleCatalog).forEach(catalogName => {
+		const catalog = moduleCatalog[catalogName];
+		if (!catalog.statUpgrades) return;
 
-        Object.keys(catalog.statUpgrades).forEach(tierKey => {
-            const statUpgradeList = catalog.statUpgrades[tierKey];
-            if (!statUpgradeList) return;
+		Object.keys(catalog.statUpgrades).forEach(tierKey => {
+			const statUpgradeList = catalog.statUpgrades[tierKey];
+			if (!statUpgradeList) return;
 
-            // Count perks in this catalog and tier
-            const perksInTier = activeCharacter.perks.filter(p =>
-                p.catalog === catalogName && p.tier === tierKey
-            ).length;
+			// Count perks in this catalog and tier
+			const perksInTier = activeCharacter.perks.filter(p =>
+				p.catalog === catalogName && p.tier === tierKey
+			).length;
 
-            for (let i = 0; i < perksInTier; i++) {
-                const upgradeIndex = i % statUpgradeList.length;
-                const upgrade = statUpgradeList[upgradeIndex];
-                const match = upgrade.name.match(/(HP|EP|MOV|DF|DM|IMPR|ATK|DMG)\s*\+(\d+)/i);
+			for (let i = 0; i < perksInTier; i++) {
+				const upgradeIndex = i % statUpgradeList.length;
+				const upgrade = statUpgradeList[upgradeIndex];
+				const match = upgrade.name.match(/(HP|EP|MOV|DF|DM|IMPR|ATK|DMG)\s*\+(\d+)/i);
 
-                if (match) {
-                    const stat = match[1].toLowerCase();
-                    const amount = parseInt(match[2], 10);
-                    activeCharacter.permanentBonuses[stat] = (activeCharacter.permanentBonuses[stat] || 0) + amount;
-                }
-            }
+				if (match) {
+					const stat = match[1].toLowerCase();
+					const amount = parseInt(match[2], 10);
+					activeCharacter.permanentBonuses[stat] = (activeCharacter.permanentBonuses[stat] || 0) + amount;
+				}
+			}
 
-            const upgradesRow = document.querySelector(`#catalogContent .collapsible-section[data-tier="${tierKey}"] .stat-upgrades-row`);
-            if (upgradesRow) {
-                upgradesRow.querySelectorAll(".stat-upgrade").forEach((el, index) => {
-                    if (index < perksInTier) {
-                        el.classList.add("unlocked");
-                    } else {
-                        el.classList.remove("unlocked");
-                    }
-                });
-            }
-        });
-    });
+			const upgradesRow = document.querySelector(`#catalogContent .collapsible-section[data-tier="${tierKey}"] .stat-upgrades-row`);
+			if (upgradesRow) {
+				upgradesRow.querySelectorAll(".stat-upgrade").forEach((el, index) => {
+					if (index < perksInTier) {
+						el.classList.add("unlocked");
+					} else {
+						el.classList.remove("unlocked");
+					}
+				});
+			}
+		});
+	});
 
-    saveCharacterData();
+	saveCharacterData();
 }
 
 	
@@ -613,31 +612,28 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 	
 	// Add skill button
-	document.getElementById("addSkill").addEventListener("click", () => {
-    if (!activeCharacter.skills) activeCharacter.skills = [];
+document.getElementById("addSkill").addEventListener("click", () => {
+	if (!activeCharacter.skills) activeCharacter.skills = [];
 
-    // Create a blank skill object
-    const newSkill = {
-        name: "",
-        restrictions: [],
-        stats: ["mig", "dex"],
-        description: "",
-        modules: [],
-        moduleRestrictions: {}
-    };
+	const newSkill = {
+		name: "",
+		restrictions: [],
+		stats: ["mig", "dex"],
+		description: "",
+		modules: [] 
+	};
 
-    // Push immediately to character skills so it has an index
-    activeCharacter.skills.push(newSkill);
-    const index = activeCharacter.skills.length - 1;
+	// Push immediately to character skills so it has an index
+	activeCharacter.skills.push(newSkill);
+	const index = activeCharacter.skills.length - 1;
 
-    // Create the form for this skill
-    const skillForm = createSkillForm(newSkill, index);
+	// Create the form for this skill
+	const skillForm = createSkillForm(newSkill, index);
 
-    // Append form to DOM
-    document.getElementById("skillsList").appendChild(skillForm);
+	// Append form to DOM
+	document.getElementById("skillsList").appendChild(skillForm);
 
-    // Optional: render immediately if renderSkills shows saved versions
-    renderSkills();
+	renderSkills();
 });
 
 
@@ -889,21 +885,23 @@ function attachTooltipToModuleButtons() {
 
 			if (activeCharacter.skills) {
 				for (const skill of activeCharacter.skills) {
-					if (skill.modules.includes(moduleName) && skill.moduleRestrictions?.[moduleName]) {
-						restriction = skill.moduleRestrictions[moduleName];
+					const module = skill.modules.find(m => m.name === moduleName);
+					if (module?.restriction) {
+						restriction = module.restriction;
 						break;
 					}
 				}
 			}
 
+
 			if (!restriction) {
 				restriction = moduleCatalog[activeCatalog]?.[button.dataset.tier]
 					?.find(m => m.name === moduleName)?.restriction || null;
 			}
-
+			
 			showTooltip(module, module.restrictions, button);
 		});
-
+		
 		button.addEventListener("mouseleave", hideTooltip);
 	});
 }
@@ -988,7 +986,7 @@ function learnModule(coreName, tier, moduleName, restriction) {
 	// Save the updated character data
 
 	if (activeCharacter.sharedUnlocks === undefined) {
-    activeCharacter.sharedUnlocks = 0; // how many perks can currently be unlocked
+	activeCharacter.sharedUnlocks = 0; // how many perks can currently be unlocked
 	}
 
 
@@ -1017,330 +1015,329 @@ function loadLearnedModules() {
 }
 	
 function createCollapsibleCatalogSection(title, contentGenerator, storageKey) {
-    const section = document.createElement("div");
-    section.className = "collapsible-section";
+	const section = document.createElement("div");
+	section.className = "collapsible-section";
 
-    const header = document.createElement("h3");
-    header.className = "collapsible-header";
-    header.innerHTML = `
-        <span>${title}</span>
-        <span class="toggle-icon">▼</span>
-    `;
+	const header = document.createElement("h3");
+	header.className = "collapsible-header";
+	header.innerHTML = `
+		<span>${title}</span>
+		<span class="toggle-icon">▼</span>
+	`;
 
-    const contentWrapper = document.createElement("div");
-    contentWrapper.className = "collapsible-content";
-    contentWrapper.appendChild(contentGenerator());
+	const contentWrapper = document.createElement("div");
+	contentWrapper.className = "collapsible-content";
+	contentWrapper.appendChild(contentGenerator());
 
-    // Check localStorage for saved state
-    const savedState = localStorage.getItem(`collapsible-${storageKey}`);
-    if (savedState === 'collapsed') {
-        contentWrapper.style.display = 'none';
-        header.querySelector('.toggle-icon').textContent = '▲';
-    }
+	// Check localStorage for saved state
+	const savedState = localStorage.getItem(`collapsible-${storageKey}`);
+	if (savedState === 'collapsed') {
+		contentWrapper.style.display = 'none';
+		header.querySelector('.toggle-icon').textContent = '▲';
+	}
 
-    section.appendChild(header);
-    section.appendChild(contentWrapper);
+	section.appendChild(header);
+	section.appendChild(contentWrapper);
 	header.addEventListener("click", toggleCollapse);
-    return section;
+	return section;
 }
 
 // Load modules and perks for the selected catalog
 function loadCatalogContent(coreName) {
-    const catalog = moduleCatalog[coreName];
-    const catalogContent = document.getElementById("catalogContent");
-    catalogContent.innerHTML = "";
+	const catalog = moduleCatalog[coreName];
+	const catalogContent = document.getElementById("catalogContent");
+	catalogContent.innerHTML = "";
 
-    // Add catalog title
-    const title = document.createElement("h2");
-    title.textContent = coreName.charAt(0).toUpperCase() + coreName.slice(1);
-    catalogContent.appendChild(title);
+	// Add catalog title
+	const title = document.createElement("h2");
+	title.textContent = coreName.charAt(0).toUpperCase() + coreName.slice(1);
+	catalogContent.appendChild(title);
 
-    // Process each tier
-    Object.keys(catalog).forEach(tierKey => {
-        if (tierKey.startsWith('tier')) {
-            const tierSection = createCollapsibleCatalogSection(
-                `Tier ${tierKey.slice(-1)}`,
-                () => {
-                    const tierContent = document.createElement("div");
+	// Process each tier
+	Object.keys(catalog).forEach(tierKey => {
+		if (tierKey.startsWith('tier')) {
+			const tierSection = createCollapsibleCatalogSection(
+				`Tier ${tierKey.slice(-1)}`,
+				() => {
+					const tierContent = document.createElement("div");
 
-                    // Modules
-                    const moduleContainer = document.createElement("div");
-                    moduleContainer.className = "catalog-module-container";
-                    catalog[tierKey].forEach(catalogModule => {
-                        const module = moduleLibrary.find(m => m.name === catalogModule.name);
-                        if (!module) {
-                            console.error(catalogModule.name + " not found");
-                            return;
-                        }
+					// Modules
+					const moduleContainer = document.createElement("div");
+					moduleContainer.className = "catalog-module-container";
+					catalog[tierKey].forEach(catalogModule => {
+						const module = moduleLibrary.find(m => m.name === catalogModule.name);
+						if (!module) {
+							console.error(catalogModule.name + " not found");
+							return;
+						}
 
-                        const moduleButton = document.createElement("button");
-                        moduleButton.className = "module-button";
-                        moduleButton.textContent = module.emote;
-                        moduleButton.dataset.catalog = coreName;
-                        moduleButton.dataset.tier = tierKey;
-                        moduleButton.dataset.module = catalogModule.name;
+						const moduleButton = document.createElement("button");
+						moduleButton.className = "module-button";
+						moduleButton.textContent = module.emote;
+						moduleButton.dataset.catalog = coreName;
+						moduleButton.dataset.tier = tierKey;
+						moduleButton.dataset.module = catalogModule.name;
 
-                        // Check if learned
-                        const isLearned = activeCharacter.modules?.[tierKey]?.some(m =>
-                            m.name === catalogModule.name && m.catalogs.includes(coreName)
-                        );
-                        if (isLearned) moduleButton.classList.add("learned");
+						// Check if learned
+						const isLearned = activeCharacter.modules?.[tierKey]?.some(m =>
+							m.name === catalogModule.name && m.catalogs.includes(coreName)
+						);
+						if (isLearned) moduleButton.classList.add("learned");
 
-                        moduleButton.addEventListener("click", () => {
-                            moduleButton.classList.toggle("learned");
-                            learnModule(coreName, tierKey, catalogModule.name, catalogModule.restriction);
+						moduleButton.addEventListener("click", () => {
+							moduleButton.classList.toggle("learned");
+							learnModule(coreName, tierKey, catalogModule.name, catalogModule.restriction);
 
-                            // Recalculate perks after module interaction, but avoid resetting the perk badge
-                            setTimeout(() => {
-                                updatePerkAvailability(coreName, tierKey);
-                            }, 0);
-                        });
+							// Recalculate perks after module interaction, but avoid resetting the perk badge
+							setTimeout(() => {
+								updatePerkAvailability(coreName, tierKey);
+							}, 0);
+						});
 
-                        moduleContainer.appendChild(moduleButton);
-                    });
-                    tierContent.appendChild(moduleContainer);
+						moduleContainer.appendChild(moduleButton);
+					});
+					tierContent.appendChild(moduleContainer);
 
-                    // Perks
-                    const perks = catalog.perks?.[tierKey] || [];
-                    if (perks.length > 0) {
-                        const perkContainer = document.createElement("div");
-                        perkContainer.className = "perk-container";
+					// Perks
+					const perks = catalog.perks?.[tierKey] || [];
+					if (perks.length > 0) {
+						const perkContainer = document.createElement("div");
+						perkContainer.className = "perk-container";
 
-                        // Stat Upgrades
-                        if (catalog.statUpgrades?.[tierKey]) {
-                            const statUpgradeContainer = document.createElement("div");
-                            statUpgradeContainer.className = "stat-upgrade-container";
-                            const upgradesRow = document.createElement("div");
-                            upgradesRow.className = "stat-upgrades-row";
+						// Stat Upgrades
+						if (catalog.statUpgrades?.[tierKey]) {
+							const statUpgradeContainer = document.createElement("div");
+							statUpgradeContainer.className = "stat-upgrade-container";
+							const upgradesRow = document.createElement("div");
+							upgradesRow.className = "stat-upgrades-row";
 
 							const perksInTier = activeCharacter.perks.filter(p =>
 								p.catalog === coreName && p.tier === tierKey).length || 0;
 							const earnedUpgrades = perksInTier;
-                            const availableUpgrades = catalog.statUpgrades[tierKey];
+							const availableUpgrades = catalog.statUpgrades[tierKey];
 
-                            availableUpgrades.forEach((upgrade, index) => {
-                                const upgradeElement = document.createElement("span");
-                                upgradeElement.className = "stat-upgrade" +
-                                    (index < earnedUpgrades ? " unlocked" : "");
-                                upgradeElement.textContent = upgrade.name;
+							availableUpgrades.forEach((upgrade, index) => {
+								const upgradeElement = document.createElement("span");
+								upgradeElement.className = "stat-upgrade" +
+									(index < earnedUpgrades ? " unlocked" : "");
+								upgradeElement.textContent = upgrade.name;
 
-                                if (index > 0 && index < availableUpgrades.length) {
-                                    const separator = document.createElement("span");
-                                    separator.className = "stat-upgrade-separator";
-                                    separator.textContent = " ▶ ";
-                                    upgradesRow.appendChild(separator);
-                                }
-                                upgradesRow.appendChild(upgradeElement);
-                            });
+								if (index > 0 && index < availableUpgrades.length) {
+									const separator = document.createElement("span");
+									separator.className = "stat-upgrade-separator";
+									separator.textContent = " ▶ ";
+									upgradesRow.appendChild(separator);
+								}
+								upgradesRow.appendChild(upgradeElement);
+							});
 
-                            statUpgradeContainer.appendChild(upgradesRow);
-                            const bottomBorder = document.createElement("div");
-                            bottomBorder.className = "stat-upgrade-border";
-                            statUpgradeContainer.appendChild(bottomBorder);
-                            perkContainer.appendChild(statUpgradeContainer);
-                        }
+							statUpgradeContainer.appendChild(upgradesRow);
+							const bottomBorder = document.createElement("div");
+							bottomBorder.className = "stat-upgrade-border";
+							statUpgradeContainer.appendChild(bottomBorder);
+							perkContainer.appendChild(statUpgradeContainer);
+						}
 
-                        const perkTitle = document.createElement("h4");
-                        perkTitle.className = "perkTitle";
-                        perkTitle.textContent = "Perks";
-                        perkTitle.setAttribute("data-tier", tierKey);
-                        perkContainer.appendChild(perkTitle);
-                        perkContainer.appendChild(document.createElement("br"));
+						const perkTitle = document.createElement("h4");
+						perkTitle.className = "perkTitle";
+						perkTitle.textContent = "Perks";
+						perkTitle.setAttribute("data-tier", tierKey);
+						perkContainer.appendChild(perkTitle);
+						perkContainer.appendChild(document.createElement("br"));
 
 						updatePerkAvailability(coreName, tierKey);
 
-                        perks.forEach(perk => {
-                            const perkButton = document.createElement("button");
-                            perkButton.className = "perk-button";
-                            perkButton.textContent = perk.name;
-                            perkButton.dataset.catalog = coreName;
-                            perkButton.dataset.tier = tierKey;
+						perks.forEach(perk => {
+							const perkButton = document.createElement("button");
+							perkButton.className = "perk-button";
+							perkButton.textContent = perk.name;
+							perkButton.dataset.catalog = coreName;
+							perkButton.dataset.tier = tierKey;
 
-                            if (perk.type === "restriction") {
-                                perkButton.classList.add("restriction-perk");
-                                perkButton.title = "This perk adds a new skill restriction option.";
-                            }
+							if (perk.type === "restriction") {
+								perkButton.classList.add("restriction-perk");
+								perkButton.title = "This perk adds a new skill restriction option.";
+							}
 
-                            const isSelected = activeCharacter.perks?.some(p =>
-                                p.name === perk.name && p.catalog === coreName && p.tier === tierKey
-                            );
+							const isSelected = activeCharacter.perks?.some(p =>
+								p.name === perk.name && p.catalog === coreName && p.tier === tierKey
+							);
 
-                            if (isSelected) {
-                                perkButton.classList.add("learned");
-                            }
+							if (isSelected) {
+								perkButton.classList.add("learned");
+							}
 
 							
 
 
-                            perkButton.addEventListener("click", () => {
-                                const index = activeCharacter.perks.findIndex(p =>
-                                    p.name === perk.name && p.catalog === coreName && p.tier === tierKey
-                                );
-                                if (index === -1) {
-                                    activeCharacter.perks.push({
-                                        ...perk, catalog: coreName, tier: tierKey
-                                    });
-                                    perkButton.classList.add("learned");
-                                } else {
-                                    activeCharacter.perks.splice(index, 1);
-                                    perkButton.classList.remove("learned");
-                                }
-                                saveCharacterData();
-                                updatePerkAvailability(coreName, tierKey);
+							perkButton.addEventListener("click", () => {
+								const index = activeCharacter.perks.findIndex(p =>
+									p.name === perk.name && p.catalog === coreName && p.tier === tierKey
+								);
+								if (index === -1) {
+									activeCharacter.perks.push({
+										...perk, catalog: coreName, tier: tierKey
+									});
+									perkButton.classList.add("learned");
+								} else {
+									activeCharacter.perks.splice(index, 1);
+									perkButton.classList.remove("learned");
+								}
+								saveCharacterData();
+								updatePerkAvailability(coreName, tierKey);
 								updateStatUpgrades()
 								populateCharacterData(activeCharacter);
-                            });
+							});
 
-                            perkContainer.appendChild(perkButton);
-                        });
+							perkContainer.appendChild(perkButton);
+						});
 
-                        tierContent.appendChild(perkContainer);
-                    }
-                    return tierContent;
-                },
-                `catalog-${coreName}-${tierKey}`
+						tierContent.appendChild(perkContainer);
+					}
+					return tierContent;
+				},
+				`catalog-${coreName}-${tierKey}`
 
 				
-            );
-            catalogContent.appendChild(tierSection);
+			);
+			catalogContent.appendChild(tierSection);
 			updatePerkAvailability(coreName, tierKey);
-        }
-    });
+		}
+	});
 
-    // Attach tooltips
-    attachTooltipToModuleButtons();
-    attachTooltipToPerkButtons();
+	// Attach tooltips
+	attachTooltipToModuleButtons();
+	attachTooltipToPerkButtons();
 }
 
 
 function loadOriginPerks() {
-    const ventajasList = document.getElementById('ventajasList');
-    const desventajasList = document.getElementById('desventajasList');
+	const ventajasList = document.getElementById('ventajasList');
+	const desventajasList = document.getElementById('desventajasList');
 
-    ventajasList.innerHTML = '';
-    desventajasList.innerHTML = '';
+	ventajasList.innerHTML = '';
+	desventajasList.innerHTML = '';
 
-    // Load Ventajas
-    const ventajasSection = createCollapsibleSection("Ventajas", () => {
-        const ventajasContent = document.createElement("div");
-        moduleCatalog.origen.ventajas.forEach(perk => {
-            const button = createPerkButton(perk, 'ventajas');
-            ventajasContent.appendChild(button);
-        });
-        return ventajasContent;
-    }, 'ventajas');
-    ventajasList.appendChild(ventajasSection);
+	// Load Ventajas
+	const ventajasSection = createCollapsibleSection("Ventajas", () => {
+		const ventajasContent = document.createElement("div");
+		moduleCatalog.origen.ventajas.forEach(perk => {
+			const button = createPerkButton(perk, 'ventajas');
+			ventajasContent.appendChild(button);
+		});
+		return ventajasContent;
+	}, 'ventajas');
+	ventajasList.appendChild(ventajasSection);
 
-    // Load Desventajas
-    const desventajasSection = createCollapsibleSection("Desventajas", () => {
-        const desventajasContent = document.createElement("div");
-        moduleCatalog.origen.desventajas.forEach(perk => {
-            const button = createPerkButton(perk, 'desventajas');
-            desventajasContent.appendChild(button);
-        });
-        return desventajasContent;
-    }, 'desventajas');
-    desventajasList.appendChild(desventajasSection);
+	// Load Desventajas
+	const desventajasSection = createCollapsibleSection("Desventajas", () => {
+		const desventajasContent = document.createElement("div");
+		moduleCatalog.origen.desventajas.forEach(perk => {
+			const button = createPerkButton(perk, 'desventajas');
+			desventajasContent.appendChild(button);
+		});
+		return desventajasContent;
+	}, 'desventajas');
+	desventajasList.appendChild(desventajasSection);
 }
 
 function createPerkButton(perk, section) {
-  const button = document.createElement('button');
-  button.className = 'perk-button';
-  button.textContent = perk.name;
-  button.title = perk.description;
-  button.dataset.section = section;
-  
-  // Check if already learned
-  const isLearned = activeCharacter.perks.some(p => 
-    p.name === perk.name && p.catalog === 'origen'
-  );
-  
-  if (isLearned) button.classList.add(`learned-${section}`);
+const button = document.createElement('button');
+button.className = 'perk-button';
+button.textContent = perk.name;
+button.title = perk.description;
+button.dataset.section = section;
 
-  button.addEventListener('click', () => {
-    const sectionType = button.dataset.section;
-    button.classList.toggle(`learned-${sectionType}`);
-    toggleOriginPerk(perk, sectionType);
-  });
+// Check if already learned
+const isLearned = activeCharacter.perks.some(p => 
+	p.name === perk.name && p.catalog === 'origen'
+);
 
-  return button;
+if (isLearned) button.classList.add(`learned-${section}`);
+
+button.addEventListener('click', () => {
+	const sectionType = button.dataset.section;
+	button.classList.toggle(`learned-${sectionType}`);
+	toggleOriginPerk(perk, sectionType);
+});
+
+return button;
 }
 
 function toggleOriginPerk(perk, section) {
-  const index = activeCharacter.perks?.findIndex(p => 
-    p.name === perk.name && p.catalog === 'origen'
-  );
+const index = activeCharacter.perks?.findIndex(p => 
+	p.name === perk.name && p.catalog === 'origen'
+);
 
-  if (index > -1) {
-    // Remove perk
-    activeCharacter.perks.splice(index, 1);
-  } else {
-    // Add perk with section type
-    activeCharacter.perks.push({
-      ...perk,
-      catalog: 'origen',
-      tier: section
-    });
-  }
-  
-  saveCharacterData();
+if (index > -1) {
+	// Remove perk
+	activeCharacter.perks.splice(index, 1);
+} else {
+	// Add perk with section type
+	activeCharacter.perks.push({
+	...perk,
+	catalog: 'origen',
+	tier: section
+	});
+}
+
+saveCharacterData();
 }
 
 // Show tooltip on hover
 function showTooltip(item, restriction, button) {
-		let tooltip = document.getElementById("tooltip");
-		if (!tooltip) {
-				tooltip = document.createElement("div");
-				tooltip.id = "tooltip";
-				tooltip.className = "module-tooltip";
-				document.body.appendChild(tooltip);
+	if (!item || typeof item !== "object") return; // <-- Guard against undefined or non-object
+
+	let tooltip = document.getElementById("tooltip");
+	if (!tooltip) {
+		tooltip = document.createElement("div");
+		tooltip.id = "tooltip";
+		tooltip.className = "module-tooltip";
+		document.body.appendChild(tooltip);
+	}
+
+	// Now safe to check "category" in item
+	const isModule = "category" in item;
+
+	let content = `<strong>${item.name}</strong><br>`;
+
+	if (isModule) {
+		content += `<em>${item.category}</em><br>
+					${item.description}<br>
+					<strong>Restrictions:</strong> ${restriction || "None"}`;
+	} else {
+		content += `<em>${item.type}</em><br>${item.description}`;
+	}
+
+	if (item.effects && item.effects.length) {
+		content += "<br><strong>Sub-Effects:</strong><br>";
+		for (let effect of item.effects) {
+			content += `<div class='sub-effect'>
+							<span class='sub-effect-emote'>${effect.emote}</span>
+							<span class='sub-effect-description'>${effect.description}</span>
+						</div>`;
 		}
+	}
 
-		// Check if the item is a module or a perk
-		const isModule = "category" in item;
+	tooltip.innerHTML = content;
+	tooltip.style.display = "block";
+	tooltip.style.opacity = "0";
 
-		// Set tooltip content
-		let content = `<strong>${item.name}</strong><br>`;
+	const rect = button.getBoundingClientRect();
+	const viewportWidth = window.innerWidth;
+	const viewportHeight = window.innerHeight;
 
-		if (isModule) {
-				content += `<em>${item.category}</em><br>
-										${item.description}<br>
-										<strong>Restrictions:</strong> ${restriction || "None"}`;
-		} else {
-				content += `<em>${item.type}</em><br>${item.description}`;
-		}
+	let top = rect.bottom + 5, left = rect.left;
+	if (left + tooltip.offsetWidth > viewportWidth) left = viewportWidth - tooltip.offsetWidth - 10;
+	if (left < 10) left = 10;
+	if (top + tooltip.offsetHeight > viewportHeight) top = rect.top - tooltip.offsetHeight - 5;
 
-		if (item.effects && item.effects.length) {
-				content += "<br><strong>Sub-Effects:</strong><br>";
-				for (let effect of item.effects) {
-						content += `<div class='sub-effect'>
-														<span class='sub-effect-emote'>${effect.emote}</span>
-														<span class='sub-effect-description'>${effect.description}</span>
-												</div>`;
-				}
-		}
-
-		tooltip.innerHTML = content;
-		tooltip.style.display = "block";
-		tooltip.style.opacity = "0";
-
-		// Get all dimensions
-		const rect = button.getBoundingClientRect();
-		const viewportWidth = window.innerWidth;
-		const viewportHeight = window.innerHeight;
-
-		// Calculate position
-		let top = rect.bottom + 5, left = rect.left;
-		if (left + tooltip.offsetWidth > viewportWidth) left = viewportWidth - tooltip.offsetWidth - 10;
-		if (left < 10) left = 10;
-		if (top + tooltip.offsetHeight > viewportHeight) top = rect.top - tooltip.offsetHeight - 5;
-
-		// Apply position
-		tooltip.style.position = "fixed";
-		tooltip.style.top = `${top}px`;
-		tooltip.style.left = `${left}px`;
-		tooltip.style.opacity = "1";
+	tooltip.style.position = "fixed";
+	tooltip.style.top = `${top}px`;
+	tooltip.style.left = `${left}px`;
+	tooltip.style.opacity = "1";
 }
+
 
 // Hide tooltip when not hovering
 function hideTooltip() {
@@ -1355,9 +1352,9 @@ function attachTooltipToPerkButtons() {
 	document.querySelectorAll(".perk-button").forEach(button => {
 		const perkName = button.textContent;
 		const perk = (moduleCatalog[activeCatalog] &&
-              moduleCatalog[activeCatalog].perks &&
-              moduleCatalog[activeCatalog].perks[button.dataset.tier] || [])
-              .find(p => p.name === perkName);
+			moduleCatalog[activeCatalog].perks &&
+			moduleCatalog[activeCatalog].perks[button.dataset.tier] || [])
+			.find(p => p.name === perkName);
 
 		if (perk) {
 			button.addEventListener("mouseenter", () => showTooltip(perk, null, button));
@@ -1405,426 +1402,452 @@ function updatePerkAvailability(coreName, tier) {
 
 //Selfcore section		
 function loadSelfCoreContent() {
-    const selfCoreContent = document.getElementById("selfCoreContent");
+	const selfCoreContent = document.getElementById("selfCoreContent");
 
-    // Clear ONLY the dynamic parts, not the notes
-    Array.from(selfCoreContent.children).forEach(child => {
-        if (child.id !== "notesContainer") {
-            child.remove();
-        }
-    });
+	// Clear ONLY the dynamic parts, not the notes
+	Array.from(selfCoreContent.children).forEach(child => {
+		if (child.id !== "notesContainer") {
+			child.remove();
+		}
+	});
 
-    if (!activeCharacter.modules && !activeCharacter.perks) {
-        const msg = document.createElement("p");
-        msg.textContent = "No modules or perks learned yet.";
-        selfCoreContent.insertBefore(msg, document.getElementById("notesContainer"));
-        return;
-    }
+	if (!activeCharacter.modules && !activeCharacter.perks) {
+		const msg = document.createElement("p");
+		msg.textContent = "No modules or perks learned yet.";
+		selfCoreContent.insertBefore(msg, document.getElementById("notesContainer"));
+		return;
+	}
 
-    // ===== MODULE TABLE =====
-    if (activeCharacter.modules) {
-        const moduleSection = createCollapsibleSection("Modules", () => {
-            const moduleTable = document.createElement("table");
-            moduleTable.className = "module-table";
+	// ===== MODULE TABLE =====
+	if (activeCharacter.modules) {
+		const moduleSection = createCollapsibleSection("Modules", () => {
+			const moduleTable = document.createElement("table");
+			moduleTable.className = "module-table";
 
-            // Table headers
-            const headerRow = document.createElement("tr");
-            ["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"].forEach(tier => {
-                const th = document.createElement("th");
-                th.textContent = tier;
-                headerRow.appendChild(th);
-            });
-            moduleTable.appendChild(headerRow);
+			// Table headers
+			const headerRow = document.createElement("tr");
+			["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"].forEach(tier => {
+				const th = document.createElement("th");
+				th.textContent = tier;
+				headerRow.appendChild(th);
+			});
+			moduleTable.appendChild(headerRow);
 
-            // Modules per tier
-            const moduleRow = document.createElement("tr");
-            for (let tier = 1; tier <= 5; tier++) {
-                const tierCell = document.createElement("td");
-                tierCell.className = "module-cell";
-                const tierModules = activeCharacter.modules["tier" + tier] || [];
+			// Modules per tier
+			const moduleRow = document.createElement("tr");
+			for (let tier = 1; tier <= 5; tier++) {
+				const tierCell = document.createElement("td");
+				tierCell.className = "module-cell";
+				const tierModules = activeCharacter.modules["tier" + tier] || [];
 
-                tierModules.forEach(module => {
-                    const moduleContainer = document.createElement("div");
-                    moduleContainer.className = "module-container";
+				tierModules.forEach(module => {
+					const moduleContainer = document.createElement("div");
+					moduleContainer.className = "module-container";
 
-                    // Module emoji
-                    const moduleDiv = document.createElement("div");
-                    moduleDiv.className = "module-emote";
-                    moduleDiv.textContent = module.emote;
+					// Module emoji
+					const moduleDiv = document.createElement("div");
+					moduleDiv.className = "module-emote";
+					moduleDiv.textContent = module.emote;
 
-                    // Restriction icon
-                    if (module.restrictions.length) {
-                        const restrictionIcon = document.createElement("div");
-                        restrictionIcon.className = "restriction-icon";
-                        restrictionIcon.textContent = "R";
-                        moduleDiv.appendChild(restrictionIcon);
-                    }
+					// Restriction icon
+					if (module.restrictions.length) {
+						const restrictionIcon = document.createElement("div");
+						restrictionIcon.className = "restriction-icon";
+						restrictionIcon.textContent = "R";
+						
+						moduleDiv.appendChild(restrictionIcon);
+					}
 
-                    // Click to show details
-                    moduleDiv.addEventListener("click", () => {
-                        document.querySelectorAll(".module-detail-view").forEach(el => el.remove());
-                        const detailView = document.createElement("div");
-                        detailView.className = "module-detail-view";
+					// Click to show details
+					moduleDiv.addEventListener("click", () => {
+						document.querySelectorAll(".module-detail-view").forEach(el => el.remove());
+						const detailView = document.createElement("div");
+						detailView.className = "module-detail-view";
 
-                        let detailContent = `${module.emote} <em>(${module.category}, Tier ${tier})</em> - ${module.description}`;
+						let detailContent = `${module.emote} <em>(${module.category}, Tier ${tier})</em> - ${module.description}`;
 						if (module.restrictions.length) {
-                             detailContent += `<br><strong>Restrictions:</strong> ${module.restrictions}`;
-                         }
-                        if (module.effects && module.effects.length) {
-                            detailContent += `<div class='sub-effects'><strong>Sub-effects:</strong>`;
-                            module.effects.forEach(effect => {
-                                detailContent += `<div class='sub-effect'>
-                                    <span class='sub-effect-emote'>${effect.emote}</span>
-                                    <span class='sub-effect-description'>${effect.description}</span>
-                                </div>`;
-                            });
-                            detailContent += `</div>`;
-                        }
-                        detailView.innerHTML = detailContent;
-                        moduleTable.insertAdjacentElement("afterend", detailView);
-                    });
+							detailContent += `<br><strong>Restrictions:</strong> ${module.restrictions}`;
+						}
+						if (module.effects && module.effects.length) {
+							detailContent += `<div class='sub-effects'><strong>Sub-effects:</strong>`;
+							module.effects.forEach(effect => {
+								detailContent += `<div class='sub-effect'>
+									<span class='sub-effect-emote'>${effect.emote}</span>
+									<span class='sub-effect-description'>${effect.description}</span>
+								</div>`;
+							});
+							detailContent += `</div>`;
+						}
+						detailView.innerHTML = detailContent;
+						moduleTable.insertAdjacentElement("afterend", detailView);
+					});
 
-                    moduleContainer.appendChild(moduleDiv);
-                    tierCell.appendChild(moduleContainer);
-                });
+					moduleContainer.appendChild(moduleDiv);
+					tierCell.appendChild(moduleContainer);
+				});
 
-                moduleRow.appendChild(tierCell);
-            }
-            moduleTable.appendChild(moduleRow);
-            return moduleTable;
-        }, 'modules');
-        selfCoreContent.insertBefore(moduleSection, document.getElementById("notesContainer"));
-    }
+				moduleRow.appendChild(tierCell);
+			}
+			moduleTable.appendChild(moduleRow);
+			return moduleTable;
+		}, 'modules');
+		selfCoreContent.insertBefore(moduleSection, document.getElementById("notesContainer"));
+	}
 
-    // ===== PERKS SECTION =====
-    if (activeCharacter.perks) {
-        const perkSection = createCollapsibleSection("Perks", () => {
-            const container = document.createElement("div");
+	// ===== PERKS SECTION =====
+	if (activeCharacter.perks) {
+		const perkSection = createCollapsibleSection("Perks", () => {
+			const container = document.createElement("div");
 
-            // Filter out restriction-type perks
-            const filteredPerks = activeCharacter.perks.filter(perk => perk.type === "perk");
+			// Filter out restriction-type perks
+			const filteredPerks = activeCharacter.perks.filter(perk => perk.type === "perk");
 
-            const perkGroups = filteredPerks.reduce((acc, perk) => {
-                const catalog = perk.catalog || 'other';
-                if (!acc[catalog]) acc[catalog] = [];
-                acc[catalog].push(perk);
-                return acc;
-            }, {});
+			const perkGroups = filteredPerks.reduce((acc, perk) => {
+				const catalog = perk.catalog || 'other';
+				if (!acc[catalog]) acc[catalog] = [];
+				acc[catalog].push(perk);
+				return acc;
+			}, {});
 
-            Object.entries(perkGroups).forEach(([catalog, perks]) => {
-                const catalogSection = createCollapsibleSection(
-                    catalog === 'origen' ? 'Origin' : catalog.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-                    () => {
-                        const content = document.createElement("div");
+			Object.entries(perkGroups).forEach(([catalog, perks]) => {
+				const catalogSection = createCollapsibleSection(
+					catalog === 'origen' ? 'Origin' : catalog.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+					() => {
+						const content = document.createElement("div");
 
-                        if (catalog === 'origen') {
-                            const ventajas = perks.filter(p => p.tier === 'ventajas');
-                            const desventajas = perks.filter(p => p.tier === 'desventajas');
+						if (catalog === 'origen') {
+							const ventajas = perks.filter(p => p.tier === 'ventajas');
+							const desventajas = perks.filter(p => p.tier === 'desventajas');
 
-                            if (ventajas.length) {
-                                const ventajasSection = createCollapsibleSection("Ventajas", () => createPerkList(ventajas), `ventajas-${catalog}`);
-                                content.appendChild(ventajasSection);
-                            }
-                            if (desventajas.length) {
-                                const desventajasSection = createCollapsibleSection("Desventajas", () => createPerkList(desventajas), `desventajas-${catalog}`);
-                                content.appendChild(desventajasSection);
-                            }
-                        } else {
-                            content.appendChild(createPerkList(perks));
-                        }
+							if (ventajas.length) {
+								const ventajasSection = createCollapsibleSection("Ventajas", () => createPerkList(ventajas), `ventajas-${catalog}`);
+								content.appendChild(ventajasSection);
+							}
+							if (desventajas.length) {
+								const desventajasSection = createCollapsibleSection("Desventajas", () => createPerkList(desventajas), `desventajas-${catalog}`);
+								content.appendChild(desventajasSection);
+							}
+						} else {
+							content.appendChild(createPerkList(perks));
+						}
 
-                        return content;
-                    },
-                    `perks-${catalog}`
-                );
-                container.appendChild(catalogSection);
-            });
+						return content;
+					},
+					`perks-${catalog}`
+				);
+				container.appendChild(catalogSection);
+			});
 
-            return container;
-        }, 'perks');
-        selfCoreContent.insertBefore(perkSection, document.getElementById("notesContainer"));
-    }
+			return container;
+		}, 'perks');
+		selfCoreContent.insertBefore(perkSection, document.getElementById("notesContainer"));
+	}
 
-    // ===== NOTES SECTION (persistent) =====
-    const notesTextarea = document.getElementById("notes-section");
-    notesTextarea.value = activeCharacter.notes || "";
+	// ===== NOTES SECTION (persistent) =====
+	const notesTextarea = document.getElementById("notes-section");
+	notesTextarea.value = activeCharacter.notes || "";
 
-    notesTextarea.oninput = e => {
-        activeCharacter.notes = e.target.value;
-        saveCharacterData();
-    };
+	notesTextarea.oninput = e => {
+		activeCharacter.notes = e.target.value;
+		saveCharacterData();
+	};
 
-    // Add toggle handlers
-    document.querySelectorAll('.collapsible-header').forEach(header => {
-        header.addEventListener('click', toggleCollapse);
-    });
+	// Add toggle handlers
+	document.querySelectorAll('.collapsible-header').forEach(header => {
+		header.addEventListener('click', toggleCollapse);
+	});
 }
 
 function createPerkList(perks) {
-    const list = document.createElement("ul");
-    list.className = "perks-list";
+	const list = document.createElement("ul");
+	list.className = "perks-list";
 
-    perks.forEach(perk => {
-        const listItem = document.createElement("li");
-        listItem.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
-        list.appendChild(listItem);
-    });
+	perks.forEach(perk => {
+		const listItem = document.createElement("li");
+		listItem.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
+		list.appendChild(listItem);
+	});
 
-    return list;
+	return list;
 }
 
 function createCollapsibleSection(title, contentGenerator, storageKey) {
-    const section = document.createElement("div");
-    section.className = "collapsible-section";
+	const section = document.createElement("div");
+	section.className = "collapsible-section";
 
-    const header = document.createElement("h3");
-    header.className = "collapsible-header";
-    header.innerHTML = `
-        <span>${title}</span>
-        <span class="toggle-icon">▼</span>
-    `;
+	const header = document.createElement("h3");
+	header.className = "collapsible-header";
+	header.innerHTML = `
+		<span>${title}</span>
+		<span class="toggle-icon">▼</span>
+	`;
 
-    const contentWrapper = document.createElement("div");
-    contentWrapper.className = "collapsible-content";
-    contentWrapper.appendChild(contentGenerator());
+	const contentWrapper = document.createElement("div");
+	contentWrapper.className = "collapsible-content";
+	contentWrapper.appendChild(contentGenerator());
 
-    // Check localStorage for saved state
-    const savedState = localStorage.getItem(`collapsible-${storageKey}`);
-    if (savedState === 'collapsed') {
-        contentWrapper.style.display = 'none';
-        header.querySelector('.toggle-icon').textContent = '▲';
-    }
+	// Check localStorage for saved state
+	const savedState = localStorage.getItem(`collapsible-${storageKey}`);
+	if (savedState === 'collapsed') {
+		contentWrapper.style.display = 'none';
+		header.querySelector('.toggle-icon').textContent = '▲';
+	}
 
-    section.appendChild(header);
-    section.appendChild(contentWrapper);
+	section.appendChild(header);
+	section.appendChild(contentWrapper);
 	header.addEventListener("click", toggleCollapse);
-    return section;
+	return section;
 }
 
 // Toggle function for collapsible sections
 function toggleCollapse(e) {
-    const header = e.currentTarget;
-    const section = header.parentElement;
-    const content = section.querySelector('.collapsible-content');
-    const icon = header.querySelector('.toggle-icon');
+	const header = e.currentTarget;
+	const section = header.parentElement;
+	const content = section.querySelector('.collapsible-content');
+	const icon = header.querySelector('.toggle-icon');
 
-    const isCollapsed = content.style.display === 'none';
-    content.style.display = isCollapsed ? 'block' : 'none';
-    icon.textContent = isCollapsed ? '▼' : '▲';
+	const isCollapsed = content.style.display === 'none';
+	content.style.display = isCollapsed ? 'block' : 'none';
+	icon.textContent = isCollapsed ? '▼' : '▲';
 
-    // Save state to localStorage
-    const storageKey = Array.from(section.classList)
-        .find(cls => cls.startsWith('collapsible-'))
-        .replace('collapsible-', '');
-    if (storageKey) {
-        localStorage.setItem(`collapsible-${storageKey}`, isCollapsed ? 'expanded' : 'collapsed');
-    }
+	// Save state to localStorage
+	const storageKey = Array.from(section.classList)
+		.find(cls => cls.startsWith('collapsible-'))
+		.replace('collapsible-', '');
+	if (storageKey) {
+		localStorage.setItem(`collapsible-${storageKey}`, isCollapsed ? 'expanded' : 'collapsed');
+	}
 
-    e.stopPropagation();
+	e.stopPropagation();
 }
 
 
 
 // Skill creation/editing form
 function createSkillForm(skill = {}, index) {
-    // Determine if this is a new skill
-    let isNew = index === undefined || index < 0;
+	let isNew = index === undefined || index < 0;
 
-    // Default skill structure
-    const defaultSkill = {
-        name: "",
-        restrictions: [],
-        stats: ["mig", "dex"],
-        description: "",
-        modules: [],
-        moduleRestrictions: {}
-    };
-    const currentSkill = { ...defaultSkill, ...skill };
+	const defaultSkill = {
+		name: "",
+		restrictions: [],
+		stats: ["mig", "dex"],
+		description: "",
+		modules: []
+	};
+	const currentSkill = { 
+		...defaultSkill, 
+		...skill, 
+		modules: skill.modules ? skill.modules.map(m => ({ ...m })) : [] 
+	};
 
-    // --- Form container ---
-    const form = document.createElement("div");
-    form.className = "skill-form";
+	const form = document.createElement("div");
+	form.className = "skill-form";
 
-    // --- Name input ---
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.placeholder = "Skill Name";
-    nameInput.value = currentSkill.name;
-    form.appendChild(nameInput);
+	// --- Name input ---
+	const nameInput = document.createElement("input");
+	nameInput.type = "text";
+	nameInput.placeholder = "Skill Name";
+	nameInput.value = currentSkill.name;
+	form.appendChild(nameInput);
 
-    // --- Stats selection ---
-    const stats = ["mig", "dex", "int", "wlp", "stl"];
-    const statContainer = document.createElement("div");
-    statContainer.className = "stat-selection";
-    for (let i = 0; i < 2; i++) {
-        const select = document.createElement("select");
-        stats.forEach(stat => {
-            const option = document.createElement("option");
-            option.value = stat;
-            option.textContent = stat.toUpperCase();
-            select.appendChild(option);
-        });
-        select.value = currentSkill.stats[i] || stats[i];
-        statContainer.appendChild(select);
-        if (i === 0) statContainer.appendChild(document.createTextNode(" + "));
-    }
-    form.appendChild(statContainer);
+	// --- Stats selection ---
+	const stats = ["mig", "dex", "int", "wlp", "stl"];
+	const statContainer = document.createElement("div");
+	statContainer.className = "stat-selection";
+	for (let i = 0; i < 2; i++) {
+		const select = document.createElement("select");
+		stats.forEach(stat => {
+			const option = document.createElement("option");
+			option.value = stat;
+			option.textContent = stat.toUpperCase();
+			select.appendChild(option);
+		});
+		select.value = currentSkill.stats[i] || stats[i];
+		statContainer.appendChild(select);
+		if (i === 0) statContainer.appendChild(document.createTextNode(" + "));
+	}
+	form.appendChild(statContainer);
 
-    // --- Restriction selects ---
-    const restrictionContainer = document.createElement("div");
-    restrictionContainer.className = "restriction-container";
+	// --- Restriction selects ---
+	const restrictionContainer = document.createElement("div");
+	restrictionContainer.className = "restriction-container";
 
-    const hasMasoquista = activeCharacter.perks?.some(p => p.name === "Masoquista");
-    const numRestrictions = hasMasoquista ? 2 : 1;
+	const hasMasoquista = activeCharacter.perks?.some(p => p.name === "Masoquista");
+	const numRestrictions = hasMasoquista ? 2 : 1;
 
-    const restrictionOptions = [
-        { value: "", text: "No Restriction" },
-        { value: "Doble [+2 ☐ ]", text: "Acción doble [+2 ☐ ]" },
-        { value: "+1 PE [+1 ☐ ]", text: "Consumir Energía - 1 PE [+1 ☐ ]" },
-        { value: "+3 PE [+2 ☐ ]", text: "Consumir Energía - 3 PE [+2 ☐ ]" },
-        { value: "+6 PE [+3 ☐ ]", text: "Consumir Energía - 6 PE [+3 ☐ ]" },
-        { value: "+10 PE [+4 ☐ ]", text: "Consumir Energía - 10 PE [+4 ☐ ]" }
-    ];
+	const restrictionOptions = [
+		{ value: "", text: "No Restriction" },
+		{ value: "Doble [+2 ☐ ]", text: "Acción doble [+2 ☐ ]" },
+		{ value: "+1 PE [+1 ☐ ]", text: "Consumir Energía - 1 PE [+1 ☐ ]" },
+		{ value: "+3 PE [+2 ☐ ]", text: "Consumir Energía - 3 PE [+2 ☐ ]" },
+		{ value: "+6 PE [+3 ☐ ]", text: "Consumir Energía - 6 PE [+3 ☐ ]" },
+		{ value: "+10 PE [+4 ☐ ]", text: "Consumir Energía - 10 PE [+4 ☐ ]" }
+	];
 
-    activeCharacter.perks?.forEach(p => {
-        if (p.type === "restriction") restrictionOptions.push({ value: p.name, text: p.name });
-    });
+	activeCharacter.perks?.forEach(p => {
+		if (p.type === "restriction") restrictionOptions.push({ value: p.name, text: p.name });
+	});
 
-    const restrictionSelects = [];
-    for (let i = 0; i < numRestrictions; i++) {
-        const select = document.createElement("select");
-        restrictionOptions.forEach(opt => {
-            const option = document.createElement("option");
-            option.value = opt.value;
-            option.textContent = opt.text;
-            select.appendChild(option);
-        });
-        select.value = currentSkill.restrictions[i] || "";
-        restrictionContainer.appendChild(select);
-        restrictionSelects.push(select);
-    }
-    form.appendChild(restrictionContainer);
+	const restrictionSelects = [];
+	for (let i = 0; i < numRestrictions; i++) {
+		const select = document.createElement("select");
+		restrictionOptions.forEach(opt => {
+			const option = document.createElement("option");
+			option.value = opt.value;
+			option.textContent = opt.text;
+			select.appendChild(option);
+		});
+		select.value = currentSkill.restrictions[i] || "";
+		restrictionContainer.appendChild(select);
+		restrictionSelects.push(select);
+	}
+	form.appendChild(restrictionContainer);
 
-    // --- Module slots ---
-    const moduleSlots = document.createElement("div");
-    moduleSlots.className = "module-slots";
+	// --- Module slots ---
+	const moduleSlots = document.createElement("div");
+	moduleSlots.className = "module-slots";
 
-    function updateModuleSlots() {
-        moduleSlots.innerHTML = "";
-        const newRestrictions = restrictionSelects.map(s => s.value);
-        const totalSlots = getTotalSlots({ restrictions: newRestrictions });
-        const skillData = (index > -1) ? activeCharacter.skills[index] : currentSkill;
-        const currentModules = [...(skillData.modules || [])].slice(0, totalSlots);
+	function updateModuleSlots() {
+		moduleSlots.innerHTML = "";
+		const newRestrictions = restrictionSelects.map(s => s.value);
+		const totalSlots = getTotalSlots({ restrictions: newRestrictions });
+		const skillData = (index > -1) ? activeCharacter.skills[index] : currentSkill;
+		const currentModules = [...(skillData.modules || [])].slice(0, totalSlots);
 
-        for (let i = 0; i < totalSlots; i++) {
-            const slot = document.createElement("div");
-            slot.className = "module-slot";
+		for (let i = 0; i < totalSlots; i++) {
+			const slot = document.createElement("div");
+			slot.className = "module-slot";
 
-            if (currentModules[i]) {
-                const moduleName = currentModules[i];
-                const module = moduleLibrary.find(m => m.name === moduleName);
-                slot.textContent = module ? module.emote : "?";
-                slot.dataset.module = moduleName;
-                slot.dataset.category = module ? module.category : "";
+			if (currentModules[i]) {
+				const moduleObj = currentModules[i];
+				const moduleDef = moduleLibrary.find(m => m.name === moduleObj.name);
+				slot.textContent = moduleDef ? moduleDef.emote : "?";
+				slot.dataset.module = moduleObj.name;
+				slot.dataset.category = moduleDef ? moduleDef.category : "";
 
-                // --- Restriction icon ---
-					// --- MODULE RESTRICTION ICON ---
-					const skillElement = slot.closest(".skill");
-					const skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
-					const currentRestriction = skillData.moduleRestrictions?.[moduleName];
+				// --- Restriction icon ---
+				const restrictionIcon = document.createElement("div");
+				restrictionIcon.className = "restriction-icon";
+				restrictionIcon.textContent = "R";
 
-					const restrictionIcon = document.createElement("div");
-					restrictionIcon.className = "restriction-icon";
-					restrictionIcon.textContent = "R";
-					restrictionIcon.title = currentRestriction || "None";
+				// Always attach tooltip handling instead of static title
+				restrictionIcon.addEventListener("mouseenter", () => {
+					const moduleName = moduleObj.name;
+					const module = moduleLibrary.find(m => m.name === moduleName);
+					if (!module) return;
 
-					if (!currentRestriction) {
-						restrictionIcon.style.opacity = 0; // hide if none
-						slot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
-						slot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
-					}
+					const restriction = moduleObj.restriction || null;
+					showTooltip(module, restriction, restrictionIcon);
+				});
 
-					restrictionIcon.addEventListener("click", (e) => {
-						e.stopPropagation();
-						showGenericModuleRestrictions(restrictionIcon, skillData, moduleName);
-					});
+				restrictionIcon.addEventListener("mouseleave", hideTooltip);
 
-					slot.appendChild(restrictionIcon);
+				// If no restriction, keep it hidden until hover
+				if (!moduleObj.restriction) {
+					restrictionIcon.style.opacity = 0;
+					slot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
+					slot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
+				}
+
+				// Click opens restriction selection
+				restrictionIcon.addEventListener("click", (e) => {
+					e.stopPropagation();
+					showGenericModuleRestrictions(restrictionIcon, skillData, i);
+				});
+
+				slot.appendChild(restrictionIcon);
+;
 				} else {
 					slot.textContent = "+";
 					slot.classList.add("empty");
 					slot.dataset.module = "";
+					
+					// Create restriction icon for empty slots too
+					const restrictionIcon = document.createElement("div");
+					restrictionIcon.className = "restriction-icon";
+					restrictionIcon.textContent = "R";
+					restrictionIcon.title = "None";
+					restrictionIcon.style.opacity = 0;
+					slot.appendChild(restrictionIcon);
 				}
+			// --- Drag & click events ---
+			slot.draggable = true;
+			slot.addEventListener("dragstart", handleDragStart);
+			slot.addEventListener("dragover", handleDragOver);
+			slot.addEventListener("drop", handleDrop);
+			slot.addEventListener("dragend", handleDragEnd);
+			slot.addEventListener("mouseenter", handleModuleHover);
+			slot.addEventListener("mouseleave", handleModuleUnhover);
+			slot.addEventListener("click", e => {
+				if (!slot.classList.contains("dragging")) {
+					e.stopPropagation();
+					document.querySelectorAll(".module-selector").forEach(sel => sel.remove());
+					showModuleSelection(slot, saveSkill, currentSkill, index, currentModules);
+				}
+			});
 
-            // --- Drag & click events ---
-            slot.draggable = true;
-            slot.addEventListener("dragstart", handleDragStart);
-            slot.addEventListener("dragover", handleDragOver);
-            slot.addEventListener("drop", handleDrop);
-            slot.addEventListener("dragend", handleDragEnd);
-            slot.addEventListener("mouseenter", handleModuleHover);
-            slot.addEventListener("mouseleave", handleModuleUnhover);
-            slot.addEventListener("click", e => {
-                if (!slot.classList.contains("dragging")) {
-                    e.stopPropagation();
-                    document.querySelectorAll(".module-selector").forEach(sel => sel.remove());
-                    showModuleSelection(slot, saveSkill, currentSkill, index, currentModules);
-                }
-            });
+			moduleSlots.appendChild(slot);
+		}
+	}
+	restrictionSelects.forEach(select => select.addEventListener("change", updateModuleSlots));
+	updateModuleSlots();
+	form.appendChild(moduleSlots);
 
-            moduleSlots.appendChild(slot);
-        }
-    }
-    restrictionSelects.forEach(select => select.addEventListener("change", updateModuleSlots));
-    updateModuleSlots();
-    form.appendChild(moduleSlots);
+	// --- Description ---
+	const descriptionInput = document.createElement("textarea");
+	descriptionInput.placeholder = "Skill Description";
+	descriptionInput.value = currentSkill.description;
+	form.appendChild(descriptionInput);
 
-    // --- Description ---
-    const descriptionInput = document.createElement("textarea");
-    descriptionInput.placeholder = "Skill Description";
-    descriptionInput.value = currentSkill.description;
-    form.appendChild(descriptionInput);
+	// --- Save button ---
+	const saveButton = document.createElement("button");
+	saveButton.textContent = "Save";
 
-    // --- Save button ---
-    const saveButton = document.createElement("button");
-    saveButton.textContent = "Save";
+	function saveSkill() {
+		const modules = Array.from(moduleSlots.children).map((slot, i) => {
+			const moduleName = slot.dataset.module;
+			if (!moduleName) return null;
 
-    function saveSkill() {
-        const modules = Array.from(moduleSlots.children)
-            .map(slot => slot.dataset.module)
-            .filter(Boolean);
-        const restrictions = restrictionSelects.map(s => s.value);
+			const moduleObj = (index > -1) ? activeCharacter.skills[index].modules[i] : currentSkill.modules[i];
 
-        Object.assign(currentSkill, {
-            name: nameInput.value,
-            stats: Array.from(statContainer.querySelectorAll("select")).map(s => s.value),
-            restrictions,
-            description: descriptionInput.value,
-            modules,
-            cost: calculateSkillCost(modules, restrictions, currentSkill.moduleRestrictions)
-        });
+			return {
+				name: moduleName,
+				restriction: moduleObj?.restriction || null
+			};
+		}).filter(Boolean);
 
-        if (!activeCharacter.skills) activeCharacter.skills = [];
-        if (isNew) {
-            activeCharacter.skills.push(currentSkill);
-            index = activeCharacter.skills.length - 1;
-            isNew = false;
-        } else {
-            activeCharacter.skills[index] = currentSkill;
-        }
+		const restrictions = restrictionSelects.map(s => s.value);
 
-        saveCharacterData();
-        updateSPDisplay();
-    }
+		Object.assign(currentSkill, {
+			name: nameInput.value,
+			stats: Array.from(statContainer.querySelectorAll("select")).map(s => s.value),
+			restrictions,
+			description: descriptionInput.value,
+			modules,
+			cost: calculateSkillCost(modules, restrictions)
+		});
+
+		if (!activeCharacter.skills) activeCharacter.skills = [];
+		if (isNew) {
+			activeCharacter.skills.push(currentSkill);
+			index = activeCharacter.skills.length - 1;
+			isNew = false;
+		} else {
+			activeCharacter.skills[index] = currentSkill;
+		}
+
+		saveCharacterData();
+		updateSPDisplay();
+	}
 
 	saveButton.addEventListener("click", () => {
-		saveSkill();      // save the skill first
-		renderSkills();   // then re-render the skills list
+		saveSkill();
+		renderSkills();
 	});
 
-    form.appendChild(saveButton);
+	form.appendChild(saveButton);
 
-    return form;
+	return form;
 }
 
 // Edit skill
@@ -1859,7 +1882,6 @@ function editSkill(index) {
 	}
 }
 
-// Update module selection to only show learned modules
 function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 	// Create the module selector
 	const moduleSelector = document.createElement("div");
@@ -1918,14 +1940,45 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 								moduleOption.className = "module-option";
 								moduleOption.textContent = module.emote;
 								moduleOption.title = `${module.name} (Tier ${tier})`;
-
 								moduleOption.addEventListener("click", () => {
-										slot.textContent = module.emote;
-										slot.dataset.module = module.name;
-										slot.dataset.category = module.category;
-										slot.classList.remove("empty");
-										selector.remove();
-										saveSkill(skill, index);
+									slot.textContent = module.emote;
+									slot.dataset.module = module.name;
+									slot.dataset.category = module.category;
+									slot.classList.remove("empty");
+
+									// Update / create restriction icon
+									let restrictionIcon = slot.querySelector(".restriction-icon");
+									if (!restrictionIcon) {
+										restrictionIcon = document.createElement("div");
+										restrictionIcon.className = "restriction-icon";
+										restrictionIcon.textContent = "R";
+										slot.appendChild(restrictionIcon);
+									}
+
+									// Reset default state
+									restrictionIcon.style.opacity = 0;
+
+									// Reattach tooltip + click handling
+									restrictionIcon.onmouseenter = () => {
+										const moduleName = module.name;
+										const moduleDef = moduleLibrary.find(m => m.name === moduleName);
+										if (!moduleDef) return;
+										const restriction = null; // new modules start restriction-less
+										showTooltip(moduleDef, restriction, restrictionIcon);
+									};
+									restrictionIcon.onmouseleave = hideTooltip;
+
+									restrictionIcon.onclick = (e) => {
+										e.stopPropagation();
+										showGenericModuleRestrictions(restrictionIcon, skill, index);
+									};
+
+									// Fade in/out behavior
+									slot.onmouseenter = () => restrictionIcon.style.opacity = 1;
+									slot.onmouseleave = () => restrictionIcon.style.opacity = 0;
+
+									selector.remove();
+									saveSkill(skill, index);
 								});
 								selector.appendChild(moduleOption);
 						});
@@ -1981,97 +2034,87 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 	
 }
 
-function showGenericModuleRestrictions(icon, skill, moduleName) {
-    if (!skill) return;
+function showGenericModuleRestrictions(icon, skill, moduleIndex) {
+	if (!skill || !skill.modules) return;
 
-    // Remove any existing popup for this module
-    document.querySelectorAll(`.restriction-popup[data-module="${moduleName}"]`).forEach(p => p.remove());
+	// Remove any existing popup for this module
+	document.querySelectorAll(`.restriction-popup[data-module="${moduleIndex}"]`).forEach(p => p.remove());
 
-    if (!skill.moduleRestrictions) skill.moduleRestrictions = {};
+	const moduleObj = skill.modules[moduleIndex];
+	const currentRestriction = moduleObj?.restriction || null;
 
-    const currentRestriction = skill.moduleRestrictions[moduleName] || null;
+	const restrictions = [
+		{ name: "None", type: "" },
+		{ name: "Maestria", type: "Maestria" },
+		{ name: "+1 PE coste de activación", type: "-1 SP" },
+		{ name: "Requiere un objeto específico como material", type: "-1 SP" },
+		{ name: "Solo afecta a objetivos que hayan recibido daño", type: "-1 SP" },
+		{ name: "El área debe estar centrada en el usuario", type: "-1 SP" },
+		{ name: "No afecta a objetos inanimados", type: "-1 SP" },
+		{ name: "Solo afecta a objetos o estructuras inanimadas", type: "-2 SP" },
+		{ name: "Requiere un componente menor, que es consumido", type: "-2 SP" },
+		{ name: "Este efecto termina si el objetivo recibe daño de un elemento (escogido durante creación)", type: "-2 SP" },
+		{ name: "Mientras este módulo está activo, tu apariencia cambia a una obviamente mágica", type: "-2 SP" },
+		{ name: "El objetivo debe estar afectado por otro módulo especificado en creación", type: "-3 SP" },
+		{ name: "Solo afecta a un objetivo si te ha hecho daño en esta escena", type: "-3 SP" },
+		{ name: "Este efecto termina cuando el objetivo recibe daño", type: "-3 SP" }
+	];
 
-    const restrictions = [
-        { name: "None", type: "" },
-		{ name: "Maestria", type:"Maestria" },
-        { name: "+1 PE coste de activación", type: "-1 SP" },
-        { name: "Requiere un objeto específico como material", type:"-1 SP" },
-        { name: "Solo afecta a objetivos que hayan recibido daño", type:"-1 SP" },
-        { name: "El área debe estar centrada en el usuario", type: "-1 SP" },
-        { name: "No afecta a objetos inanimados", type: "-1 SP" },
-        { name: "Solo afecta a objetos o estructuras inanimadas", type: "-2 SP" },
-        { name: "Requiere un componente menor, que es consumido", type:"-2 SP" },
-        { name: "Este efecto termina si el objetivo recibe daño de un elemento (escogido durante creación)", type:"-2 SP" },
-        { name: "Mientras este módulo está activo, tu apariencia cambia a una obviamente mágica", type:"-2 SP" },
-        { name: "El objetivo debe estar afectado por otro módulo especificado en creación", type:"-3 SP" },
-        { name: "Solo afecta a un objetivo si te ha hecho daño en esta escena", type:"-3 SP" },
-        { name: "Este efecto termina cuando el objetivo recibe daño", type:"-3 SP" }
-    ];
+	const popup = document.createElement("div");
+	popup.className = "restriction-popup";
+	popup.dataset.module = moduleIndex;
+	popup.innerHTML = "<strong>Select Restriction:</strong><br>";
 
-    const popup = document.createElement("div");
-    popup.className = "restriction-popup";
-    popup.dataset.module = moduleName; // track popup per module
-    popup.innerHTML = "<strong>Select Restriction:</strong><br>";
+	restrictions.forEach(r => {
+		const label = document.createElement("label");
+		label.className = "restriction-option";
 
-    restrictions.forEach(r => {
-        const label = document.createElement("label");
-        label.className = "restriction-option";
+		const input = document.createElement("input");
+		input.type = "radio";
+		input.name = `restriction-${moduleIndex}`;
+		input.value = r.name;
+		input.checked = currentRestriction?.name === r.name;
 
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = `restriction-${moduleName}`;
-        input.value = r.name;
-        input.checked = currentRestriction?.name === r.name;
+		input.addEventListener("change", () => {
+			if (r.name.toLowerCase() === "none") {
+				delete moduleObj.restriction;
+				icon.title = "";
+				icon.dataset.restriction = "";
+			} else {
+				moduleObj.restriction = { name: r.name, type: r.type };
+				icon.title = `${r.name} (${r.type})`;
+				icon.dataset.restriction = JSON.stringify(moduleObj.restriction);
+			}
 
-        input.addEventListener("change", () => {
-            if (!skill.moduleRestrictions) skill.moduleRestrictions = {};
+			skill.cost = calculateSkillCost(skill.modules || [], skill.restrictions || []);
+			saveCharacterData();
+		});
 
-            if (r.name.toLowerCase() === "none") {
-                delete skill.moduleRestrictions[moduleName];
-                icon.title = "";
-            } else {
-                skill.moduleRestrictions[moduleName] = r;
-                icon.title = `${r.name} (${r.type})`;
-            }
+		label.appendChild(input);
+		const labelText = r.name.toLowerCase() === "none" ? "None" : `${r.name} (${r.type})`;
+		label.appendChild(document.createTextNode(labelText));
+		popup.appendChild(label);
+		popup.appendChild(document.createElement("br"));
+	});
 
-            const newCost = calculateSkillCost(
-                skill.modules || [],
-                skill.restrictions || [],
-                skill.moduleRestrictions
-            );
-            skill.cost = newCost;
+	document.body.appendChild(popup);
 
-            saveCharacterData();
-        });
+	const rect = icon.getBoundingClientRect();
+	popup.style.position = "absolute";
+	popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+	popup.style.left = `${rect.left + window.scrollX}px`;
+	popup.style.zIndex = "1000";
 
-        label.appendChild(input);
-
-        const labelText = r.name.toLowerCase() === "none"
-            ? "None"
-            : `${r.name} (${r.type})`;
-
-        label.appendChild(document.createTextNode(labelText));
-        popup.appendChild(label);
-        popup.appendChild(document.createElement("br"));
-    });
-
-    document.body.appendChild(popup);
-
-    const rect = icon.getBoundingClientRect();
-    popup.style.position = "absolute";
-    popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    popup.style.left = `${rect.left + window.scrollX}px`;
-    popup.style.zIndex = "1000";
-
-    // Close popup on outside click
-    const clickHandler = e => {
-        if (!popup.contains(e.target)) {
-            popup.remove();
-            document.removeEventListener("click", clickHandler);
-        }
-    };
-    document.addEventListener("click", clickHandler);
+	// Close popup on outside click
+	const clickHandler = e => {
+		if (!popup.contains(e.target)) {
+			popup.remove();
+			document.removeEventListener("click", clickHandler);
+		}
+	};
+	document.addEventListener("click", clickHandler);
 }
+
 
 
 // Delete skill
@@ -2085,171 +2128,176 @@ function deleteSkill(index) {
 
 //Render Skill list
 function renderSkills() {
-		const skillsList = document.getElementById("skillsList");
-		skillsList.innerHTML = "";
+	const skillsList = document.getElementById("skillsList");
+	skillsList.innerHTML = "";
 
-		if (!activeCharacter.skills || activeCharacter.skills.length === 0) {
-				skillsList.innerHTML = "<div class='no-skills'>No skills learned yet</div>";
-				return;
+	if (!activeCharacter.skills || activeCharacter.skills.length === 0) {
+		skillsList.innerHTML = "<div class='no-skills'>No skills learned yet</div>";
+		return;
+	}
+
+	const restrictionPerks = activeCharacter.perks
+		.filter(perk => perk.type === "restriction")
+		.map(perk => perk.name);
+
+	activeCharacter.skills.forEach((skill, index) => {
+		if (!skill.stats) skill.stats = ["mig", "dex"];
+
+		const skillDiv = document.createElement("div");
+		skillDiv.className = "skill";
+		skillDiv.id = "skill-" + index;
+
+		const actionsDiv = document.createElement("div");
+		actionsDiv.className = "skill-actions";
+
+		const editButton = document.createElement("button");
+		editButton.innerHTML = "✏️";
+		editButton.onclick = () => editSkill(index);
+
+		const deleteButton = document.createElement("button");
+		deleteButton.innerHTML = "🗑️";
+		deleteButton.onclick = () => deleteSkill(index);
+
+		actionsDiv.appendChild(editButton);
+		actionsDiv.appendChild(deleteButton);
+
+		const contentDiv = document.createElement("div");
+		contentDiv.className = "skill-content";
+
+		const headerDiv = document.createElement("div");
+		headerDiv.className = "skill-header";
+
+		const nameDiv = document.createElement("div");
+		nameDiv.className = "skill-name";
+		nameDiv.textContent = skill.name;
+
+		const costDiv = document.createElement("div");
+		costDiv.className = "skill-cost";
+		const liveCost = calculateSkillCost(
+			skill.modules || [],
+			skill.restrictions || []
+		);
+		costDiv.textContent = `Cost: ${liveCost} SE`;
+
+		headerDiv.appendChild(nameDiv);
+
+		const statsDiv = document.createElement("div");
+		statsDiv.className = "skill-stats";
+
+		const stat1 = skill.stats[0] || "mig";
+		const stat2 = skill.stats[1] || "dex";
+		const moduleMod = (skill.modules.filter(m => m.name === "Apuntar").length * 2);
+		const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
+		const totalATK = baseAtk + moduleMod;
+
+		statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
+							`${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
+
+		const restrictions = skill.restrictions?.length > 0 ? skill.restrictions : [];
+		if (restrictions.length > 0) {
+			const restrictionDiv = document.createElement("div");
+			restrictionDiv.className = "skill-restriction";
+			restrictionDiv.innerHTML = "Restrictions: ";
+			restrictions.forEach((restriction, i) => {
+				const span = document.createElement("span");
+				span.className = "restriction-item";
+				span.textContent = restriction;
+				span.addEventListener("mouseenter", (e) => showRestrictionTooltip(restriction, e.target));
+				span.addEventListener("mouseleave", () => {});
+				if (i > 0) restrictionDiv.append(", ");
+				restrictionDiv.appendChild(span);
+			});
+			headerDiv.appendChild(restrictionDiv);
 		}
 
-		const restrictionPerks = activeCharacter.perks
-				.filter(perk => perk.type === "restriction")
-				.map(perk => perk.name);
+		headerDiv.appendChild(costDiv);
 
-		activeCharacter.skills.forEach((skill, index) => {
-				if (!skill.stats) skill.stats = ["mig", "dex"];
+		const descriptionDiv = document.createElement("div");
+		descriptionDiv.className = "skill-description";
+		descriptionDiv.textContent = skill.description;
 
-				const skillDiv = document.createElement("div");
-				skillDiv.className = "skill";
-				skillDiv.id = "skill-" + index;
+		const modulesDiv = document.createElement("div");
+		modulesDiv.className = "skill-modules";
 
-				const actionsDiv = document.createElement("div");
-				actionsDiv.className = "skill-actions";
+		const totalSlots = getTotalSlots(skill);
+		const isEditMode = skillsList.classList.contains("editing");
 
-				const editButton = document.createElement("button");
-				editButton.innerHTML = "✏️";
-				editButton.onclick = () => editSkill(index);
+		for (let i = 0; i < totalSlots; i++) {
+			const moduleSlot = document.createElement("div");
+			moduleSlot.className = "module-slot";
 
-				const deleteButton = document.createElement("button");
-				deleteButton.innerHTML = "🗑️";
-				deleteButton.onclick = () => deleteSkill(index);
+			if (skill.modules[i]) {
+				const module = moduleLibrary.find(m => m.name === skill.modules[i].name);
+				moduleSlot.textContent = module ? module.emote : "?";
+				moduleSlot.dataset.module = skill.modules[i].name;
+				moduleSlot.dataset.category = module ? module.category : "";
+				moduleSlot.title = skill.modules[i].name;
 
-				actionsDiv.appendChild(editButton);
-				actionsDiv.appendChild(deleteButton);
+				const baseRestrictions = getModuleRestrictions(skill.modules[i].name); // <-- keep this
+				const skillRestriction = skill.modules[i].restriction; // <-- direct assignment
 
-				const contentDiv = document.createElement("div");
-				contentDiv.className = "skill-content";
-
-				const headerDiv = document.createElement("div");
-				headerDiv.className = "skill-header";
-
-				const nameDiv = document.createElement("div");
-				nameDiv.className = "skill-name";
-				nameDiv.textContent = skill.name;
-
-				const costDiv = document.createElement("div");
-				costDiv.className = "skill-cost";
-				const liveCost = calculateSkillCost(
-					skill.modules || [],
-					skill.restrictions || [],
-					skill.moduleRestrictions || {}
-				);
-				costDiv.textContent = `Cost: ${liveCost} SE`;
-
-				headerDiv.appendChild(nameDiv);
-
-				const statsDiv = document.createElement("div");
-				statsDiv.className = "skill-stats";
-
-				const stat1 = skill.stats[0] || "mig";
-				const stat2 = skill.stats[1] || "dex";
-				const moduleMod = (skill.modules.filter(m => m === "Apuntar").length * 2);
-				const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
-				const totalATK = baseAtk + moduleMod;
-
-				statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
-															 `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
-
-				const restrictions = skill.restrictions?.length > 0 ? skill.restrictions : [];
-				if (restrictions.length > 0) {
-						const restrictionDiv = document.createElement("div");
-						restrictionDiv.className = "skill-restriction";
-						restrictionDiv.innerHTML = "Restrictions: ";
-						restrictions.forEach((restriction, i) => {
-								const span = document.createElement("span");
-								span.className = "restriction-item";
-								span.textContent = restriction;
-								span.addEventListener("mouseenter", (e) => showRestrictionTooltip(restriction, e.target));
-						span.addEventListener("mouseleave", () => {});
-			if (i > 0) restrictionDiv.append(", ");
-								restrictionDiv.appendChild(span);
-						});
-						headerDiv.appendChild(restrictionDiv);
+				if (baseRestrictions.length > 0 || skillRestriction) {
+					const restrictionIcon = document.createElement("div");
+					restrictionIcon.className = "restriction-icon";
+					restrictionIcon.textContent = "R";
+					restrictionIcon.title = skillRestriction || "None";
+					restrictionIcon.addEventListener("click", (e) => {
+						e.stopPropagation();
+						showGenericModuleRestrictions(restrictionIcon, skill, i);
+					});
+					moduleSlot.appendChild(restrictionIcon);
 				}
 
-				headerDiv.appendChild(costDiv);
+			} else {
+				moduleSlot.textContent = "+";
+				moduleSlot.classList.add("empty");
+			}
 
-				const descriptionDiv = document.createElement("div");
-				descriptionDiv.className = "skill-description";
-				descriptionDiv.textContent = skill.description;
+			if (!isEditMode) {
+				moduleSlot.addEventListener("mouseenter", handleModuleHover);
+				moduleSlot.addEventListener("mouseleave", handleModuleUnhover);
+			}
 
-				const modulesDiv = document.createElement("div");
-				modulesDiv.className = "skill-modules";
-				if (!skill.moduleRestrictions) skill.moduleRestrictions = {};
+			modulesDiv.appendChild(moduleSlot);
+		}
 
-				const totalSlots = getTotalSlots(skill);
-				const isEditMode = document.getElementById("skillsList").classList.contains("editing");
 
-				for (let i = 0; i < totalSlots; i++) {
-						const moduleSlot = document.createElement("div");
-						moduleSlot.className = "module-slot";
+		contentDiv.appendChild(headerDiv);
+		contentDiv.appendChild(statsDiv);
+		contentDiv.appendChild(descriptionDiv);
+		contentDiv.appendChild(modulesDiv);
 
-						if (skill.modules[i]) {
-								const module = moduleLibrary.find(m => m.name === skill.modules[i]);
-								moduleSlot.textContent = module ? module.emote : "?";
-								moduleSlot.dataset.module = skill.modules[i];
-								moduleSlot.dataset.category = module ? module.category : "";
-								moduleSlot.title = skill.modules[i];
-
-								const baseRestrictions = getModuleRestrictions(skill.modules[i]);
-								const skillRestriction = skill.moduleRestrictions[skill.modules[i]];
-
-								if (baseRestrictions.length > 0 || skillRestriction) {
-										const restrictionIcon = document.createElement("div");
-										restrictionIcon.className = "restriction-icon";
-										restrictionIcon.textContent = "R";
-										restrictionIcon.title = `Active: ${skillRestriction || "None"}\nAvailable Restrictions:\n${baseRestrictions.join("\n")}`;
-										restrictionIcon.addEventListener("click", (e) => {
-												e.stopPropagation();
-												showRestrictionPopup(restrictionIcon, skill.modules[i], moduleSlot);
-										});
-										moduleSlot.appendChild(restrictionIcon);
-								}
-						} else {
-								moduleSlot.textContent = "+";
-								moduleSlot.classList.add("empty");
-						}
-
-						if (!isEditMode) {
-								moduleSlot.addEventListener("mouseenter", handleModuleHover);
-								moduleSlot.addEventListener("mouseleave", handleModuleUnhover);
-						}
-
-						modulesDiv.appendChild(moduleSlot);
-				}
-
-				contentDiv.appendChild(headerDiv);
-				contentDiv.appendChild(statsDiv);
-				contentDiv.appendChild(descriptionDiv);
-				contentDiv.appendChild(modulesDiv);
-
-				skillDiv.appendChild(actionsDiv);
-				skillDiv.appendChild(contentDiv);
-				skillsList.appendChild(skillDiv);
-		});
+		skillDiv.appendChild(actionsDiv);
+		skillDiv.appendChild(contentDiv);
+		skillsList.appendChild(skillDiv);
+	});
+	renderSkillsSummary();
 }
 
+//Modules on Skill section interactions
 function handleModuleHover(e) {
-
 	const moduleSlot = e.target;
 	const moduleName = moduleSlot.dataset.module;
 
 	if (!moduleName) return;
 
-	// Get the skill-specific restriction if it exists
 	const skillElement = moduleSlot.closest(".skill");
 	const skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
-	const skillRestriction = activeCharacter.skills[skillIndex]?.moduleRestrictions?.[moduleName];
 
-	// Get base module restrictions
+	const allSlots = Array.from(moduleSlot.parentElement.children);
+	const moduleIndex = allSlots.indexOf(moduleSlot);
+
+	const skill = activeCharacter.skills[skillIndex];
+	const skillModule = skill?.modules[moduleIndex];
+	const skillRestriction = skillModule?.restriction;
+
 	const module = moduleLibrary.find(m => m.name === moduleName);
+	if (!module) return; 
+
 	const baseRestrictions = getModuleRestrictions(moduleName);
 
-	// Show tooltip with active restriction
 	let restrictionText = "None";
 	if (skillRestriction) {
-		// If it’s an object, show its fields
 		if (typeof skillRestriction === "object") {
 			restrictionText = `${skillRestriction.name} (${skillRestriction.type}) (selected)`;
 		} else {
@@ -2261,28 +2309,23 @@ function handleModuleHover(e) {
 
 	showTooltip(module, restrictionText, moduleSlot);
 
-	// Highlight for "Rango" category
 	if (module.category === "Rango") {
-		const allSlots = Array.from(moduleSlot.parentElement.children);
-		const currentIndex = allSlots.indexOf(moduleSlot);
-
 		let endIndex = allSlots.findIndex((slot, index) =>
-			index > currentIndex &&
+			index > moduleIndex &&
 			(slot.dataset.category === "Rango" || slot.dataset.category === "Area")
 		);
 
 		endIndex = endIndex === -1 ? allSlots.length : endIndex + 1;
-
-		allSlots.slice(currentIndex, endIndex).forEach(slot => {
+		allSlots.slice(moduleIndex, endIndex).forEach(slot => {
 			slot.classList.add("highlighted");
 		});
 	}
-		if (e.target.classList.contains("restriction-item")) {
-				const restriction = e.target.textContent;
-				showRestrictionTooltip(restriction, e.target);
-				return;
-		}
 
+	if (e.target.classList.contains("restriction-item")) {
+		const restriction = e.target.textContent;
+		showRestrictionTooltip(restriction, e.target);
+		return;
+	}
 }
 
 function handleModuleUnhover(e) {
@@ -2294,7 +2337,135 @@ function handleModuleUnhover(e) {
 		slot.classList.remove("highlighted");
 	});
 }	
-			
+
+function handleDragStart(e) {
+    const moduleSlot = e.target;
+    if (!moduleSlot.dataset.module) {
+        e.preventDefault();
+        return;
+    }
+    
+    draggedModule = moduleSlot;
+    moduleSlot.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', moduleSlot.dataset.module);
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+    const moduleSlot = e.target;
+    moduleSlot.classList.remove('dragging');
+    draggedModule = null;
+    
+    Array.from(moduleSlot.parentElement.children).forEach(slot => {
+        slot.classList.remove('drop-target');
+    });
+    
+    const restrictionIcon = moduleSlot.querySelector('.restriction-icon');
+    if (restrictionIcon && !moduleSlot.dataset.module) {
+        restrictionIcon.style.opacity = 0;
+    }
+}
+
+// Update the handleDrop function to properly handle restriction icons
+function handleDrop(e) {
+    e.preventDefault();
+    const target = e.target;
+    if (target.classList.contains('module-slot')) {
+        target.classList.remove('drop-target');
+        
+        // Store all elements and data from both slots
+        const draggedContent = draggedModule.innerHTML;
+        const draggedModuleData = draggedModule.dataset.module;
+        const draggedCategory = draggedModule.dataset.category;
+        
+        const targetContent = target.innerHTML;
+        const targetModuleData = target.dataset.module;
+        const targetCategory = target.dataset.category;
+        
+        // Swap everything including HTML content
+        draggedModule.innerHTML = targetContent;
+        draggedModule.dataset.module = targetModuleData;
+        draggedModule.dataset.category = targetCategory;
+        
+        target.innerHTML = draggedContent;
+        target.dataset.module = draggedModuleData;
+        target.dataset.category = draggedCategory;
+        
+        // Update empty class states
+        draggedModule.classList.toggle('empty', !draggedModule.dataset.module);
+        target.classList.toggle('empty', !target.dataset.module);
+        
+        // Reattach event listeners to the restriction icons in both slots
+        reattachRestrictionIconListeners(draggedModule);
+        reattachRestrictionIconListeners(target);
+    }
+}
+
+// Add this helper function to reattach event listeners to restriction icons
+function reattachRestrictionIconListeners(slot) {
+    const restrictionIcon = slot.querySelector('.restriction-icon');
+    if (!restrictionIcon) return;
+    
+    // Get the skill and module index
+    const skillElement = slot.closest('.skill-form') || slot.closest('.skill');
+    if (!skillElement) return;
+    
+    let skillIndex;
+    if (skillElement.id.startsWith('skill-')) {
+        skillIndex = parseInt(skillElement.id.replace('skill-', ''));
+    } else {
+        // For forms, we need to find the index differently
+        const forms = document.querySelectorAll('.skill-form');
+        skillIndex = Array.from(forms).indexOf(skillElement);
+    }
+    
+    const allSlots = Array.from(slot.parentElement.children);
+    const moduleIndex = allSlots.indexOf(slot);
+    
+    const skill = activeCharacter.skills[skillIndex];
+    if (!skill || !skill.modules) return;
+    
+    // Reattach tooltip and click events
+    restrictionIcon.addEventListener("mouseenter", () => {
+        const moduleName = slot.dataset.module;
+        const module = moduleLibrary.find(m => m.name === moduleName);
+        if (!module) return;
+        
+        const moduleObj = skill.modules[moduleIndex];
+        const restriction = moduleObj?.restriction || null;
+        showTooltip(module, restriction, restrictionIcon);
+    });
+    
+    restrictionIcon.addEventListener("mouseleave", hideTooltip);
+    
+    restrictionIcon.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showGenericModuleRestrictions(restrictionIcon, skill, moduleIndex);
+    });
+    
+    // Reattach hover behavior for the slot
+    slot.addEventListener("mouseenter", () => {
+        if (restrictionIcon && !restrictionIcon.style.opacity) {
+            restrictionIcon.style.opacity = 1;
+        }
+    });
+    
+    slot.addEventListener("mouseleave", () => {
+        if (restrictionIcon && restrictionIcon.style.opacity === "1") {
+            restrictionIcon.style.opacity = 0;
+        }
+    });
+}
+
+function handleDragOver(e) {
+	e.preventDefault();
+	const target = e.target;
+	if (target.classList.contains('module-slot')) {
+		target.classList.add('drop-target');
+		e.dataTransfer.dropEffect = 'move';
+	}
+}
+
 function getTotalSlots(skill) {
 		let slots = 5; // Base slots
 
@@ -2324,132 +2495,47 @@ function getTotalSlots(skill) {
 }
 
 // Calculate skill cost
-function calculateSkillCost(modules, restrictions = [], moduleRestrictions = {}) {
-    let cost = modules.reduce((total, moduleName) => {
+function calculateSkillCost(modules, skillRestrictions = []) {
+    let cost = modules.reduce((total, moduleObj) => {
+        // Find which tier this module belongs to
         const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
-            (activeCharacter.modules[tk] || []).some(m => m.name === moduleName)
+            (activeCharacter.modules[tk] || []).some(m => m.name === moduleObj.name)
         );
         const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
         return total + tierNum;
     }, 0);
 
-    // Skill-wide restriction multiplier
-    if (restrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
+    // Apply skill-level restrictions
+    if (skillRestrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
 
-    // Per-module discounts
-    modules.forEach(moduleName => {
-        const r = moduleRestrictions?.[moduleName];
-        if (!r) return;
-        const type = (typeof r === "object" && r.type) ? r.type : r;
-
-        if (typeof type === "string") {
-            if (type.includes("-1 SP")) cost -= 1;
-            else if (type.includes("-2 SP")) cost -= 2;
-            else if (type.includes("-3 SP")) cost -= 3;
-            else if (type.includes("Maestria")) {
-                const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
-                    (activeCharacter.modules[tk] || []).some(m => m.name === moduleName)
-                );
-                const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
-                cost -= tierNum;
-            }
+    // Apply module-specific restrictions
+    modules.forEach(moduleObj => {
+        if (!moduleObj.restriction) return;
+        
+        // Handle both string and object restriction formats
+        let restrictionType;
+        if (typeof moduleObj.restriction === 'string') {
+            restrictionType = moduleObj.restriction;
+        } else if (typeof moduleObj.restriction === 'object') {
+            restrictionType = moduleObj.restriction.type;
+        }
+        
+        if (!restrictionType) return;
+        
+        // Apply discounts based on restriction type
+        if (restrictionType.includes("-1 SP")) cost -= 1;
+        else if (restrictionType.includes("-2 SP")) cost -= 2;
+        else if (restrictionType.includes("-3 SP")) cost -= 3;
+        else if (restrictionType.includes("Maestria")) {
+            const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
+                (activeCharacter.modules[tk] || []).some(m => m.name === moduleObj.name)
+            );
+            const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
+            cost -= tierNum;
         }
     });
 
     return Math.max(cost, 0);
-}
-
-
-
-function handleDragStart(e) {
-	const moduleSlot = e.target;
-	if (!moduleSlot.dataset.module) {
-		e.preventDefault();
-		return;
-	}
-	
-	draggedModule = moduleSlot;
-	moduleSlot.classList.add('dragging');
-	e.dataTransfer.setData('text/plain', moduleSlot.dataset.module);
-	e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragOver(e) {
-	e.preventDefault();
-	const target = e.target;
-	if (target.classList.contains('module-slot')) {
-		target.classList.add('drop-target');
-		e.dataTransfer.dropEffect = 'move';
-	}
-}
-
-function handleDragEnd(e) {
-	const moduleSlot = e.target;
-	moduleSlot.classList.remove('dragging');
-	draggedModule = null;
-	
-	// Remove drop-target class from all slots
-	Array.from(moduleSlot.parentElement.children).forEach(slot => {
-		slot.classList.remove('drop-target');
-	});
-}
-	
-function getModuleRestrictions(moduleName) {
-	return Object.values(activeCharacter.modules)
-		.flat()
-		.filter(m => m.name === moduleName)
-		.flatMap(m => m.restrictions)
-		.filter(r => r)
-		.reduce((acc, curr) => {
-			if (!acc.includes(curr)) acc.push(curr);
-			return acc;
-		}, []);
-}
-
-function handleDrop(e) {
-	e.preventDefault();
-	const target = e.target;
-	if (target.classList.contains('module-slot')) {
-		target.classList.remove('drop-target');
-		
-		// Swap module data
-		const tempModule = draggedModule.dataset.module;
-		const tempCategory = draggedModule.dataset.category;
-		
-		draggedModule.dataset.module = target.dataset.module;
-		draggedModule.dataset.category = target.dataset.category;
-		draggedModule.textContent = target.textContent;
-		
-		target.dataset.module = tempModule;
-		target.dataset.category = tempCategory;
-		target.textContent = tempModule ? moduleLibrary.find(m => m.name === tempModule).emote || "?" : "+";
-		
-		// Update empty state
-		draggedModule.classList.toggle('empty', !draggedModule.dataset.module);
-		target.classList.toggle('empty', !target.dataset.module);
-	}
-}
-		
-function selectPerk(perk, coreName, tier) {
-	if (perk.type === "restriction") {
-		// Add the restriction to the character's available skill restrictions
-		if (!activeCharacter.skillRestrictions) {
-			activeCharacter.skillRestrictions = [];
-		}
-		activeCharacter.skillRestrictions.push(perk.name);
-	} else {
-		// Add the perk to the character's perk list
-		if (!activeCharacter.perks) {
-			activeCharacter.perks = [];
-		}
-		activeCharacter.perks.push({
-			...perk,
-			catalog: coreName,
-			tier: tier
-		});
-	}
-	saveCharacterData();
-	updatePerkAvailability(coreName, tier);
 }
 
 function showRestrictionTooltip(restrictionName, element) {
@@ -2504,97 +2590,19 @@ function showRestrictionTooltip(restrictionName, element) {
 				element.addEventListener("mouseleave", () => {
 						tooltip.remove();
 				}, { once: true });
-	 
+	
 }
 
-function showRestrictionPopup(icon, moduleName, moduleSlot) {
-		var restrictions = getModuleRestrictions(moduleName);
-		if (restrictions.length < 2) return;
-
-		// Find the skill index from the closest skill element
-		var skillElement = moduleSlot.closest(".skill");
-		var skillIndex = Array.from(document.querySelectorAll(".skill")).indexOf(skillElement);
-
-		var popup = document.createElement("div");
-		popup.className = "restriction-popup";
-		popup.innerHTML = "<strong>Select Restriction:</strong>";
-
-		restrictions.forEach(function (restriction, index) {
-				var wrapper = document.createElement("div");
-				wrapper.className = "restriction-option";
-
-				var input = document.createElement("input");
-				input.type = "radio";
-				input.name = "restriction-" + moduleName + "-" + skillIndex;
-				input.id = "restrict-" + moduleName + "-" + skillIndex + "-" + index;
-				input.value = restriction;
-
-				// Check if this restriction is the currently selected one
-				var currentRestriction = activeCharacter.skills[skillIndex].moduleRestrictions?.[moduleName];
-				input.checked = currentRestriction === restriction;
-
-				input.addEventListener("change", function () {
-						if (!activeCharacter.skills[skillIndex].moduleRestrictions) {
-								activeCharacter.skills[skillIndex].moduleRestrictions = {};
-						}
-						activeCharacter.skills[skillIndex].moduleRestrictions[moduleName] = restriction;
-
-						// Update the icon tooltip immediately
-						icon.title = "Restriction: " + restriction;
-
-						// Update the module's stored restrictions
-						var module = activeCharacter.modules[moduleSlot.dataset.tier]?.find(function (m) {
-								return m.name === moduleName && m.catalogs.includes(activeCatalog);
-						});
-
-						if (module) {
-								module.activeRestriction = restriction;
-						}
-
-						saveCharacterData();
-						renderSkills();
-				});
-
-				var label = document.createElement("label");
-				label.htmlFor = input.id;
-				label.textContent = restriction;
-
-				wrapper.appendChild(input);
-				wrapper.appendChild(label);
-				popup.appendChild(wrapper);
-		});
-
-		document.body.appendChild(popup);
-
-		// Get dimensions and position with boundary checks
-		var rect = icon.getBoundingClientRect();
-		var popupWidth = popup.offsetWidth;
-		var popupHeight = popup.offsetHeight;
-		
-		var top = rect.bottom + window.scrollY;
-		var left = rect.left + window.scrollX;
-
-		// Adjust positioning to prevent overflow
-		if (left + popupWidth > window.innerWidth) {
-				left = window.innerWidth - popupWidth - 10;
-		}
-		if (top + popupHeight > window.innerHeight) {
-				top = rect.top - popupHeight - 10;
-		}
-
-		popup.style.position = "absolute";
-		popup.style.top = top + "px";
-		popup.style.left = left + "px";
-		popup.style.zIndex = "1000";
-
-		// Close popup on outside click
-		var clickHandler = function (e) {
-				if (!popup.contains(e.target)) {
-						popup.remove();
-						document.removeEventListener("click", clickHandler);
-				}
-		};
-		document.addEventListener("click", clickHandler);
+function getModuleRestrictions(moduleName) {
+	return Object.values(activeCharacter.modules)
+		.flat()
+		.filter(m => m.name === moduleName)
+		.flatMap(m => m.restrictions)
+		.filter(r => r)
+		.reduce((acc, curr) => {
+			if (!acc.includes(curr)) acc.push(curr);
+			return acc;
+		}, []);
 }
 
 
@@ -2690,23 +2698,55 @@ function renderSkillsSummary() {
         statsDiv.className = "skill-stats";
         const stat1 = skill.stats[0] || "mig";
         const stat2 = skill.stats[1] || "dex";
-        const moduleMod = (skill.modules.filter(m => m === "Apuntar").length * 2);
+        
+        // Count "Apuntar" modules by checking the name property
+        const moduleMod = (skill.modules.filter(m => m.name === "Apuntar").length * 2);
         const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
         const totalATK = baseAtk + moduleMod;
+        
         statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
-                               `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
+                            `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
 
-        // Modules
-        const modulesDiv = document.createElement("div");
-        modulesDiv.className = "skill-modules";
-        skill.modules.forEach(m => {
-            const module = moduleLibrary.find(mod => mod.name === m);
-            const span = document.createElement("span");
-            span.className = "module-slot";
-            span.textContent = module ? module.emote : "?";
-            modulesDiv.appendChild(span);
-        });
-
+		// Modules
+		const modulesDiv = document.createElement("div");
+		modulesDiv.className = "skill-modules";
+		skill.modules.forEach(moduleObj => {
+			const module = moduleLibrary.find(mod => mod.name === moduleObj.name);
+			const span = document.createElement("span");
+			span.className = "module-slot";
+			span.textContent = module ? module.emote : "?";
+			
+			// Add restriction indicator if present (using the same style as elsewhere)
+			if (moduleObj.restriction) {
+				const restrictionIcon = document.createElement("div");
+				restrictionIcon.className = "restriction-icon";
+				restrictionIcon.textContent = "R";
+				
+				// Set tooltip text
+				restrictionIcon.title = typeof moduleObj.restriction === 'object' 
+					? `${moduleObj.restriction.name} (${moduleObj.restriction.type})`
+					: moduleObj.restriction;
+				
+				// Add hover events for tooltip
+				restrictionIcon.addEventListener("mouseenter", (e) => {
+					const moduleData = moduleLibrary.find(m => m.name === moduleObj.name);
+					if (moduleData) {
+						showTooltip(
+							moduleData, 
+							restrictionIcon.title, 
+							restrictionIcon
+						);
+					}
+					e.stopPropagation();
+				});
+				
+				restrictionIcon.addEventListener("mouseleave", hideTooltip);
+				
+				span.appendChild(restrictionIcon);
+			}
+			
+			modulesDiv.appendChild(span);
+		});
         skillDiv.appendChild(headerDiv);
         skillDiv.appendChild(statsDiv);
         skillDiv.appendChild(modulesDiv);
@@ -2716,86 +2756,84 @@ function renderSkillsSummary() {
 }
 
 function renderPerksSummary() {
-    const summaryPerks = document.getElementById("summary-perks");
-    summaryPerks.innerHTML = "";
+	const summaryPerks = document.getElementById("summary-perks");
+	summaryPerks.innerHTML = "";
 
-    if (!activeCharacter.perks || activeCharacter.perks.length === 0) {
-        summaryPerks.innerHTML = "<div class='no-perks'>No perks learned yet</div>";
-        return;
-    }
+	if (!activeCharacter.perks || activeCharacter.perks.length === 0) {
+		summaryPerks.innerHTML = "<div class='no-perks'>No perks learned yet</div>";
+		return;
+	}
 
-    // Get unique catalogs/archetypes
-    const catalogs = [...new Set(activeCharacter.perks.map(p => p.catalog || "Origen"))];
+	// Get unique catalogs/archetypes
+	const catalogs = [...new Set(activeCharacter.perks.map(p => p.catalog || "Origen"))];
 
-    catalogs.forEach(catalog => {
-        const archetypeDiv = document.createElement("div");
-        archetypeDiv.className = "archetype";
+	catalogs.forEach(catalog => {
+		const archetypeDiv = document.createElement("div");
+		archetypeDiv.className = "archetype";
 
-        const archetypeTitle = document.createElement("strong");
-        archetypeTitle.textContent = catalog.charAt(0).toUpperCase() + catalog.slice(1);
-        archetypeDiv.appendChild(archetypeTitle);
+		const archetypeTitle = document.createElement("strong");
+		archetypeTitle.textContent = catalog.charAt(0).toUpperCase() + catalog.slice(1);
+		archetypeDiv.appendChild(archetypeTitle);
 
-        const perkListDiv = document.createElement("div");
-        perkListDiv.className = "perk-list";
+		const perkListDiv = document.createElement("div");
+		perkListDiv.className = "perk-list";
 
-        // Filter perks for this catalog and exclude restrictions
-        const filteredPerks = activeCharacter.perks
-            .filter(p => (p.catalog || "Origen") === catalog && p.type !== "restriction");
+		// Filter perks for this catalog and exclude restrictions
+		const filteredPerks = activeCharacter.perks
+			.filter(p => (p.catalog || "Origen") === catalog && p.type !== "restriction");
 
-        filteredPerks.forEach(perk => {
-            const label = document.createElement("label");
-            label.textContent = perk.name;
-            perkListDiv.appendChild(label);
-        });
+		filteredPerks.forEach(perk => {
+			const label = document.createElement("label");
+			label.textContent = perk.name;
+			perkListDiv.appendChild(label);
+		});
 
-        archetypeDiv.appendChild(perkListDiv);
-        summaryPerks.appendChild(archetypeDiv);
-    });
+		archetypeDiv.appendChild(perkListDiv);
+		summaryPerks.appendChild(archetypeDiv);
+	});
 }
 
-
-
 function setupCharacterImage() {
-    const charImageButton = document.getElementById("charImageButton");
-    const charImageInput = document.getElementById("charImageInput");
-    const charImageDisplay = document.getElementById("charImageDisplay");
+	const charImageButton = document.getElementById("charImageButton");
+	const charImageInput = document.getElementById("charImageInput");
+	const charImageDisplay = document.getElementById("charImageDisplay");
 
-    if (!charImageButton || !charImageInput || !charImageDisplay) return;
+	if (!charImageButton || !charImageInput || !charImageDisplay) return;
 
-    const updateImageDisplay = () => {
-        if (!activeCharacter || !activeCharacter.image) {
-            charImageDisplay.src = "";
-            charImageDisplay.style.display = "none";
-            charImageButton.style.display = "inline-block";
-        } else {
-            charImageDisplay.src = activeCharacter.image;
-            charImageDisplay.style.display = "block";
-            charImageButton.style.display = "none";
-        }
-    };
+	const updateImageDisplay = () => {
+		if (!activeCharacter || !activeCharacter.image) {
+			charImageDisplay.src = "";
+			charImageDisplay.style.display = "none";
+			charImageButton.style.display = "inline-block";
+		} else {
+			charImageDisplay.src = activeCharacter.image;
+			charImageDisplay.style.display = "block";
+			charImageButton.style.display = "none";
+		}
+	};
 
-    // Initial display
-    updateImageDisplay();
+	// Initial display
+	updateImageDisplay();
 
-    // Click button or image to open file picker
-    charImageButton.addEventListener("click", () => charImageInput.click());
-    charImageDisplay.addEventListener("click", () => charImageInput.click());
+	// Click button or image to open file picker
+	charImageButton.addEventListener("click", () => charImageInput.click());
+	charImageDisplay.addEventListener("click", () => charImageInput.click());
 
-    // Handle image selection
-    charImageInput.addEventListener("change", () => {
-        const file = charImageInput.files[0];
-        if (!file || !activeCharacter) return;
+	// Handle image selection
+	charImageInput.addEventListener("change", () => {
+		const file = charImageInput.files[0];
+		if (!file || !activeCharacter) return;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            activeCharacter.image = e.target.result;
-            updateImageDisplay();
-            saveCharacterData();
-        };
-        reader.readAsDataURL(file);
-    });
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			activeCharacter.image = e.target.result;
+			updateImageDisplay();
+			saveCharacterData();
+		};
+		reader.readAsDataURL(file);
+	});
 
-    // Update display whenever the character selector changes
-    document.getElementById("characterSelector").addEventListener("change", updateImageDisplay);
+	// Update display whenever the character selector changes
+	document.getElementById("characterSelector").addEventListener("change", updateImageDisplay);
 }
 
