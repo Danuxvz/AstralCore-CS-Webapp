@@ -168,7 +168,7 @@ document.getElementById("importCharacter").addEventListener("change", function(e
 						
 						// Load existing characters
 						const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-				a		
+						
 						// Add new character
 						characters[newCharacterId] = characterData;
 						
