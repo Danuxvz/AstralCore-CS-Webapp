@@ -278,7 +278,7 @@ document.getElementById("deleteCharacter").addEventListener("click", () => {
 
 async function saveCharacterToGitHub(characterData, name) {
   const token = "GIT_TOKEN";
-  const repo = "Danuxvz/AstralCore-CS-Webapp/tree/Potilandia-Heroes/";
+  const repo = "Danuxvz/PotilandiaHeroes-Characters";
   const path = `${name}.json`;
 
   const response = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
