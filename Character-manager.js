@@ -18,24 +18,118 @@ const jobEffects = [
 ];
 
 
-function setActiveCharacter(characterId) {
-	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-	const selectedCharacter = characters[characterId];
-
-	const currentHpInput = document.getElementById("currentHp");
-	const currentEpInput = document.getElementById("currentEp");
-	if (currentHpInput) currentHpInput.value = "";
-	if (currentEpInput) currentEpInput.value = "";
-
-	if (selectedCharacter) {
-		activeCharacter = selectedCharacter;
-		populateCharacterData(selectedCharacter);
-		console.log("Active character set:", activeCharacter);
-	} else {
-		console.error("Character ID not found:", characterId);
-	}
+function migrateCharacterData(character) {
+    if (!character) return character;
+    
+    // Migrate skill modules (old string format to new object format)
+    if (character.skills) {
+        character.skills.forEach(skill => {
+            if (skill.modules && skill.modules.length > 0) {
+                // Check if modules are in old string format
+                if (typeof skill.modules[0] === 'string') {
+                    console.log("Migrating old skill modules to new format");
+                    skill.modules = skill.modules.map(moduleName => ({
+                        name: moduleName,
+                        restriction: null
+                    }));
+                }
+            }
+        });
+    }
+    
+    // Migrate character modules to match latest library data
+    if (character.modules) {
+        Object.keys(character.modules).forEach(tier => {
+            if (Array.isArray(character.modules[tier])) {
+                character.modules[tier] = character.modules[tier].map(charModule => {
+                    const libraryModule = moduleLibrary.find(libModule => 
+                        libModule.name === charModule.name
+                    );
+                    console.log("Migrating character module", libraryModule, charModule);
+                    if (libraryModule) {
+                        return {
+                            ...libraryModule, 
+                            catalogs: charModule.catalogs || [], 
+                            restrictions: charModule.restrictions || [] 
+                        };
+                    }
+                    
+                    // If no matching library module found, keep the character's module as-is
+                    return charModule;
+                });
+            }
+        });
+    }
+    
+    return character;
 }
 
+// Update the setActiveCharacter function to use the enhanced migration
+function setActiveCharacter(characterId) {
+    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+    const selectedCharacter = characters[characterId];
+
+    const currentHpInput = document.getElementById("currentHp");
+    const currentEpInput = document.getElementById("currentEp");
+    if (currentHpInput) currentHpInput.value = "";
+    if (currentEpInput) currentEpInput.value = "";
+
+    if (selectedCharacter) {
+        activeCharacter = migrateCharacterData(selectedCharacter);
+        populateCharacterData(activeCharacter);
+        console.log("Active character set:", activeCharacter);
+        
+        // Save the migrated character back to storage
+        characters[characterId] = activeCharacter;
+        localStorage.setItem('characters', JSON.stringify(characters));
+    } else {
+        console.error("Character ID not found:", characterId);
+    }
+}
+
+// Update the import function to use the enhanced migration
+document.getElementById("importCharacter").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const characterData = JSON.parse(e.target.result);
+            
+            // Migrate imported character if needed
+            const migratedCharacter = migrateCharacterData(characterData);
+            
+            // Generate unique ID for the new character
+            const newCharacterId = `char_${Date.now()}`;
+            
+            // Load existing characters
+            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+            
+            // Add new character
+            characters[newCharacterId] = migratedCharacter;
+            
+            // Save to localStorage
+            localStorage.setItem('characters', JSON.stringify(characters));
+            
+            // Update UI
+            const characterSelector = document.getElementById("characterSelector");
+            const newOption = new Option(migratedCharacter.name, newCharacterId);
+            characterSelector.add(newOption);
+            characterSelector.value = newCharacterId;
+            
+            // Set as active character and populate data
+            setActiveCharacter(newCharacterId);
+
+            // Reset file input
+            event.target.value = '';
+        } catch (e) {
+            alert("Error importing character: Invalid or corrupted file format");
+            console.error("Import error:", e);
+        }
+    };
+    reader.readAsText(file);
+});	
 
 // Navigation
 function showSection(sectionId) {
