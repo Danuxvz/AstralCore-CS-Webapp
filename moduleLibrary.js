@@ -846,6 +846,12 @@ const moduleLibrary = [
 		emote: "🧸",
 	},
 	{
+		name: "Revivir",
+		category: "Efecto",
+		description: `Anula el estado "Derrotado" sin que el objetivo sufra consecuencias. En caso de que el objetivo tenga 0 HP, aumenta su HP a 1`,
+		emote: "🐦‍🔥",
+	},
+	{
 		name: "Restringir 4",
 		category: "Efecto",
 		description: "Escoge una stat (Definida durante creación). El objetivo es incapaz de utilizar cualquier acción que incluya la stat escogida.",

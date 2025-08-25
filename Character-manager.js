@@ -1668,18 +1668,49 @@ function loadSelfCoreContent() {
 }
 
 function createPerkList(perks) {
-	const list = document.createElement("ul");
-	list.className = "perks-list";
+    const list = document.createElement("ul");
+    list.className = "perks-list";
 
-	perks.forEach(perk => {
-		const listItem = document.createElement("li");
-		listItem.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
-		list.appendChild(listItem);
-	});
-
-	return list;
+function createDeletePerkButton(perk) {
+    const deleteButton = document.createElement("button");
+	deleteButton.textContent = "Delete";
+    deleteButton.classList.add("delete-perk-button");
+    deleteButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm(`Are you sure you want to delete the perk "${perk.name}"?`)) {
+            // Find and remove the perk
+            const index = activeCharacter.perks.findIndex(p => 
+                p.name === perk.name && p.catalog === perk.catalog && p.tier === perk.tier
+            );
+            if (index !== -1) {
+                activeCharacter.perks.splice(index, 1);
+                saveCharacterData();
+                loadSelfCoreContent(); // Refresh the display
+            }
+        }
+    });
+    return deleteButton;
 }
 
+
+    perks.forEach(perk => {
+        const listItem = document.createElement("li");
+        
+        // Create container for perk content and delete button
+        const perkContent = document.createElement("div");
+        perkContent.className = "perk-content";
+        perkContent.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
+        
+        // Add delete button
+        const deleteButton = createDeletePerkButton(perk);
+        
+        listItem.appendChild(perkContent);
+        // listItem.appendChild(deleteButton);
+        list.appendChild(listItem);
+    });
+
+    return list;
+}
 function createCollapsibleSection(title, contentGenerator, storageKey) {
 	const section = document.createElement("div");
 	section.className = "collapsible-section";
