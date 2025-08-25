@@ -632,11 +632,8 @@ const moduleCatalog = {
 				{ name: "Tools Required! [+1 ☐ ]", 
 				 description: "Esta skill queda asociada a un tipo objeto, equipamiento, o material a tu elección (definido durante creación), y no puede ser activada sin tener el objeto escogido equipado.", 
 				 type: "restriction", slots: "+1"
-				},				
-				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1.", 
-				 type: "perk" 
 				},
+
 			],
 			tier2: [
 				{ name: "Bruja Tier 3", 
@@ -676,11 +673,8 @@ const moduleCatalog = {
 				{ name: "Placeholder", 
 				 description: "..", 
 				 type: "restriction", slots: "+2"
-				},				
-				{ name: "Maestria 3", 
-				 description: "Ganas maestría en un módulo Tier 3 de Wiccrat's Curse.", 
-				 type: "perk" 
 				},
+
 			],
 		},
 	},
@@ -829,11 +823,19 @@ const moduleCatalog = {
 				{ name: "EP +1"},
 				{ name: "IMPR +1"}
 			],
-			tier2: [],
-			tier3: [
+			tier2: [
 				{ name: "HP +4"},
+				{ name: "ATK +1"},
+				{ name: "IMPR +1"},
+				{ name: "DMG +1"},
+				{ name: "EP +2"}],
+			tier3: [
+				{ name: "HP +6"},
 				{ name: "EP +1"},
-				{ name: "STAT UP!", description: "Aumenta un dado de Stat en un tamaño." }
+				{ name: "STAT UP!", description: "Aumenta un dado de Stat en un tamaño." },
+				{ name: "EP +1"},
+				{ name: "DMG +2"},
+
 			]
 		},
 		perks: {
@@ -945,7 +947,7 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},
 				{ name: "Fragile [+1 ☐ ]", 
-				 description: "Si fallas una tirada de ataque con esta skill, recibes lr de daño.", 
+				 description: "Si fallas una tirada de ataque con esta skill, recibes LR de daño.", 
 				 type: "restriction", slots: "+1"
 				},
 
@@ -975,25 +977,17 @@ const moduleCatalog = {
 			],
 			tier3: [
 				{ name: "Acceso al Tier 4", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de Umbra Employment Agency.", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Alquimista.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
 				 description: ".", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
+				{ name: "Placeholder [+3 ☐ ]", 
 				 description: ".", 
-				 type: "perk" 
-				},
-				{ name: "Worker's Wrongs [+3 ☐ ]", 
-				 description: "Este modulo debe incluir una invocacion. Cada vez que una criatura invocada por esta skill es reducida a 0 HP, debes pagar -1 PE. No puedes usar una skill con esta restriccion si tienes 0 PE restante.", 
-				 type: "restriction", slots: "+2"
+				 type: "restriction", slots: "+3"
 				},				
-				{ name: "Maestria 3", 
-				 description: "Ganas maestría en un módulo Tier 3 de Umbra Employment Agency.", 
-				 type: "perk" 
-				},
 			],
 		},
 	},

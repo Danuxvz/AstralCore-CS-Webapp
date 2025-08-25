@@ -17,53 +17,6 @@ const jobEffects = [
 	"Ignoras cualquier desventaja circunstancial que afecte tus tiradas del oficio."
 ];
 
-
-function migrateCharacterData(character) {
-    if (!character) return character;
-    
-    // Migrate skill modules (old string format to new object format)
-    if (character.skills) {
-        character.skills.forEach(skill => {
-            if (skill.modules && skill.modules.length > 0) {
-                // Check if modules are in old string format
-                if (typeof skill.modules[0] === 'string') {
-                    console.log("Migrating old skill modules to new format");
-                    skill.modules = skill.modules.map(moduleName => ({
-                        name: moduleName,
-                        restriction: null
-                    }));
-                }
-            }
-        });
-    }
-    
-    // Migrate character modules to match latest library data
-    if (character.modules) {
-        Object.keys(character.modules).forEach(tier => {
-            if (Array.isArray(character.modules[tier])) {
-                character.modules[tier] = character.modules[tier].map(charModule => {
-                    const libraryModule = moduleLibrary.find(libModule => 
-                        libModule.name === charModule.name
-                    );
-                    console.log("Migrating character module", libraryModule, charModule);
-                    if (libraryModule) {
-                        return {
-                            ...libraryModule, 
-                            catalogs: charModule.catalogs || [], 
-                            restrictions: charModule.restrictions || [] 
-                        };
-                    }
-                    
-                    // If no matching library module found, keep the character's module as-is
-                    return charModule;
-                });
-            }
-        });
-    }
-    
-    return character;
-}
-
 // Update the setActiveCharacter function to use the enhanced migration
 function setActiveCharacter(characterId) {
     const characters = JSON.parse(localStorage.getItem('characters') || '{}');
@@ -76,6 +29,7 @@ function setActiveCharacter(characterId) {
 
     if (selectedCharacter) {
         activeCharacter = migrateCharacterData(selectedCharacter);
+		syncOldCharacterData();
         populateCharacterData(activeCharacter);
         console.log("Active character set:", activeCharacter);
         
@@ -155,6 +109,7 @@ document.getElementById("importCharacter").addEventListener("change", function(e
     };
     reader.readAsText(file);
 	updateImageDisplay();
+	syncOldCharacterData();
 });
 
 
@@ -284,11 +239,6 @@ function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBon
 		parseInt(stats.mig.temp || 0) + parseInt(stats.dex.temp || 0)) / 2
 	);
 
-	const maxHp = hpBase + (permanentBonuses.hp || 0);
-	const tempHp = currentSecondaryStats.hp?.temp || 0;
-	const totalHp = maxHp + tempHp;
-
-
 	return {
 		hp: {
 			value: hpBase + (permanentBonuses.hp || 0),
@@ -322,10 +272,8 @@ function calculateSecondaryStats(stats, currentSecondaryStats = {}, permanentBon
 			value: permanentBonuses.dmg || 0,
 			temp: currentSecondaryStats.dmg?.temp || 0
 		},
-		currentHP: currentSecondaryStats.currentHP ?? totalHp
 	};
 }
-
 
 // Gather character data for export
 function gatherCharacterData() {
@@ -551,7 +499,115 @@ function updateStatUpgrades() {
 	saveCharacterData();
 }
 
+function migrateCharacterData(character) {
+    if (!character) return character;
+    
+    // Migrate skill modules (old string format to new object format)
+    if (character.skills) {
+        character.skills.forEach(skill => {
+            if (skill.modules && skill.modules.length > 0) {
+                // Check if modules are in old string format
+                if (typeof skill.modules[0] === 'string') {
+                    console.log("Migrating old skill modules to new format");
+                    skill.modules = skill.modules.map(moduleName => ({
+                        name: moduleName,
+                        restriction: null
+                    }));
+                }
+            }
+        });
+    }
+    
+    // Migrate character modules to match latest library data
+    if (character.modules) {
+        Object.keys(character.modules).forEach(tier => {
+            if (Array.isArray(character.modules[tier])) {
+                character.modules[tier] = character.modules[tier].map(charModule => {
+                    const libraryModule = moduleLibrary.find(libModule => 
+                        libModule.name === charModule.name
+                    );
+                    console.log("Migrating character module", libraryModule, charModule);
+                    if (libraryModule) {
+                        return {
+                            ...libraryModule, 
+                            catalogs: charModule.catalogs || [], 
+                            restrictions: charModule.restrictions || [] 
+                        };
+                    }
+                    
+                    // If no matching library module found, keep the character's module as-is
+                    return charModule;
+                });
+            }
+        });
+    }
+    
+    return character;
+}
+
+function syncOldCharacterData() {
+    if (!activeCharacter) return;
+
+    // Helper to sync a single module
+    function syncModule(moduleObj) {
+        const libModule = moduleLibrary.find(m => m.name === moduleObj.name);
+        if (!libModule) return moduleObj; // nothing to sync against
+
+        let updated = false;
+
+        // Sync description
+        if (libModule.description && moduleObj.description !== libModule.description) {
+            moduleObj.description = libModule.description;
+            updated = true;
+        }
+
+		// Normalize restrictions into arrays
+		function normalizeRestrictions(r) {
+			if (!r) return [];
+			if (Array.isArray(r)) return r;
+			return [r]; // wrap single string into array
+		}
+
+		// Sync restrictions
+		const libRestrictions = normalizeRestrictions(libModule.restrictions);
+		const charRestrictions = normalizeRestrictions(moduleObj.restrictions);
+
+		if (JSON.stringify(libRestrictions) !== JSON.stringify(charRestrictions)) {
+			moduleObj.restrictions = libRestrictions;
+			updated = true;
+		}
+
+        // Compare stringified versions for deep equality
+        if (JSON.stringify(libRestrictions) !== JSON.stringify(charRestrictions)) {
+            moduleObj.restrictions = [...libRestrictions];
+            updated = true;
+        }
+
+        if (updated) {
+            console.log(`Module "${moduleObj.name}" synced from library.`);
+        }
+        return moduleObj;
+    }
+
+    // --- Sync skill modules ---
+    if (activeCharacter.skills) {
+        activeCharacter.skills.forEach(skill => {
+            if (skill.modules) {
+                skill.modules = skill.modules.map(syncModule);
+            }
+        });
+    }
+
+    // --- Sync tiered modules ---
+    if (activeCharacter.modules) {
+        Object.keys(activeCharacter.modules).forEach(tier => {
+            activeCharacter.modules[tier] = activeCharacter.modules[tier].map(syncModule);
+        });
+    }
 	
+    saveCharacterData();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 	const characterSelector = document.getElementById("characterSelector");
 
@@ -696,7 +752,7 @@ document.getElementById("addSkill").addEventListener("click", () => {
 	renderSkills();
 });
 
-
+	syncOldCharacterData();
 	setupCharacterImage();
 	calculateAvailableJobs();
 	loadSelfCoreContent();
@@ -2921,7 +2977,7 @@ function renderSummary() {
 
 	const currentHp = activeCharacter.secondaryStats.currentHP;
 	const currentEp = activeCharacter.secondaryStats.currentEP;
-
+	
 
 	// Calculate percentage
 	const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
@@ -2935,6 +2991,7 @@ function renderSummary() {
 	if (epBar) epBar.style.width = epPercent + "%";
 
 	// Update summaries
+	
 	renderSkillsSummary();
 	renderPerksSummary();
 
@@ -3079,8 +3136,6 @@ function updateImageDisplay()  {
 		charImageButton.style.display = "none";
 	}
 };
-
-
 
 function setupCharacterImage() {
 	const charImageButton = document.getElementById("charImageButton");
