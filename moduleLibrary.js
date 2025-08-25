@@ -806,7 +806,7 @@ const moduleLibrary = [
 
 	// Especiales
 	{
-		name: "Reacción 5",
+		name: "Reacción 3",
 		category: "Especial",
 		description: "Una vez por ronda, puedes consumir +2 PE para activar esta skill fuera de tu turno.",
 		emote: "⏲️",
