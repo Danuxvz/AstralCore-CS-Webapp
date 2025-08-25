@@ -1731,36 +1731,6 @@ function toggleCollapse(e) {
 }
 
 //Custom Modules
-function setupCustomModuleControls() {
-  const selfCoreContent = document.getElementById("selfCoreContent");
-  
-  // Create controls container
-  const controlsDiv = document.createElement("div");
-  controlsDiv.className = "custom-module-controls";
-  
-  // Add Module button
-  const addButton = document.createElement("button");
-  addButton.textContent = "Add Module";
-  addButton.addEventListener("click", showCustomModuleForm);
-  controlsDiv.appendChild(addButton);
-  
-  // Remove Module button
-  const removeButton = document.createElement("button");
-  removeButton.textContent = "Remove Module";
-  removeButton.addEventListener("click", toggleRemovalMode);
-  controlsDiv.appendChild(removeButton);
-  
-  // Insert controls at the end of selfCoreContent (before notes)
-  const notesContainer = document.getElementById("notesContainer");
-  selfCoreContent.insertBefore(controlsDiv, notesContainer);
-  
-  // Create form container (initially hidden)
-  const formContainer = document.createElement("div");
-  formContainer.id = "customModuleFormContainer";
-  formContainer.style.display = "none";
-  selfCoreContent.insertBefore(formContainer, notesContainer);
-}
-
 function showCustomModuleForm() {
 const formContainer = document.getElementById("customModuleFormContainer");
 
@@ -1993,53 +1963,46 @@ function createSkillForm(skill = {}, index) {
 			const slot = document.createElement("div");
 			slot.className = "module-slot";
 
-			if (currentModules[i]) {
-				const moduleObj = currentModules[i];
-				let moduleDef = moduleLibrary.find(m => m.name === moduleObj.name);
-				console.log(moduleDef);
-				if (!moduleDef) {
-					moduleDef = Object.values(activeCharacter.customModules || {})
-						.flat()
-						.find(m => m.name === moduleObj.name);
+				if (currentModules[i]) {
+					const saved = currentModules[i];
+					const found = findModuleDefByName(saved.name);
+
+					const displayEmote = found?.emote ?? saved.emote ?? "?";
+					const displayCategory = found?.category ?? saved.category ?? "Custom";
+
+					slot.textContent = displayEmote;
+					slot.dataset.module = saved.name;
+					slot.dataset.category = displayCategory;
+					slot.title = saved.name;
+
+					// --- Restriction icon ---
+					const restrictionIcon = document.createElement("div");
+					restrictionIcon.className = "restriction-icon";
+					restrictionIcon.textContent = "R";
+
+					// Tooltip handling
+					restrictionIcon.addEventListener("mouseenter", () => {
+						const restriction = saved.restriction || null;
+						showTooltip(found, restriction, restrictionIcon);
+					});
+					restrictionIcon.addEventListener("mouseleave", hideTooltip);
+
+					// If no restriction, keep hidden until hover
+					if (!saved.restriction) {
+						restrictionIcon.style.opacity = 0;
+						slot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
+						slot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
+					}
+
+					// Click opens restriction selection
+					restrictionIcon.addEventListener("click", (e) => {
+						e.stopPropagation();
+						showGenericModuleRestrictions(restrictionIcon, skillData, i);
+					});
+
+					slot.appendChild(restrictionIcon);
 				}
-				console.log(moduleDef);
-				slot.textContent = moduleDef ? moduleDef.emote : "?";
-				slot.dataset.module = moduleObj.name;
-				slot.dataset.category = moduleDef ? moduleDef.category : "";
-
-				// --- Restriction icon ---
-				const restrictionIcon = document.createElement("div");
-				restrictionIcon.className = "restriction-icon";
-				restrictionIcon.textContent = "R";
-
-				// Always attach tooltip handling instead of static title
-				restrictionIcon.addEventListener("mouseenter", () => {
-					const moduleName = moduleObj.name;
-					const module = moduleLibrary.find(m => m.name === moduleName);
-					if (!module) return;
-
-					const restriction = moduleObj.restriction || null;
-					showTooltip(module, restriction, restrictionIcon);
-				});
-
-				restrictionIcon.addEventListener("mouseleave", hideTooltip);
-
-				// If no restriction, keep it hidden until hover
-				if (!moduleObj.restriction) {
-					restrictionIcon.style.opacity = 0;
-					slot.addEventListener("mouseenter", () => restrictionIcon.style.opacity = 1);
-					slot.addEventListener("mouseleave", () => restrictionIcon.style.opacity = 0);
-				}
-
-				// Click opens restriction selection
-				restrictionIcon.addEventListener("click", (e) => {
-					e.stopPropagation();
-					showGenericModuleRestrictions(restrictionIcon, skillData, i);
-				});
-
-				slot.appendChild(restrictionIcon);
-;
-				} else {
+				else {
 					slot.textContent = "+";
 					slot.classList.add("empty");
 					slot.dataset.module = "";
@@ -2131,7 +2094,6 @@ function createSkillForm(skill = {}, index) {
 	});
 
 	form.appendChild(saveButton);
-
 	return form;
 }
 
@@ -2965,18 +2927,15 @@ function renderSkillsSummary() {
         const skillDiv = document.createElement("div");
         skillDiv.className = "summary-skill";
 
-        // Header container: name + restrictions
+        // --- Header: name + restrictions ---
         const headerDiv = document.createElement("div");
         headerDiv.className = "skill-header";
 
-        // Name
         const nameDiv = document.createElement("div");
         nameDiv.className = "skill-name";
         nameDiv.textContent = skill.name;
-
         headerDiv.appendChild(nameDiv);
 
-        // Restrictions
         if (skill.restrictions && skill.restrictions.length > 0) {
             const restrictionDiv = document.createElement("div");
             restrictionDiv.className = "skill-restriction";
@@ -2985,60 +2944,53 @@ function renderSkillsSummary() {
             headerDiv.appendChild(restrictionDiv);
         }
 
-        // Stats
+        // --- Stats ---
         const statsDiv = document.createElement("div");
         statsDiv.className = "skill-stats";
         const stat1 = skill.stats[0] || "mig";
         const stat2 = skill.stats[1] || "dex";
-        
-        // Count "Apuntar" modules by checking the name property
+
         const moduleMod = (skill.modules.filter(m => m.name === "Apuntar").length * 2);
         const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
         const totalATK = baseAtk + moduleMod;
-        
+
         statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
                             `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
 
-		// Modules
-		const modulesDiv = document.createElement("div");
-		modulesDiv.className = "skill-modules";
-		skill.modules.forEach(moduleObj => {
-			const module = moduleLibrary.find(mod => mod.name === moduleObj.name);
-			const span = document.createElement("span");
-			span.className = "module-slot";
-			span.textContent = module ? module.emote : "?";
-			
-			// Add restriction indicator if present (using the same style as elsewhere)
-			if (moduleObj.restriction) {
-				const restrictionIcon = document.createElement("div");
-				restrictionIcon.className = "restriction-icon";
-				restrictionIcon.textContent = "R";
-				
-				// Set tooltip text
-				restrictionIcon.title = typeof moduleObj.restriction === 'object' 
-					? `${moduleObj.restriction.name} (${moduleObj.restriction.type})`
-					: moduleObj.restriction;
-				
-				// Add hover events for tooltip
-				restrictionIcon.addEventListener("mouseenter", (e) => {
-					const moduleData = moduleLibrary.find(m => m.name === moduleObj.name);
-					if (moduleData) {
-						showTooltip(
-							moduleData, 
-							restrictionIcon.title, 
-							restrictionIcon
-						);
-					}
-					e.stopPropagation();
-				});
-				
-				restrictionIcon.addEventListener("mouseleave", hideTooltip);
-				
-				span.appendChild(restrictionIcon);
-			}
-			
-			modulesDiv.appendChild(span);
-		});
+        // --- Modules ---
+        const modulesDiv = document.createElement("div");
+        modulesDiv.className = "skill-modules";
+
+        skill.modules.forEach(moduleObj => {
+
+			const found = findModuleDefByName(moduleObj.name);
+
+			const displayEmote = found?.emote ?? saved.emote ?? "?";
+            const displayCategory = moduleObj.category ?? moduleObj.category ?? "Custom";
+            const span = document.createElement("span");
+            span.className = "module-slot";
+            span.textContent = displayEmote;
+            span.dataset.module = moduleObj.name;
+            span.dataset.category = displayCategory;
+            span.title = moduleObj.name;
+
+            // Restriction handling (only show if restriction exists)
+            if (moduleObj.restriction) {
+                const restrictionIcon = document.createElement("div");
+                restrictionIcon.className = "restriction-icon";
+                restrictionIcon.textContent = "R";
+
+                restrictionIcon.addEventListener("mouseenter", () => {
+                    showTooltip(resolvedModule, moduleObj.restriction, restrictionIcon);
+                });
+                restrictionIcon.addEventListener("mouseleave", hideTooltip);
+
+                span.appendChild(restrictionIcon);
+            }
+
+            modulesDiv.appendChild(span);
+        });
+
         skillDiv.appendChild(headerDiv);
         skillDiv.appendChild(statsDiv);
         skillDiv.appendChild(modulesDiv);
