@@ -87,50 +87,6 @@ function setActiveCharacter(characterId) {
     }
 }
 
-// Update the import function to use the enhanced migration
-document.getElementById("importCharacter").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const characterData = JSON.parse(e.target.result);
-            
-            // Migrate imported character if needed
-            const migratedCharacter = migrateCharacterData(characterData);
-            
-            // Generate unique ID for the new character
-            const newCharacterId = `char_${Date.now()}`;
-            
-            // Load existing characters
-            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-            
-            // Add new character
-            characters[newCharacterId] = migratedCharacter;
-            
-            // Save to localStorage
-            localStorage.setItem('characters', JSON.stringify(characters));
-            
-            // Update UI
-            const characterSelector = document.getElementById("characterSelector");
-            const newOption = new Option(migratedCharacter.name, newCharacterId);
-            characterSelector.add(newOption);
-            characterSelector.value = newCharacterId;
-            
-            // Set as active character and populate data
-            setActiveCharacter(newCharacterId);
-
-            // Reset file input
-            event.target.value = '';
-        } catch (e) {
-            alert("Error importing character: Invalid or corrupted file format");
-            console.error("Import error:", e);
-        }
-    };
-    reader.readAsText(file);
-});	
-
 // Navigation
 function showSection(sectionId) {
 	// Hide all sections and show the selected one
@@ -155,44 +111,52 @@ document.getElementById("exportCharacter").addEventListener("click", () => {
 
 // Import Character from JSON
 document.getElementById("importCharacter").addEventListener("change", function(event) {
-		const file = event.target.files[0];
-		if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-		const reader = new FileReader();
-		reader.onload = function(e) {
-				try {
-						const characterData = JSON.parse(e.target.result);
-						
-						// Generate unique ID for the new character
-						const newCharacterId = `char_${Date.now()}`;
-						
-						// Load existing characters
-						const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-						
-						// Add new character
-						characters[newCharacterId] = characterData;
-						
-						// Save to localStorage
-						localStorage.setItem('characters', JSON.stringify(characters));
-						
-						// Update UI
-						const characterSelector = document.getElementById("characterSelector");
-						const newOption = new Option(characterData.name, newCharacterId);
-						characterSelector.add(newOption);
-						characterSelector.value = newCharacterId;
-						
-						// Set as active character and populate data
-						setActiveCharacter(newCharacterId);
-			
-						// Reset file input
-						event.target.value = '';
-				} catch (e) {
-						alert("Error importing character: Invalid or corrupted file format");
-						console.error("Import error:", e);
-				}
-		};
-		reader.readAsText(file);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            // Parse imported character
+            const characterData = JSON.parse(e.target.result);
+
+            // Optionally migrate character
+            const migratedCharacter = typeof migrateCharacterData === "function"
+                ? migrateCharacterData(characterData)
+                : characterData;
+
+            // Generate unique ID for the new character
+            const newCharacterId = `char_${Date.now()}`;
+
+            // Load existing characters
+            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+
+            // Add new character
+            characters[newCharacterId] = migratedCharacter;
+
+            // Save to localStorage
+            localStorage.setItem('characters', JSON.stringify(characters));
+
+            // Update UI
+            const characterSelector = document.getElementById("characterSelector");
+            const newOption = new Option(migratedCharacter.name, newCharacterId);
+            characterSelector.add(newOption);
+            characterSelector.value = newCharacterId;
+
+            // Set as active character and populate data
+            setActiveCharacter(newCharacterId);
+
+            // Reset file input
+            event.target.value = '';
+        } catch (e) {
+            alert("Error importing character: Invalid or corrupted file format");
+            console.error("Import error:", e);
+        }
+    };
+    reader.readAsText(file);
+	updateImageDisplay();
 });
+
 
 document.getElementById("newCharacter").addEventListener("click", () => {
 	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
@@ -241,6 +205,7 @@ document.getElementById("newCharacter").addEventListener("click", () => {
 	// Select new character
 	characterSelector.value = newCharacterId;
 	setActiveCharacter(newCharacterId);
+	updateImageDisplay();
 });
 
 document.getElementById("deleteCharacter").addEventListener("click", () => {
@@ -273,6 +238,7 @@ document.getElementById("deleteCharacter").addEventListener("click", () => {
 		characterSelector.value = firstCharacterId;
 		setActiveCharacter(firstCharacterId);
 	}
+	updateImageDisplay();
 });
 
 function saveCharacterData() {
@@ -2887,24 +2853,26 @@ function renderPerksSummary() {
 	});
 }
 
+function updateImageDisplay()  {
+	if (!activeCharacter || !activeCharacter.image) {
+		charImageDisplay.src = "";
+		charImageDisplay.style.display = "none";
+		charImageButton.style.display = "inline-block";
+	} else {
+		charImageDisplay.src = activeCharacter.image;
+		charImageDisplay.style.display = "block";
+		charImageButton.style.display = "none";
+	}
+};
+
+
+
 function setupCharacterImage() {
 	const charImageButton = document.getElementById("charImageButton");
 	const charImageInput = document.getElementById("charImageInput");
 	const charImageDisplay = document.getElementById("charImageDisplay");
 
 	if (!charImageButton || !charImageInput || !charImageDisplay) return;
-
-	const updateImageDisplay = () => {
-		if (!activeCharacter || !activeCharacter.image) {
-			charImageDisplay.src = "";
-			charImageDisplay.style.display = "none";
-			charImageButton.style.display = "inline-block";
-		} else {
-			charImageDisplay.src = activeCharacter.image;
-			charImageDisplay.style.display = "block";
-			charImageButton.style.display = "none";
-		}
-	};
 
 	// Initial display
 	updateImageDisplay();
@@ -2929,5 +2897,7 @@ function setupCharacterImage() {
 
 	// Update display whenever the character selector changes
 	document.getElementById("characterSelector").addEventListener("change", updateImageDisplay);
+	
+
 }
 
