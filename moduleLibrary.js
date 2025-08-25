@@ -65,6 +65,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo recupera LR de HP.",
 		emote: "🤕",
+		restrictions:"Un objetivo solo puede ser afectado por este modulo 1 vez por escena."
 	},
 	{
 		name: "Prestidigitación 1",
