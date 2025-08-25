@@ -11,8 +11,8 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Culto al orbe.", 
 				 type: "perk" 
 				},
-				{ name: "Templo personal", 
-				 description: "Siempre que tengas acceso a un objeto perfectamente esférico, puedes	usar una acción para convertirlo temporalmente en un punto de contacto para cualquier Astral Core del cual tengas al menos 1 perk.Solo puedes usar esta acción una vez, y recuperas el uso tras una escena de descanso. El efecto de esta perk termina al final de la escena", 
+				{ name: "Laboratorio Portatil", 
+				 description: "Siempre que tengas acceso a tus herramientas de trabajo, puedes usar una acción para que tu o un aliado pueda utilizar uno de los siguientes efectos: <br> - Modifica una de sus skills con tus SP disponibles. <br> - Compra 1 modulo con tus CE disponibles. <br> - Escoge 1 Perk de un catalogo y tier disponible. <br> Solo puedes usar esta acción una vez y recuperas el uso tras una escena de descanso.", 
 				 type: "perk" 
 				},
 				{ name: "Call of the Hive [+1 ☐ ]", 

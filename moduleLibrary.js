@@ -65,7 +65,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo recupera LR de HP.",
 		emote: "🤕",
-		restrictions:"Un objetivo solo puede ser afectado por este modulo 1 vez por escena."
+		restrictions: "Un objetivo solo puede ser afectado por este modulo 1 vez por escena.",
 	},
 	{
 		name: "Prestidigitación 1",
@@ -206,6 +206,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Hasta el final de la escena, el objetivo gana un +1 a sus tiradas de ataque.",
 		emote: "👯",
+		restrictions: "+2 EP",
 	},
 	{
 		name: "Ilusión Aromatica",
@@ -419,6 +420,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Este módulo se mantiene aplicado por una duración indefinida. La próxima vez que el objetivo recibe daño, reduce el daño de 1 elemento a tu elección a 0, este módulo termina tras ello.",
 		emote: "🎈",
+		restrictions: "Un objetivo solo puede ser afectado por 1 modulo de 🎈 a la vez."
 	},
 	{
 		name: "Detectar 2",
