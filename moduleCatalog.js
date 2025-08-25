@@ -16,7 +16,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Call of the Hive [+1 ☐ ]", 
-				 description: "El objetivo debe ser un portador de Core.", 
+				 description: "El objetivo debe tener al menos 1 perk.", 
 				 type: "restriction",slots:"+1" 
 				},
 				{ name: "Area Instantanea [+1 ☐ ]", 
@@ -229,14 +229,14 @@ const moduleCatalog = {
 				 description: "Solo puedes usar esta skill mientras estas en oscuridad parcial o total.", 
 				 type: "restriction", slots: "+1"
 				},				
-				{ name: "Habes Corpus [+1 ☐ ]", 
-				 description: "Solo puedes usar esta skill mientras estas en oscuridad parcial o total.", 
+				{ name: "Caveat Emptor [+1 ☐ ]", 
+				 description: "Debes explicar de forma audible y dramática los efectos de esta skill antes de activarla.", 
 				 type: "restriction", slots: "+1"
-				},				
-				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1.", 
-				 type: "perk" 
 				},
+				{ name: "Habes Corpus [+1 ☐ ]", 
+				 description: "Solo puedes usar esta skill mientras estás bajo el efecto del módulo 🐺.", 
+				 type: "restriction", slots: "+1"
+				},								
 			],
 			tier2: [
 				{ name: "Paladín Oscuro Tier 3", 
@@ -248,7 +248,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "La Arbitración de Luna", 
-				 description: "Mientras seas	afectado por 🐺, puedes	incrementar en 1 tamaño	una de tus stats, al hacerlo, reduce en 1 tamaño una stat distinta. Estos efectos no	pueden ser resistidos", 
+				 description: "Mientras seas afectado por 🐺, puedes incrementar en 1 tamaño una de tus stats, al hacerlo, reduce en 1 tamaño una stat distinta. Estos efectos no pueden ser resistidos", 
 				 type: "perk" 
 				},
 				{ name: "Corpus Amittere [+2 ☐ ]", 
@@ -374,9 +374,9 @@ const moduleCatalog = {
 				 description: "Reduce tu MOV a la mitad hasta el final de tu siguiente turno.", 
 				 type: "restriction", slots: "+1"
 				},				
-				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1.", 
-				 type: "perk" 
+				{ name: "Quick Action [-2 ☐ ]", 
+				 description: "Cuando consumes una accion para utilizar una acción de movimiento, puedes usar este ataque como parte de la misma acción.", 
+				 type: "restriction", slots: "-2"
 				},
 			],
 			tier2: [
@@ -392,14 +392,14 @@ const moduleCatalog = {
 				 description: "No puedes usar la accion de MOV hasta el inicio de tu siguiente turno.", 
 				 type: "restriction", slots: "+2",
 				},
+				{ name: "Need to Rush [+2 ☐ ]", 
+				 description: "Sólo puedes usar esta acción tras gastar todo tu MOV avanzando en línea recta en el turno.", 
+				 type: "restriction", slots: "+2"
+				},
 				{ name: "Pinball", 
 				 description: "Cuando un objetivo es empujado por una de tus skills, este se convierte en un proyectil. Si dicho proyectil impacta contra otro objetivo, tanto el proyectil como el nuevo objetivo reciben daño Físico igual al LR de la tirada de ataque.", 
 				 type: "perk",
 				},				
-				{ name: "Maestria 2", 
-				 description: "Ganas maestría en un módulo Tier 2.", 
-				 type: "perk" 
-				},
 			],
 			tier3: [
 				{ name: "Repartidor Tier 4", 
@@ -414,13 +414,9 @@ const moduleCatalog = {
 				 description: "Al utilizar el módulo de 🧚, puedes invocar a el familiar en forma de un vehículo personal. El vehículo tiene 1 asiento de conductor y 1 de pasajero, y puede ser abordado o desembarcado con una interacción con objetos. Todas las criaturas a bordo se desplazan al mismo tiempo cuando el vehículo o el conductor utiliza una acción de movimiento. En su turno, el conductor puede utilizar su acción de movimiento, para desplazarse un número de casillas igual a su MOV+el MOV del vehículo, al hacerlo el MOV del vehículo es reducido a 0 hasta el final de su siguiente turno.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: "..", 
-				 type: "restriction", slots: "+2"
-				},				
-				{ name: "Maestria 3", 
-				 description: "Ganas maestría en un módulo Tier 3 del Zephyr Express.", 
-				 type: "perk" 
+				{ name: "Supersonic", 
+				 description: "Durante tu turno, puedes usar una acción para consumir una cantidad de EP a tu elección por cada punto de EP consumido, aumenta tu MOV en +3 hasta el final de tu siguiente ronda.", 
+				 type: "Perk",
 				},
 			],
 		},
@@ -432,8 +428,8 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +1", 
-					description: "Permanent +1 to Max HP"
+					name: "HP +2", 
+					description: "Permanent +2 to Max HP"
 				},
 				{ 
 					name: "HP +2", 
@@ -503,8 +499,8 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
-				{ name: "Firma de Karma", 
-				 description: "Cuando aplicas 🪧sobre una criatura a la que hayas curado o te haya hecho daño como resultado de una tirada de ataque, puedes convertir 🪧 en tu Karma Sign, una marca permanente que no puede ser resistida.", 
+				{ name: "Karma", 
+				 description: "Cuando aplicas 🪧 sobre una criatura a la que hayas curado o te haya hecho daño como resultado de una tirada de ataque, puedes convertir 🪧 en una “Marca”, la Marca es de duración permanente y no puede ser resistida.", 
 				 type:"perk" },
 				{ name: "Payback [+1 ☐ ]", 
 				 description: "El objetvio debe tener tu Karma Sign", 
@@ -514,8 +510,8 @@ const moduleCatalog = {
 				 description: "Recibes daño igual al LR, este daño no puede ser bloqueado", 
 				 type: "restriction", slots: "+1",
 				},
-				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1.", 
+				{ name: "Blood Donation", 
+				 description: "Puedes usar una acción para reducir tu HP máximo una cantidad a tu elección (a un máximo de 2x tu MIG máximo). Al hacerlo, escoge a un aliado en escena distinto a ti para recibir el siguiente beneficio:<br> - El objetivo es curado 3 HP por cada 1 HP sacrificado <br> - El objetivo recupera 1 EP por cada 5 HP sacrificados <br>Recuperas 1 MIG de la HP Máxima sacrificada en una escena de descanso.",
 				 type: "perk" 
 				},
 			],
@@ -524,8 +520,12 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Blood Boost", 
+				 description: "Añade las siguientes opciones a los beneficios del Perk (Blood Donation).<br> - El objetivo aumenta el tamaño de 1 de sus stats por cada 4 HP sacrificados <br> - El objetivo resiste automáticamente  1 módulo  que le esté  afectando por cada 3 HP sacrificados", 
+				 type: "perk" 
+				},
+				{ name: "Battle Medic", 
+				 description: "Puedes sumar tu DMG a los HP que cures usando acciones.", 
 				 type: "perk" 
 				},
 				{ name: "Embers to Ashes [+2 ☐ ]", 
@@ -536,28 +536,20 @@ const moduleCatalog = {
 				 description: "El objetivo debe tener tu Karma Sign, la cual desaparece tras ser afectado por esta skill.", 
 				 type: "restriction", slots: "+2",
 				},
-				{ name: "Maestria 2", 
-				 description: "Ganas maestría en un módulo Tier 2 de Vita Karma.", 
-				 type: "perk" 
-				},
 			],
 			tier3: [
 				{ name: "Sacrificio Tier 4", 
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Sacrificio.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Blood Drive", 
+				 description: "Utilizar la acción del Perk Blood Donation para sacrificar HP Máximos, puedes escoger más de una de las opciones para repartir tu HP entre ellas.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Bloody Blade", 
+				 description: "Como acción gratuita al inicio de tu turno de cada uno de tus turnos puedes lanzar tu MIG para recibir daño igual al resultadoComo acción gratuita al inicio de tu turno de cada uno de tus turnos puedes lanzar tu MIG para recibir daño igual al resultado. Hasta el final de tu turno, aumenta tu DMG igual al daño recibido por este Perk.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: "..", 
-				 type: "restriction", slots: "+2"
-				},				
 				{ name: "Maestria 3", 
 				 description: "Ganas maestría en un módulo Tier 3.", 
 				 type: "perk" 
