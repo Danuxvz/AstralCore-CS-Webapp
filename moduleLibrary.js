@@ -622,7 +622,7 @@ const moduleLibrary = [
 	{
 		name: "Teletransportar 3",
 		category: "Efecto",
-		description: "El objetivo del rango a la izquierda de este módulo es teletransportado al punto de impacto del rango a la derecha de este módulo.",
+		description: "El objetivo del rango mas cercano a la izquierda de este módulo es teletransportado al punto de impacto del rango mas cercano a la derecha de este módulo.",
 		emote: "🎱",
 	},
 	{

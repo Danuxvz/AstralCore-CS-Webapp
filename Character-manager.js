@@ -1458,8 +1458,6 @@ function updatePerkAvailability(coreName, tier) {
 
 
 
-
-
 //Selfcore section		
 function loadSelfCoreContent() {
 	const selfCoreContent = document.getElementById("selfCoreContent");
@@ -1481,10 +1479,12 @@ function loadSelfCoreContent() {
 	// ===== MODULE TABLE =====
 	if (activeCharacter.modules) {
 		const moduleSection = createCollapsibleSection("Modules", () => {
+			const container = document.createElement("div");
+
+			// Table
 			const moduleTable = document.createElement("table");
 			moduleTable.className = "module-table";
 
-			// Table headers
 			const headerRow = document.createElement("tr");
 			["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"].forEach(tier => {
 				const th = document.createElement("th");
@@ -1493,37 +1493,50 @@ function loadSelfCoreContent() {
 			});
 			moduleTable.appendChild(headerRow);
 
-			// Modules per tier
 			const moduleRow = document.createElement("tr");
 			for (let tier = 1; tier <= 5; tier++) {
 				const tierCell = document.createElement("td");
 				tierCell.className = "module-cell";
+				tierCell.dataset.tier = "tier" + tier;
 				const tierModules = activeCharacter.modules["tier" + tier] || [];
 
 				tierModules.forEach(module => {
 					const moduleContainer = document.createElement("div");
 					moduleContainer.className = "module-container";
+				
+					if (module.isCustom) {
+						moduleContainer.classList.add("custom-module");
+					}
 
-					// Module emoji
 					const moduleDiv = document.createElement("div");
 					moduleDiv.className = "module-emote";
 					moduleDiv.textContent = module.emote;
+					moduleDiv.dataset.module = module.name; 
 
-					// Restriction icon
 					if (module.restrictions.length) {
 						const restrictionIcon = document.createElement("div");
 						restrictionIcon.className = "restriction-icon";
 						restrictionIcon.textContent = "R";
-						
 						moduleDiv.appendChild(restrictionIcon);
 					}
 
-					// Click to show details
-					moduleDiv.addEventListener("click", () => {
+					moduleDiv.addEventListener("click", (ev) => {
+						if (document.body.classList.contains("removal-mode")) {
+							ev.stopPropagation();
+							if (module.isCustom) {
+							removeCustomModule(module.name, "tier" + tier);
+							} else {
+							alert("Only custom modules can be removed.");
+							}
+							// Exit removal mode after an action
+							document.body.classList.remove("removal-mode");
+							return;
+						}
+
+						// (Normal behavior below if not in removal mode)
 						document.querySelectorAll(".module-detail-view").forEach(el => el.remove());
 						const detailView = document.createElement("div");
 						detailView.className = "module-detail-view";
-
 						let detailContent = `${module.emote} <em>(${module.category}, Tier ${tier})</em> - ${module.description}`;
 						if (module.restrictions.length) {
 							detailContent += `<br><strong>Restrictions:</strong> ${module.restrictions}`;
@@ -1531,9 +1544,9 @@ function loadSelfCoreContent() {
 						if (module.effects && module.effects.length) {
 							detailContent += `<div class='sub-effects'><strong>Sub-effects:</strong>`;
 							module.effects.forEach(effect => {
-								detailContent += `<div class='sub-effect'>
-									<span class='sub-effect-emote'>${effect.emote}</span>
-									<span class='sub-effect-description'>${effect.description}</span>
+							detailContent += `<div class='sub-effect'>
+								<span class='sub-effect-emote'>${effect.emote}</span>
+								<span class='sub-effect-description'>${effect.description}</span>
 								</div>`;
 							});
 							detailContent += `</div>`;
@@ -1542,6 +1555,13 @@ function loadSelfCoreContent() {
 						moduleTable.insertAdjacentElement("afterend", detailView);
 					});
 
+
+					if (module.isCustom) {
+					moduleContainer.classList.add("custom-module");
+					}
+
+					moduleDiv.dataset.module = module.name; 
+
 					moduleContainer.appendChild(moduleDiv);
 					tierCell.appendChild(moduleContainer);
 				});
@@ -1549,8 +1569,37 @@ function loadSelfCoreContent() {
 				moduleRow.appendChild(tierCell);
 			}
 			moduleTable.appendChild(moduleRow);
-			return moduleTable;
+			container.appendChild(moduleTable);
+
+			// === Controls (moved inside) ===
+			function setupCustomModuleControls(parent) {
+				const controlsDiv = document.createElement("div");
+				controlsDiv.className = "custom-module-controls";
+
+				const addButton = document.createElement("button");
+				addButton.textContent = "Add Module";
+				addButton.addEventListener("click", showCustomModuleForm);
+				controlsDiv.appendChild(addButton);
+
+				const removeButton = document.createElement("button");
+				removeButton.textContent = "Remove";
+				removeButton.addEventListener("click", toggleRemovalMode);
+				controlsDiv.appendChild(removeButton);
+
+				// Form container
+				const formContainer = document.createElement("div");
+				formContainer.id = "customModuleFormContainer";
+				formContainer.style.display = "none";
+
+				parent.appendChild(controlsDiv);
+				parent.appendChild(formContainer);
+			}
+
+			setupCustomModuleControls(container);
+
+			return container;
 		}, 'modules');
+
 		selfCoreContent.insertBefore(moduleSection, document.getElementById("notesContainer"));
 	}
 
@@ -1681,7 +1730,173 @@ function toggleCollapse(e) {
 	e.stopPropagation();
 }
 
+//Custom Modules
+function setupCustomModuleControls() {
+  const selfCoreContent = document.getElementById("selfCoreContent");
+  
+  // Create controls container
+  const controlsDiv = document.createElement("div");
+  controlsDiv.className = "custom-module-controls";
+  
+  // Add Module button
+  const addButton = document.createElement("button");
+  addButton.textContent = "Add Module";
+  addButton.addEventListener("click", showCustomModuleForm);
+  controlsDiv.appendChild(addButton);
+  
+  // Remove Module button
+  const removeButton = document.createElement("button");
+  removeButton.textContent = "Remove Module";
+  removeButton.addEventListener("click", toggleRemovalMode);
+  controlsDiv.appendChild(removeButton);
+  
+  // Insert controls at the end of selfCoreContent (before notes)
+  const notesContainer = document.getElementById("notesContainer");
+  selfCoreContent.insertBefore(controlsDiv, notesContainer);
+  
+  // Create form container (initially hidden)
+  const formContainer = document.createElement("div");
+  formContainer.id = "customModuleFormContainer";
+  formContainer.style.display = "none";
+  selfCoreContent.insertBefore(formContainer, notesContainer);
+}
 
+function showCustomModuleForm() {
+const formContainer = document.getElementById("customModuleFormContainer");
+
+// Create form HTML
+formContainer.innerHTML = `
+	<div class="custom-module-form">
+	<h4>Add Custom Module</h4>
+	<input type="text" id="customModuleName" placeholder="Module Name" required>
+	<input type="text" id="customModuleEmote" placeholder="Module Icon (Emoji)" required>
+	<select id="customModuleType" required>
+		<option value="effect">Effect</option>
+		<option value="range">Range</option>
+		<option value="special">Special</option>
+	</select>
+	<textarea id="customModuleDescription" placeholder="Module Description" rows="3" required></textarea>
+	<select id="customModuleTier" required>
+		<option value="tier1">Tier 1</option>
+		<option value="tier2">Tier 2</option>
+		<option value="tier3">Tier 3</option>
+		<option value="tier4">Tier 4</option>
+		<option value="tier5">Tier 5</option>
+	</select>
+	<input type="text" id="customModuleRestriction" placeholder="Restriction (Optional)">
+	<div class="form-buttons">
+		<button type="button" id="cancelCustomModule">Cancel</button>
+		<button type="button" id="saveCustomModule">Add Module</button>
+	</div>
+	</div>
+`;
+
+// Show form
+formContainer.style.display = "block";
+
+// Add event listeners
+document.getElementById("cancelCustomModule").addEventListener("click", () => {
+	formContainer.style.display = "none";
+});
+
+document.getElementById("saveCustomModule").addEventListener("click", saveCustomModule);
+}
+
+function saveCustomModule() {
+  const name = document.getElementById("customModuleName").value;
+  const emote = document.getElementById("customModuleEmote").value;
+  const category = document.getElementById("customModuleType").value;
+  const description = document.getElementById("customModuleDescription").value;
+  const tier = document.getElementById("customModuleTier").value;
+  const restriction = document.getElementById("customModuleRestriction").value;
+  
+  // Validate inputs
+  if (!name || !emote || !description || !tier) {
+    alert("Please fill in all required fields");
+    return;
+  }
+  
+  // Create custom module object
+  const customModule = {
+    name,
+    emote,
+    description,
+	category: category || null,
+    restriction: restriction || null,
+    catalogs: ["Custom"],
+    restrictions: restriction ? [restriction] : [],
+    isCustom: true // Flag to identify custom modules
+  };
+  
+  // Initialize customModules if it doesn't exist
+  if (!activeCharacter.customModules) {
+    activeCharacter.customModules = {
+      tier1: [], tier2: [], tier3: [], tier4: [], tier5: []
+    };
+  }
+  
+  // Add module to the appropriate tier
+  activeCharacter.customModules[tier].push(customModule);
+  
+  // Also add to the main modules array for the character
+  if (!activeCharacter.modules[tier]) {
+    activeCharacter.modules[tier] = [];
+  }
+  activeCharacter.modules[tier].push(customModule);
+  
+  // Save character data
+  saveCharacterData();
+  
+  // Reload self core content to show the new module
+  loadSelfCoreContent();
+  
+  // Hide the form
+  document.getElementById("customModuleFormContainer").style.display = "none";
+}
+
+function toggleRemovalMode() {
+  const isOn = document.body.classList.toggle("removal-mode");
+  console.log("Removal mode:", isOn ? "ON" : "OFF");
+}
+
+function removeCustomModule(moduleName, tier) {
+  if (!activeCharacter.modules || !activeCharacter.modules[tier]) return;
+
+  // Remove from main modules
+  activeCharacter.modules[tier] = activeCharacter.modules[tier].filter(m => m.name !== moduleName);
+
+  // Also remove from customModules if it exists
+  if (activeCharacter.customModules && activeCharacter.customModules[tier]) {
+    activeCharacter.customModules[tier] = activeCharacter.customModules[tier].filter(m => m.name !== moduleName);
+  }
+
+  saveCharacterData();
+  loadSelfCoreContent();
+}
+
+
+
+function findModuleDefByName(name) {
+  let m = moduleLibrary.find(x => x.name === name);
+  if (m) return m;
+
+  if (activeCharacter.modules) {
+    for (let t = 1; t <= 5; t++) {
+      const arr = activeCharacter.modules["tier" + t] || [];
+      const hit = arr.find(x => x.name === name);
+      if (hit) return hit;
+    }
+  }
+
+  if (activeCharacter.customModules) {
+    for (let t = 1; t <= 5; t++) {
+      const arr = activeCharacter.customModules["tier" + t] || [];
+      const hit = arr.find(x => x.name === name);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
 
 // Skill creation/editing form
 function createSkillForm(skill = {}, index) {
@@ -1780,7 +1995,14 @@ function createSkillForm(skill = {}, index) {
 
 			if (currentModules[i]) {
 				const moduleObj = currentModules[i];
-				const moduleDef = moduleLibrary.find(m => m.name === moduleObj.name);
+				let moduleDef = moduleLibrary.find(m => m.name === moduleObj.name);
+				console.log(moduleDef);
+				if (!moduleDef) {
+					moduleDef = Object.values(activeCharacter.customModules || {})
+						.flat()
+						.find(m => m.name === moduleObj.name);
+				}
+				console.log(moduleDef);
 				slot.textContent = moduleDef ? moduleDef.emote : "?";
 				slot.dataset.module = moduleObj.name;
 				slot.dataset.category = moduleDef ? moduleDef.category : "";
@@ -1872,7 +2094,10 @@ function createSkillForm(skill = {}, index) {
 
 			return {
 				name: moduleName,
-				restriction: moduleObj?.restriction || null
+				emote: moduleObj?.emote || slot.textContent || "❓",
+			    category: slot.dataset.category || null,
+				restriction: moduleObj?.restriction || null,
+
 			};
 		}).filter(Boolean);
 
@@ -1975,13 +2200,14 @@ function showModuleSelection(slot, saveSkill, skill, index, currentModules) {
 		// Add modules grouped by tier
 		let firstTier = true;
 		for (let tier = 1; tier <= 5; tier++) {
-				const tierModules = tiers[tier].filter(m =>
-					m.catalogs.some(catalog =>
-						moduleCatalog[catalog] && 
-						moduleCatalog[catalog][`tier${tier}`] &&
-						moduleCatalog[catalog][`tier${tier}`].some(cm => cm.name === m.name)
-					)
-				);
+			const tierModules = tiers[tier].filter(m =>
+			m.isCustom ||
+			(m.catalogs || []).some(catalog =>
+				moduleCatalog[catalog] &&
+				moduleCatalog[catalog][`tier${tier}`] &&
+				moduleCatalog[catalog][`tier${tier}`].some(cm => cm.name === m.name)
+			)
+			);
 
 				if (tierModules.length > 0) {
 						// Add tier separator for every tier after the first one
@@ -2287,14 +2513,19 @@ function renderSkills() {
 			moduleSlot.className = "module-slot";
 
 			if (skill.modules[i]) {
-				const module = moduleLibrary.find(m => m.name === skill.modules[i].name);
-				moduleSlot.textContent = module ? module.emote : "?";
-				moduleSlot.dataset.module = skill.modules[i].name;
-				moduleSlot.dataset.category = module ? module.category : "";
-				moduleSlot.title = skill.modules[i].name;
+				const saved = skill.modules[i];
+				const found = findModuleDefByName(saved.name);
 
-				const baseRestrictions = getModuleRestrictions(skill.modules[i].name); // <-- keep this
-				const skillRestriction = skill.modules[i].restriction; // <-- direct assignment
+				const displayEmote = found?.emote ?? saved.emote ?? "?";
+				const displayCategory = found?.category ?? saved.category ?? "Custom";
+
+				moduleSlot.textContent = displayEmote;
+				moduleSlot.dataset.module = saved.name;
+				moduleSlot.dataset.category = displayCategory;
+				moduleSlot.title = saved.name;
+
+				const baseRestrictions = getModuleRestrictions(saved.name);
+				const skillRestriction = saved.restriction;
 
 				if (baseRestrictions.length > 0 || skillRestriction) {
 					const restrictionIcon = document.createElement("div");
@@ -2302,16 +2533,16 @@ function renderSkills() {
 					restrictionIcon.textContent = "R";
 					restrictionIcon.title = skillRestriction || "None";
 					restrictionIcon.addEventListener("click", (e) => {
-						e.stopPropagation();
-						showGenericModuleRestrictions(restrictionIcon, skill, i);
+					e.stopPropagation();
+					showGenericModuleRestrictions(restrictionIcon, skill, i);
 					});
 					moduleSlot.appendChild(restrictionIcon);
 				}
-
 			} else {
-				moduleSlot.textContent = "+";
-				moduleSlot.classList.add("empty");
+			moduleSlot.textContent = "+";
+			moduleSlot.classList.add("empty");
 			}
+
 
 			if (!isEditMode) {
 				moduleSlot.addEventListener("mouseenter", handleModuleHover);
@@ -2664,6 +2895,7 @@ function getModuleRestrictions(moduleName) {
 			return acc;
 		}, []);
 }
+
 
 
 

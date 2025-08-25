@@ -812,6 +812,93 @@ select {
 	justify-content: center;
 }
 
+/* Custom Module Form Styles - Standardized */
+.custom-module-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.custom-module-form {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  background-color: #fff;
+  transition: box-shadow 0.3s;
+}
+
+.custom-module-form:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-module-form input,
+.custom-module-form select,
+.custom-module-form textarea {
+  width: 98%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.custom-module-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.custom-module-form .form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.custom-module-form .form-buttons button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.custom-module-form .form-buttons button.cancel {
+  background-color: #f44336;
+}
+
+.custom-module {
+  position: relative;
+  border: 1px solid #ccc;
+  padding: 7px 0px;
+  border-radius: 5px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.custom-module::after {
+  content: "★";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 12px;
+  color: #ff9900;
+}
+
+.removal-mode .custom-module {
+  box-shadow: 0 0 0 2px #e63946;
+  cursor: pointer;
+}
+
+.removal-mode .custom-module:hover {
+  box-shadow: 0 0 0 3px #c1121f;
+}
+
+
+
 
 /* Skills Section */
 .skill {
