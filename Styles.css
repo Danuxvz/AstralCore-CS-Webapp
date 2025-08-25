@@ -897,6 +897,10 @@ select {
   box-shadow: 0 0 0 3px #c1121f;
 }
 
+.perk-warning {
+    color: #d9534f; 
+    margin-right: 8px;
+}
 
 
 

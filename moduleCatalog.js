@@ -1061,7 +1061,7 @@ const moduleCatalog = {
 
 	origen: {
 		ventajas: [
-		{
+			{
 			name: "Experto",
 			description: "Escoge una de tus oficios, puedes escoger un segundo efecto escogido.",
 			type: "perk"

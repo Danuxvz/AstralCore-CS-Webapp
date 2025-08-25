@@ -547,9 +547,10 @@ function migrateCharacterData(character) {
 
 function syncOldCharacterData() {
     if (!activeCharacter) return;
+	
 
-    // Helper to sync a single module
-    function syncModule(moduleObj) {
+
+	function syncModule(moduleObj) {
         const libModule = moduleLibrary.find(m => m.name === moduleObj.name);
         if (!libModule) return moduleObj; // nothing to sync against
 
@@ -604,8 +605,63 @@ function syncOldCharacterData() {
             activeCharacter.modules[tier] = activeCharacter.modules[tier].map(syncModule);
         });
     }
-	
-    saveCharacterData();
+
+	// --- Sync Perks ---
+	if (activeCharacter.perks) {
+		activeCharacter.perks.forEach(perk => {
+			perk._showDelete = false; // default
+
+			const catalogObj = moduleCatalog[perk.catalog];
+			if (!catalogObj) {
+				console.log(`Delete: ${perk.name} → catalog "${perk.catalog}" not found.`);
+				perk._showDelete = true;
+				return;
+			}
+
+			// pick the right container depending on catalog
+			let catalogContainer;
+			if (perk.catalog === "origen") {
+				catalogContainer = [
+					...(catalogObj.ventajas || []),
+					...(catalogObj.desventajas || [])
+				];
+			} else {
+				catalogContainer = catalogObj.perks || [];
+			}
+
+			const catalogTier = catalogContainer[perk.tier] || [];
+			const match = catalogTier.find(p => p.name === perk.name);
+
+			if (!match) {
+				console.log(`Delete: ${perk.name} → not found in tier "${perk.tier}".`);
+				perk._showDelete = true;
+				return;
+			}
+
+			// Normalize text to avoid false mismatches (trim whitespace)
+			const descChar = (perk.description || "").trim();
+			const descCat = (match.description || "").trim();
+
+			if (perk.type === "restriction") {
+				const slotsChar = Number(perk.slots || 0);
+				const slotsCat = Number(match.slots || 0);
+
+				if (descChar !== descCat) {
+					console.log(`Delete: ${perk.name} → description mismatch.`);
+					perk._showDelete = true;
+				}
+				if (slotsChar !== slotsCat) {
+					console.log(`Delete: ${perk.name} → slots mismatch (char: ${slotsChar}, cat: ${slotsCat}).`);
+					perk._showDelete = true;
+				}
+			} else {
+				if (descChar !== descCat) {
+					console.log(`Delete: ${perk.name} → description mismatch.`);
+					perk._showDelete = true;
+				}
+			}
+		});
+	}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -728,29 +784,29 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 	
 	// Add skill button
-document.getElementById("addSkill").addEventListener("click", () => {
-	if (!activeCharacter.skills) activeCharacter.skills = [];
+	document.getElementById("addSkill").addEventListener("click", () => {
+		if (!activeCharacter.skills) activeCharacter.skills = [];
 
-	const newSkill = {
-		name: "",
-		restrictions: [],
-		stats: ["mig", "dex"],
-		description: "",
-		modules: [] 
-	};
+		const newSkill = {
+			name: "",
+			restrictions: [],
+			stats: ["mig", "dex"],
+			description: "",
+			modules: [] 
+		};
 
-	// Push immediately to character skills so it has an index
-	activeCharacter.skills.push(newSkill);
-	const index = activeCharacter.skills.length - 1;
+		// Push immediately to character skills so it has an index
+		activeCharacter.skills.push(newSkill);
+		const index = activeCharacter.skills.length - 1;
 
-	// Create the form for this skill
-	const skillForm = createSkillForm(newSkill, index);
+		// Create the form for this skill
+		const skillForm = createSkillForm(newSkill, index);
 
-	// Append form to DOM
-	document.getElementById("skillsList").appendChild(skillForm);
+		// Append form to DOM
+		document.getElementById("skillsList").appendChild(skillForm);
 
-	renderSkills();
-});
+		renderSkills();
+	});
 
 	syncOldCharacterData();
 	setupCharacterImage();
@@ -941,7 +997,6 @@ function loadJobs(jobsData) {
 		console.log("job loaded");
 	});
 }
-
 
 function updateCEDisplay() {
 	const totalCE = activeCharacter.ce || 0;
@@ -1727,46 +1782,51 @@ function createPerkList(perks) {
     const list = document.createElement("ul");
     list.className = "perks-list";
 
-function createDeletePerkButton(perk) {
-    const deleteButton = document.createElement("button");
-	deleteButton.textContent = "Delete";
-    deleteButton.classList.add("delete-perk-button");
-    deleteButton.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (confirm(`Are you sure you want to delete the perk "${perk.name}"?`)) {
-            // Find and remove the perk
-            const index = activeCharacter.perks.findIndex(p => 
-                p.name === perk.name && p.catalog === perk.catalog && p.tier === perk.tier
-            );
-            if (index !== -1) {
-                activeCharacter.perks.splice(index, 1);
-                saveCharacterData();
-                loadSelfCoreContent(); // Refresh the display
+    function createDeletePerkButton(perk) {
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.classList.add("delete-perk-button");
+        deleteButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (confirm(`Are you sure you want to delete the perk "${perk.name}"?`)) {
+                const index = activeCharacter.perks.findIndex(p =>
+                    p.name === perk.name && p.catalog === perk.catalog && p.tier === perk.tier
+                );
+                if (index !== -1) {
+                    activeCharacter.perks.splice(index, 1);
+                    saveCharacterData();
+                    loadSelfCoreContent(); // Refresh the display
+                }
             }
-        }
-    });
-    return deleteButton;
-}
-
+        });
+        return deleteButton;
+    }
 
     perks.forEach(perk => {
         const listItem = document.createElement("li");
-        
-        // Create container for perk content and delete button
+
         const perkContent = document.createElement("div");
         perkContent.className = "perk-content";
         perkContent.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
-        
-        // Add delete button
-        const deleteButton = createDeletePerkButton(perk);
-        
+
         listItem.appendChild(perkContent);
-        // listItem.appendChild(deleteButton);
+
+        // Add warning + delete button if flagged
+        if (perk._showDelete) {
+            const warning = document.createElement("span");
+            warning.textContent = "⚠ Outdated perk";
+            warning.classList.add("perk-warning");
+            listItem.appendChild(warning);
+
+            listItem.appendChild(createDeletePerkButton(perk));
+        }
+
         list.appendChild(listItem);
     });
 
     return list;
 }
+
 function createCollapsibleSection(title, contentGenerator, storageKey) {
 	const section = document.createElement("div");
 	section.className = "collapsible-section";
