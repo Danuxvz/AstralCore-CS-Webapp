@@ -922,8 +922,6 @@ function createDropdown(jobId) {
 	return dropdown;
 }
 
-
-
 // Update addJob() function:
 function addJob() {
 		const available = calculateAvailableJobs();
@@ -997,6 +995,9 @@ function loadJobs(jobsData) {
 		console.log("job loaded");
 	});
 }
+
+
+
 
 function updateCEDisplay() {
 	const totalCE = activeCharacter.ce || 0;
@@ -1345,18 +1346,59 @@ function loadCatalogContent(coreName) {
 								const index = activeCharacter.perks.findIndex(p =>
 									p.name === perk.name && p.catalog === coreName && p.tier === tierKey
 								);
+
 								if (index === -1) {
-									activeCharacter.perks.push({
-										...perk, catalog: coreName, tier: tierKey
-									});
+									// Add the perk
+									const newPerk = { ...perk, catalog: coreName, tier: tierKey };
+									activeCharacter.perks.push(newPerk);
 									perkButton.classList.add("learned");
+
+									// 🔹 Special handling for perks that add restrictions or slots
+									switch (perk.name) {
+										case "Gimmick":
+											activeCharacter.perks.push({
+												name: " Gimmick",
+												type: "restriction",
+												description: "Sets skill cost to 0 and slots to 1 (or 2 with Gimmick Set).",
+												catalog: "SecretRestrictions",
+												tier: tierKey
+											});
+											break;
+										case "Transformación":
+											activeCharacter.perks.push({
+												name: " Transformación",
+												type: "restriction",
+												description: "Skill cost set to 0 and grants 1 module slot (plus bonuses from Bendición De Luna perks).",
+												catalog: "SecretRestrictions",
+												tier: tierKey
+											});
+											break;
+										// Add other special perk cases here
+									}
+
 								} else {
+									// Remove the perk
+									const removedPerk = activeCharacter.perks[index];
 									activeCharacter.perks.splice(index, 1);
 									perkButton.classList.remove("learned");
+
+									// 🔹 Remove associated restrictions if applicable
+									switch (removedPerk.name) {
+										case "Gimmick":
+											const gimmickIndex = activeCharacter.perks.findIndex(p => p.name === " Gimmick");
+											if (gimmickIndex !== -1) activeCharacter.perks.splice(gimmickIndex, 1);
+											break;
+										case "Transformación":
+											const transIndex = activeCharacter.perks.findIndex(p => p.name === "Transformación Restriction");
+											if (transIndex !== -1) activeCharacter.perks.splice(transIndex, 1);
+											break;
+										// Add other special perk removals here
+									}
 								}
+
 								saveCharacterData();
 								updatePerkAvailability(coreName, tierKey);
-								updateStatUpgrades()
+								updateStatUpgrades();
 								populateCharacterData(activeCharacter);
 							});
 
@@ -1718,7 +1760,10 @@ function loadSelfCoreContent() {
 			const container = document.createElement("div");
 
 			// Filter out restriction-type perks
-			const filteredPerks = activeCharacter.perks.filter(perk => perk.type === "perk");
+			const filteredPerks = activeCharacter.perks.filter(perk => 
+				perk.type === "perk" || (perk.type === "restriction" && perk._showDelete)
+			);
+
 
 			const perkGroups = filteredPerks.reduce((acc, perk) => {
 				const catalog = perk.catalog || 'other';
@@ -1988,6 +2033,7 @@ function removeCustomModule(moduleName, tier) {
   saveCharacterData();
   loadSelfCoreContent();
 }
+
 
 
 
@@ -2508,8 +2554,6 @@ function showGenericModuleRestrictions(icon, skill, moduleIndex) {
 	document.addEventListener("click", clickHandler);
 }
 
-
-
 // Delete skill
 function deleteSkill(index) {
 	if (!activeCharacter.skills) return;
@@ -2865,62 +2909,80 @@ function handleDragOver(e) {
 }
 
 function getTotalSlots(skill) {
-		let slots = 5; // Base slots
+    let slots = 5; // Base slots
 
-		skill.restrictions.forEach(restriction => {
-				switch (restriction) {
-						case 'Doble [+2 ☐ ]': slots += 2; break;
-						case '+1 PE [+1 ☐ ]': slots += 1; break;
-						case '+3 PE [+2 ☐ ]': slots += 2; break;
-						case '+6 PE [+3 ☐ ]': slots += 3; break;
-						case '+10 PE [+4 ☐ ]': slots += 4; break;
-						// Add other restrictions as needed
-				}
-		});
+    // --- Normal restrictions ---
+    skill.restrictions.forEach(restriction => {
+        switch (restriction) {
+            case 'Doble [+2 ☐ ]': slots += 2; break;
+            case '+1 PE [+1 ☐ ]': slots += 1; break;
+            case '+3 PE [+2 ☐ ]': slots += 2; break;
+            case '+6 PE [+3 ☐ ]': slots += 3; break;
+            case '+10 PE [+4 ☐ ]': slots += 4; break;
+        }
+    });
 
-		// Add perk-based slot bonuses
-		skill.restrictions.forEach(restriction => {
-				const perk = activeCharacter.perks.find(p => 
-						p.name === restriction && p.type === "restriction"
-				);
-				if (perk) {
-						const bonus = parseInt(perk.slots) || 0;
-						slots += bonus;
-				}
-		});
+    // --- Perk-based bonuses ---
+	
+    // --- Special gimmick override ---
+    if (skill.restrictions.includes(" Gimmick")) {
+        if (activeCharacter.perks.some(p => p.name === "Gimmick Set")) {
+            slots = 2;
+        } else {
+            slots = 1;
+        }
+    }
 
-		return slots;
+	if (skill.restrictions.includes(" Transformación")) {
+        if (activeCharacter.perks.some(p => p.name === "Bendición De Luna 2")) {
+            slots = 3;
+        }
+		else if (activeCharacter.perks.some(p => p.name === "Bendición De Luna")) {
+            slots = 2;
+        }
+		else {
+            slots = 1;
+        }
+    }
+
+
+    return slots;
 }
 
 // Calculate skill cost
 function calculateSkillCost(modules, skillRestrictions = []) {
-    let cost = modules.reduce((total, moduleObj) => {
-        // Find which tier this module belongs to
+    // Group modules by name
+    const grouped = modules.reduce((acc, m) => {
+        acc[m.name] = acc[m.name] || [];
+        acc[m.name].push(m);
+        return acc;
+    }, {});
+
+    let cost = 0;
+
+    for (const [name, mods] of Object.entries(grouped)) {
         const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
-            (activeCharacter.modules[tk] || []).some(m => m.name === moduleObj.name)
+            (activeCharacter.modules[tk] || []).some(m => m.name === name)
         );
         const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
-        return total + tierNum;
-    }, 0);
 
-    // Apply skill-level restrictions
+        const X = mods.length;
+        cost += (X * tierNum) + (X > 1 ? factorial(X - 1) : 0);
+    }
+
+    // Handle Ineficiente
     if (skillRestrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
 
-    // Apply module-specific restrictions
+    // Handle module restrictions
     modules.forEach(moduleObj => {
         if (!moduleObj.restriction) return;
-        
-        // Handle both string and object restriction formats
-        let restrictionType;
-        if (typeof moduleObj.restriction === 'string') {
-            restrictionType = moduleObj.restriction;
-        } else if (typeof moduleObj.restriction === 'object') {
-            restrictionType = moduleObj.restriction.type;
-        }
-        
+
+        let restrictionType = typeof moduleObj.restriction === 'string'
+            ? moduleObj.restriction
+            : moduleObj.restriction.type;
+
         if (!restrictionType) return;
-        
-        // Apply discounts based on restriction type
+
         if (restrictionType.includes("-1 SP")) cost -= 1;
         else if (restrictionType.includes("-2 SP")) cost -= 2;
         else if (restrictionType.includes("-3 SP")) cost -= 3;
@@ -2933,8 +2995,23 @@ function calculateSkillCost(modules, skillRestrictions = []) {
         }
     });
 
+    // Force cost = 0 if Gimmick or Transformación restriction is active
+    if (
+        skillRestrictions.includes(" Gimmick") ||
+        skillRestrictions.includes("") ||
+        skillRestrictions.includes(" Transformación")
+    ) {
+        cost = 0;
+    }
+
     return Math.max(cost, 0);
 }
+
+// Helper factorial
+function factorial(n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
 
 function showRestrictionTooltip(restrictionName, element) {
 		// Create dynamic descriptions from character's perks

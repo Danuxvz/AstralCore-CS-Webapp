@@ -849,7 +849,11 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
 				 type: "perk" 
 				},
-				{ name: "Gimmick", type: "perk", description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." },
+				{ name: "Gimmick", type: "perk", slots:"-4",
+				description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." 
+				},
+				{ name: "Elementalist", type: "perk",
+				description: "Una vez por ronda, al utilizar una skill con un o más de un módulo de elemento [🔥, ❄️, 🌪️, ⚡ y 🧱], puedes cambiarlos libremente a otro elemento de la lista a tu elección." },
 			],
 			tier2: [
 				{ name: "Evocador Tier 3", 
@@ -1134,7 +1138,21 @@ const moduleCatalog = {
 			type: "perk"
 			},
 		]
-	}
+	},
+	SecretRestrictions: [
+		{	
+			name: " Gimmick", type: "restriction",
+			description: "Sets skill cost to 0 and slots to 1 (or 2 with Gimmick Set).",
+			catalog: "SecretRestrictions", tier: "1"
+		},
+		{
+			name: " Transformación", type: "restriction",
+			description: "Skill cost set to 0 and grants 1 module slot (plus bonuses from Bendición De Luna perks).",
+			catalog: "SecretRestrictions", tier: "1"
+		}
+
+	]
+	
 };
 
 export default moduleCatalog;

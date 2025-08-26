@@ -772,9 +772,9 @@ const moduleLibrary = [
 	{
 		name: "Enjambre de Proyectiles Vivientes",
 		category: "Rango",
-		description: "Invocas 3 proyectiles vivientes con módulos.",
+		description: "Invocas 3 proyectiles vivientes con los módulos anidados.",
 		emote: "🍯",
-		restrictions: "Físico o Mágico"
+		restrictions: "Físico o Mágico, +1 PE"
 	},
 	{
 		name: "Familiar 3",
