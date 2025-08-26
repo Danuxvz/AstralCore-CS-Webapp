@@ -849,7 +849,7 @@ const moduleLibrary = [
 		name: "Revivir",
 		category: "Efecto",
 		description: `Anula el estado "Derrotado" sin que el objetivo sufra consecuencias. En caso de que el objetivo tenga 0 HP, aumenta su HP a 1`,
-		emote: "🐦‍🔥",
+		emote: "🐦‍🔥", restrictions: "+2 PE"
 	},
 	{
 		name: "Restringir 4",

@@ -11,8 +11,8 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier del Culto al orbe.", 
 				 type: "perk" 
 				},
-				{ name: "Laboratorio Portatil", 
-				 description: "Siempre que tengas acceso a tus herramientas de trabajo, puedes usar una acción para que tu o un aliado pueda utilizar uno de los siguientes efectos: <br> - Modifica una de sus skills con tus SP disponibles. <br> - Compra 1 modulo con tus CE disponibles. <br> - Escoge 1 Perk de un catalogo y tier disponible. <br> Solo puedes usar esta acción una vez y recuperas el uso tras una escena de descanso.", 
+				{ name: "Laboratorio Portátil", 
+				 description: "Siempre que tengas acceso a tus herramientas de trabajo, puedes usar una acción para que tu o un aliado pueda utilizar uno de los siguientes efectos: <br> - Modifica una de sus skills con tus SP disponibles. <br> - Compra 1 módulo con tus CE disponibles. <br> - Escoge 1 Perk de un catálogo y tier disponible. <br> Solo puedes usar esta acción una vez y recuperas el uso tras una escena de descanso.", 
 				 type: "perk" 
 				},
 				{ name: "Call of the Hive [+1 ☐ ]", 
@@ -633,6 +633,11 @@ const moduleCatalog = {
 				 description: "Esta skill queda asociada a un tipo objeto, equipamiento, o material a tu elección (definido durante creación), y no puede ser activada sin tener el objeto escogido equipado.", 
 				 type: "restriction", slots: "+1"
 				},
+				{ name: "Reloading  [+1 ☐ ]", 
+				 description: "Una vez activada, esta skill no puede volver a ser usada hasta que utilices una interacción con objeto para recargarla.", 
+				 type: "restriction", slots: "+1"
+				},
+
 
 			],
 			tier2: [
@@ -644,8 +649,8 @@ const moduleCatalog = {
 				 description: "Al activar una skill con requerimientos, puedes ignorar 1 de los requerimientos y activar su efecto igualmente. Al utilizar este perk, te vuelves incapaz de volver a activar la skill escogida hasta el final de la escena.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Recycle", 
+				 description: "Durante cada escena de laboratorio, puedes borrar 1 skill de tu selfcore, y recuperar SP igual a la mitad del valor de la skill eliminada.", 
 				 type: "perk" 
 				},
 				{ name: "Infusion [+2 ☐ ]", 
@@ -670,8 +675,8 @@ const moduleCatalog = {
 				 description: ".", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: "..", 
+				{ name: "Recharge [+2 ☐ ]", 
+				 description: "Debes reposar esta skill para poder volver a usarla. Esta Skill solo puede volver a activarse después del inicio de tu turno dos rondas tras cada uso.", 
 				 type: "restriction", slots: "+2"
 				},
 

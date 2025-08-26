@@ -1023,9 +1023,9 @@ function syncExperienceInputs() {
 	const ceValue = activeCharacter.ce || 0;
 	const seValue = activeCharacter.sp || 0;
 	
-	document.querySelectorAll('[id^="ce"], [id^="se"]').forEach(input => {
+	document.querySelectorAll('[id^="ce"], [id^="sp"]').forEach(input => {
 		if(input.id.includes("ce")) input.value = ceValue;
-		if(input.id.includes("se")) input.value = seValue;
+		if(input.id.includes("sp")) input.value = seValue;
 	});
 }
 
@@ -1381,7 +1381,6 @@ function loadCatalogContent(coreName) {
 	attachTooltipToPerkButtons();
 }
 
-
 function loadOriginPerks() {
 	const ventajasList = document.getElementById('ventajasList');
 	const desventajasList = document.getElementById('desventajasList');
@@ -1508,7 +1507,6 @@ function showTooltip(item, restriction, button) {
 	tooltip.style.left = `${left}px`;
 	tooltip.style.opacity = "1";
 }
-
 
 // Hide tooltip when not hovering
 function hideTooltip() {
