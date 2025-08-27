@@ -298,7 +298,7 @@ const moduleLibrary = [
 		category: "Especial",
 		description: "Se activa automáticamente bajo luz de luna. Efectos terminan bajo luz solar.",
 		emote: "🌃",
-		restrictions: "+2 Coste de PE"
+		restrictions: "+2 Coste de EP"
 	},
 	
 	// 2 Skill Points Modules
@@ -307,7 +307,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo recupera 10 HP.",
 		emote: "🩹",
-		restrictions: "+2 al coste de PE"
+		restrictions: "+2 al coste de EP"
 	},
 	{
 	name: "Prestidigitación 2",
@@ -356,7 +356,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Terminas un efecto que haya sido aplicado sobre el objetivo durante esta escena.",
 		emote: "🧯",
-		restrictions: "+1 al coste de PE"
+		restrictions: "+1 al coste de EP"
 
 	},
 	{
@@ -370,7 +370,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Reduces el tamaño de dado de una de las stats (definida durante creación) por la escena.",
 		emote: "🧑‍🦽",
-		restrictions: "+1 al coste de PE"
+		restrictions: "+1 al coste de EP"
 	},
 	{
 		name: "Vuelo",
@@ -383,7 +383,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Por el resto de la escena, el objetivo puede realizar una acción de movimiento gratuita adicional una vez por turno.",
 		emote: "🏃‍♂️",
-		restrictions: "El objetivo pierde 2 PE cuando este efecto termina",
+		restrictions: "El objetivo pierde 2 EP cuando este efecto termina",
 	},
 	{
 		name: "Mover 2",
@@ -468,7 +468,7 @@ const moduleLibrary = [
 	{
 		name: "Transformar 2",
 		category: "Efecto",
-		description: "Hasta el final de la escena, transformas las cualidades de un objetivo a otras cualidades equivalentes. Al afectar a un objeto, cambias el objeto por otro de valor, tamaño, y rareza equivalentes, que se componga por los mismos materiales que el original. Al afectar a una criatura, puedes cambiar cualidades físicas como su altura, género, o raza. Ademas, puedes consumir +2 PE para cambiar un perk de origen del objetivo por otro. ",
+		description: "Hasta el final de la escena, transformas las cualidades de un objetivo a otras cualidades equivalentes. Al afectar a un objeto, cambias el objeto por otro de valor, tamaño, y rareza equivalentes, que se componga por los mismos materiales que el original. Al afectar a una criatura, puedes cambiar cualidades físicas como su altura, género, o raza. Ademas, puedes consumir +2 EP para cambiar un perk de origen del objetivo por otro. ",
 		emote: "🏷️",
 	},
 	{
@@ -574,7 +574,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Para cálculos de HR en esta skill, puedes sumar el resultado de ambas stats.",
 		emote: "👹",
-		restrictions: "+ 1 PE"
+		restrictions: "+ 1 EP"
 	},
 	{
 		name: "Furia",
@@ -774,12 +774,12 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Invocas 3 proyectiles vivientes con los módulos anidados.",
 		emote: "🍯",
-		restrictions: "Físico o Mágico, +1 PE"
+		restrictions: "Físico o Mágico, +1 EP"
 	},
 	{
 		name: "Familiar 3",
 		category: "Rango",
-		description: "Una skill con este módulo debe ser activa como pasiva. Invocas a un familiar. El familiar es una criatura independiente, leal, pero capaz de tomar sus propias decisiones. <br>Al ser creado, el familiar recibe los módulos de efecto de este rango como efectos pasivos.	El familiar tiene un d6 para todas sus stats y 10 HP máximos, pero es incapaz de usar energía. <br>Durante creación puedes gastar +1 PE para elegir una de las siguientes mejoras, puedes tomar cada opción más de una vez:",
+		description: "Una skill con este módulo debe ser activa como pasiva. Invocas a un familiar. El familiar es una criatura independiente, leal, pero capaz de tomar sus propias decisiones. <br>Al ser creado, el familiar recibe los módulos de efecto de este rango como efectos pasivos.	El familiar tiene un d6 para todas sus stats y 10 HP máximos, pero es incapaz de usar energía. <br>Durante creación puedes gastar +1 EP para elegir una de las siguientes mejoras, puedes tomar cada opción más de una vez:",
 		effects: 
 		[
 			{emote: "-", description: "Aumentar dos de las stats base del familiar en un tamaño o una stat en 2 tamaños."},
@@ -808,7 +808,7 @@ const moduleLibrary = [
 	{
 		name: "Reacción 3",
 		category: "Especial",
-		description: "Una vez por ronda, puedes consumir +2 PE para activar esta skill fuera de tu turno.",
+		description: "Una vez por ronda, puedes consumir +2 EP para activar esta skill fuera de tu turno.",
 		emote: "⏲️",
 	},
 
@@ -849,7 +849,7 @@ const moduleLibrary = [
 		name: "Revivir",
 		category: "Efecto",
 		description: `Anula el estado "Derrotado" sin que el objetivo sufra consecuencias. En caso de que el objetivo tenga 0 HP, aumenta su HP a 1`,
-		emote: "🐦‍🔥", restrictions: "+2 PE"
+		emote: "🐦‍🔥", restrictions: "+2 EP"
 	},
 	{
 		name: "Restringir 4",
@@ -867,7 +867,7 @@ const moduleLibrary = [
 	{
 		name: "Sacrificio Vital",
 		category: "Efecto",
-		description: "Reduces el coste de energía de esta skill, pero pierdes 5 hp máxima por cada punto de PE que reduzcas (definido durante creación). Al final de la escena recuperas los puntos de golpe máximos (pero no la hp perdida).",
+		description: "Reduces el coste de energía de esta skill, pero pierdes 5 hp máxima por cada punto de EP que reduzcas (definido durante creación). Al final de la escena recuperas los puntos de golpe máximos (pero no la hp perdida).",
 		emote: "C4",
 	},
 	{
@@ -933,7 +933,7 @@ const moduleLibrary = [
 	{
 		name: "Acción Adicional",
 		category: "Efecto",
-		description: "El objetivo puede pagar 2 PE para realizar una acción directamente después tras la resolución de una skill con este módulo.",
+		description: "El objetivo puede pagar 2 EP para realizar una acción directamente después tras la resolución de una skill con este módulo.",
 		emote: "🦔",
 	},
 		// Rangos
@@ -948,14 +948,14 @@ const moduleLibrary = [
 	{
 		name: "Reacción 5",
 		category: "Especial",
-		description: "Una vez por ronda, puedes consumir +2 PE para activar esta skill fuera de tu turno.",
+		description: "Una vez por ronda, puedes consumir +2 EP para activar esta skill fuera de tu turno.",
 		emote: "⏲️",
 	},
 	{
 		name: "Ataque Múltiple",
 		category: "Especial",
 		description: "Cada módulo de rango de esta skill se coincidiera un ataque independiente. Haz una tirada de ataque por cada módulo de rango, y selecciona un objetivo para cada ataque (puedes seleccionar al mismo objetivo varias veces).",
-		emote: "💱",
+		emote: "💱", restrictions: "+2 EP por cada ataque adicional generado por este modulo."
 	}
 ];
 
