@@ -318,6 +318,9 @@ function gatherCharacterData() {
 		perks: activeCharacter.perks || [],
 		sp: parseInt(document.getElementById("sp") ? document.getElementById("sp").value : 0) || 0,
 		ce: parseInt(document.getElementById("ce") ? document.getElementById("ce").value : 0) || 0,
+		currentHP: activeCharacter.currentHP || 0,
+		currentEP: activeCharacter.currentEP || 0,
+		perks: activeCharacter.perks || [],
 		permanentBonuses: activeCharacter.permanentBonuses || {},
 		notes: activeCharacter.notes || "",
 		image: activeCharacter.image || ""
@@ -3281,18 +3284,17 @@ function renderSummary() {
 	const maxHp = recalculated.hp.value + recalculated.hp.temp;
 	const maxEp = recalculated.ep.value + recalculated.ep.temp;
 
-	// Keep secondaryStats as source of truth
 	if (currentHpInput) {
-		activeCharacter.secondaryStats.currentHP =
-		parseInt(currentHpInput.value, 10) || activeCharacter.secondaryStats.currentHP || maxHp;
+		activeCharacter.currentHP =
+		parseInt(currentHpInput.value, 10) || activeCharacter.currentHP || maxHp;
 	}
 	if (currentEpInput) {
-		activeCharacter.secondaryStats.currentEP =
-		parseInt(currentEpInput.value, 10) || activeCharacter.secondaryStats.currentEP || maxEp;
+		activeCharacter.currentEP =
+		parseInt(currentEpInput.value, 10) || activeCharacter.currentEP || maxEp;
 	}
-
-	const currentHp = activeCharacter.secondaryStats.currentHP;
-	const currentEp = activeCharacter.secondaryStats.currentEP;
+	
+	const currentHp = activeCharacter.currentHP;
+	const currentEp = activeCharacter.currentEP;
 	
 
 	// Calculate percentage
@@ -3313,7 +3315,7 @@ function renderSummary() {
 
 	if (currentHpInput) currentHpInput.value = currentHp;
 	if (currentEpInput) currentEpInput.value = currentEp;
-
+	saveCharacterData();
 }
 
 function renderSkillsSummary() {
