@@ -1101,6 +1101,11 @@ const moduleCatalog = {
 			type: "perk"
 			},
 			{
+			name: "Habilidad Innata",
+			description: "Escoge un modulo Tier 1 o 2 de duracion mayor a instantanea de cualquier catalogo (execptuando el catalogo abisal), recibes los efectos de este modulo perpetuamente como si fuera parte de una pasiva. El modulo escogido no puede ser resistido.",
+			type: "perk"
+			},
+			{
 			name: "Cuerpo Elemental",
 			description: "Escoge un módulo elemental entre [🔥, ❄️, 🧱, 🌪️ y ⚡]. Gana resistencia al tipo de daño del módulo escogido, cuando eres impactado por una skill que incluye el módulo escogido, puedes seleccionar 1 de los módulos de efecto de la skill, no eres afectado por ese módulo.",
 			type: "perk"
@@ -1190,7 +1195,12 @@ const moduleCatalog = {
 			name: " Transformación", type: "restriction",
 			description: "Skill cost set to 0 and grants 1 module slot (plus bonuses from Bendición De Luna perks).",
 			catalog: "SecretRestrictions", tier: "1"
-		}
+		},
+		{
+			name: "Innata", type: "restriction",
+			description: "Skill cost set to 0 and grants 1 module slot active as a passive.",
+			catalog: "SecretRestrictions", tier: "1"
+		},
 
 	]
 	

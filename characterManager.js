@@ -3254,7 +3254,7 @@ function calculateSkillCost(modules, skillRestrictions = []) {
     // Force cost = 0 if Gimmick or Transformación restriction is active
     if (
         skillRestrictions.includes(" Gimmick") ||
-        skillRestrictions.includes("") ||
+        // skillRestrictions.includes("") ||
         skillRestrictions.includes(" Transformación")
     ) {
         cost = 0;
