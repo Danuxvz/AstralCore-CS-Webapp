@@ -1087,7 +1087,7 @@ const moduleCatalog = {
 			},
 			{
 			name: "Cuerpo Puro",
-			description: "No nesecitas dormir, comer, o respirar.",
+			description: "No necesitas dormir, comer, o respirar. Puedes realizar trabajos ligeros y sin perder las ventajas de una escena de descanso.",
 			type: "perk"
 			},
 			{
@@ -1101,10 +1101,26 @@ const moduleCatalog = {
 			type: "perk"
 			},
 			{
-			name: "Habilidad Innata",
-			description: "Escoge un modulo Tier 1 o 2 de duracion mayor a instantanea de cualquier catalogo (execptuando el catalogo abisal), recibes los efectos de este modulo perpetuamente como si fuera parte de una pasiva. El modulo escogido no puede ser resistido.",
+			name: "Cuerpo Elemental",
+			description: "Escoge un módulo elemental entre [🔥, ❄️, 🧱, 🌪️ y ⚡]. Gana resistencia al tipo de daño del módulo escogido, cuando eres impactado por una skill que incluye el módulo escogido, puedes seleccionar 1 de los módulos de efecto de la skill, no eres afectado por ese módulo.",
 			type: "perk"
 			},
+			{
+			name: "Core Expert",
+			description: "Durante tus escenas de descanso, puedes remover tu self core y reemplazarlo por otro core válido en tu posesión. Remover un self core con esta perk no lo daña de ninguna forma, y le permite retener su poder original y todas sus skills y perks.",
+			type: "perk"
+			},
+			{
+			name: "Abyss Weaver",
+			description: "[Requiere la desventaja “Abyss Bearer”] Utiliza 5 CE para comprar módulos del Catálogo Abissal. Estos módulos no cuentan como parte de la progresión para propósitos de mejoras o perks del catálogo Abissal.",
+			type: "perk"
+			},
+			{
+			name: "Multitasker",
+			description: "Durante el combate, una vez por turno, puedes consumir 1 PE para realizar una secundaria como acción gratuita.",
+			type: "perk"
+			},
+
 		],
 		desventajas: [
 			{ 
@@ -1136,6 +1152,31 @@ const moduleCatalog = {
 			name: "Vulnerabilidad Existencial",
 			description: "Ganas una vulnerabilidad a uno de los siguientes elementos: (Fisico, Luz, Oscuridad, Cura).",
 			type: "perk"
+			},
+			{
+			name: "Desenfocado",
+			description: "No puedes utilizar tus acciones de mantenimiento o interacción con objetos de forma gratuita. Siempre debes consumir una acción para tomarlas.",
+			type: "perk"
+			},
+			{
+			name: "Juramento",
+			description: "Siempre debes pagar los costes o seguir los requerimientos impuestos por las restricciones de modulo o skill.",
+			type: "perk"
+			},
+			{
+			name: "Patoso",
+			description: "Reduce tus espacios de equipo a 0.",
+			type: "perk"
+			}, 
+			{
+			name: "Gluttony",
+			description: "Sufres hambre constante e intensa. Al final de cada escena de suspenso, acción, pierdes 3 EP. Puedes reducir el EP perdido en -1 por cada ración consumida durante la escena.",
+			type: "perk"
+			},
+			{
+			name: "Wrath",
+			description:"Si recibes daño de cualquier fuente, en tu siguiente turno deberás incluir a la fuente del daño como objetivo de una tirada de ataque o pagar 4 EP al final del turno.",
+			type:"perk"
 			},
 		]
 	},

@@ -1806,6 +1806,185 @@ function loadSelfCoreContent() {
 		selfCoreContent.insertBefore(perkSection, document.getElementById("notesContainer"));
 	}
 
+	// ===== COMPONENTS SECTION (PENDING) =====
+	// if (!activeCharacter.components) activeCharacter.components = [];
+
+	// const componentSection = createCollapsibleSection("Components", () => {
+	// 	const container = document.createElement("div");
+	// 	container.className = "components-container";
+
+	// 	const listContainer = document.createElement("ul");
+	// 	listContainer.className = "components-list";
+
+	// 	function renderComponents() {
+	// 		listContainer.innerHTML = "";
+	// 		activeCharacter.components.forEach((comp, idx) => {
+	// 			const li = document.createElement("li");
+	// 			li.className = "component-item";
+
+	// 			const amountCircle = document.createElement("span");
+	// 			amountCircle.className = "component-amount";
+	// 			amountCircle.textContent = `(${comp.amount})`;
+	// 			amountCircle.addEventListener("contextmenu", (e) => {
+	// 				e.preventDefault();
+	// 				const newAmount = parseInt(prompt("Set amount for " + comp.name, comp.amount));
+	// 				if (newAmount <= 0) activeCharacter.components.splice(idx, 1);
+	// 				else comp.amount = newAmount;
+	// 				saveCharacterData();
+	// 				renderComponents();
+	// 			});
+
+	// 			const itemDiv = document.createElement("span");
+	// 			itemDiv.className = "component-item-name";
+	// 			// Display modules as emotes
+	// 			const moduleEmotes = (comp.modules || []).map(m => {
+	// 				const mod = moduleLibrary.find(mod => mod.name === m);
+	// 				return mod?.emote ?? "?";
+	// 			}).join("");
+	// 			itemDiv.textContent = `${comp.name} [${moduleEmotes}]`;
+
+	// 			li.appendChild(amountCircle);
+	// 			li.appendChild(itemDiv);
+	// 			listContainer.appendChild(li);
+	// 		});
+	// 	}
+
+	// 	renderComponents();
+	// 	container.appendChild(listContainer);
+
+	// 	// Controls
+	// 	const controlsDiv = document.createElement("div");
+	// 	controlsDiv.className = "component-controls";
+
+	// 	const addButton = document.createElement("button");
+	// 	addButton.textContent = "+ Add Component";
+	// 	addButton.addEventListener("click", showAddComponentForm);
+	// 	controlsDiv.appendChild(addButton);
+
+	// 	container.appendChild(controlsDiv);
+
+	// 	return container;
+	// }, "components");
+
+	// selfCoreContent.insertBefore(componentSection, document.getElementById("notesContainer"));
+
+	// // ===== ADD COMPONENT FORM =====
+	// if (!document.getElementById("componentFormContainer")) {
+	// 	const formContainer = document.createElement("div");
+	// 	formContainer.id = "componentFormContainer";
+	// 	formContainer.style.display = "none";
+	// 	selfCoreContent.appendChild(formContainer);
+	// }
+
+	// function showAddComponentForm() {
+	// 	const formContainer = document.getElementById("componentFormContainer");
+	// 	formContainer.innerHTML = `<div class="component-form">
+	// 		<h4>Add Component</h4>
+	// 		<select id="componentSelect">
+	// 			<option value="">-- Select Component --</option>
+	// 			<option value="Rock">Rock</option>
+	// 			<option value="Custom">Custom</option>
+	// 		</select>
+	// 		<div id="customComponentContainer" style="display:none; margin-top:10px;"></div>
+	// 		<div class="form-buttons">
+	// 			<button type="button" id="cancelComponent">Cancel</button>
+	// 			<button type="button" id="saveComponent">Add Component</button>
+	// 		</div>
+	// 	</div>`;
+	// 	formContainer.style.display = "block";
+
+	// 	const componentSelect = document.getElementById("componentSelect");
+	// 	const customContainer = document.getElementById("customComponentContainer");
+	// 	let selectedComponent = null;
+	// 	let customModules = [];
+
+	// 	componentSelect.addEventListener("change", () => {
+	// 		if (componentSelect.value === "Custom") {
+	// 			customContainer.innerHTML = `
+	// 				<input type="text" id="customComponentName" placeholder="Component Name" required>
+	// 				<div id="customModuleSlots" class="module-slots"></div>
+	// 			`;
+	// 			customContainer.style.display = "block";
+	// 			customModules = [null, null, null, null];
+
+	// 			const slotsContainer = document.getElementById("customModuleSlots");
+	// 			slotsContainer.innerHTML = "";
+	// 			for (let i = 0; i < 4; i++) {
+	// 				const slot = document.createElement("div");
+	// 				slot.className = "module-slot empty";
+	// 				slot.textContent = "+";
+	// 				slot.addEventListener("click", () => {
+	// 					showAllModuleSelection(slot, (module) => {
+	// 						customModules[i] = module.name;
+	// 						slot.textContent = module.emote;
+	// 						slot.classList.remove("empty");
+	// 					});
+	// 				});
+	// 				slotsContainer.appendChild(slot);
+	// 			}
+	// 		} else {
+	// 			customContainer.style.display = "none";
+	// 			selectedComponent = componentSelect.value;
+	// 		}
+	// 	});
+
+	// 	document.getElementById("cancelComponent").addEventListener("click", () => {
+	// 		formContainer.style.display = "none";
+	// 	});
+
+	// 	document.getElementById("saveComponent").addEventListener("click", () => {
+	// 		if (selectedComponent === "Rock") {
+	// 			const rockModules = ["Fuego", "Tierra"];
+	// 			activeCharacter.components.push({ name: "Rock", modules: rockModules, amount: 1 });
+	// 		} else if (componentSelect.value === "Custom") {
+	// 			const name = document.getElementById("customComponentName").value.trim();
+	// 			if (!name) return alert("Component name required");
+	// 			activeCharacter.components.push({ name, modules: customModules.filter(Boolean), amount: 1 });
+	// 		} else {
+	// 			return alert("Select a component first");
+	// 		}
+
+	// 		saveCharacterData();
+	// 		loadSelfCoreContent();
+	// 		formContainer.style.display = "none";
+	// 	});
+	// }
+
+	// ===== SHOW ALL MODULE SELECTION (for custom component slots) =====
+	// function showAllModuleSelection(slot, callback) {
+	// 	const selector = document.createElement("div");
+	// 	selector.className = "module-selector";
+	// 	moduleLibrary.forEach(module => {
+	// 		const option = document.createElement("div");
+	// 		option.className = "module-option";
+	// 		option.textContent = module.emote;
+	// 		option.title = module.name;
+	// 		option.addEventListener("click", () => {
+	// 			callback(module);
+	// 			selector.remove();
+	// 		});
+	// 		selector.appendChild(option);
+	// 	});
+
+	// 	document.body.appendChild(selector);
+	// 	// Position near slot
+	// 	const rect = slot.getBoundingClientRect();
+	// 	selector.style.position = "absolute";
+	// 	selector.style.left = `${rect.left}px`;
+	// 	selector.style.top = `${rect.bottom + window.scrollY + 5}px`;
+	// 	selector.style.zIndex = 1000;
+
+	// 	// Close when clicking outside
+	// 	const clickHandler = (e) => {
+	// 		if (!selector.contains(e.target)) {
+	// 			selector.remove();
+	// 			document.removeEventListener("click", clickHandler);
+	// 		}
+	// 	};
+	// 	document.addEventListener("click", clickHandler);
+	// }
+
+
 	// ===== NOTES SECTION (persistent) =====
 	const notesTextarea = document.getElementById("notes-section");
 	notesTextarea.value = activeCharacter.notes || "";
@@ -1854,8 +2033,11 @@ function createPerkList(perks) {
 
         listItem.appendChild(perkContent);
 
-        // Add warning + delete button if flagged
-        if (perk._showDelete) {
+        // Only add warning + delete button if _showDelete is true
+        // AND the perk is NOT an Origen perk in Ventajas/Desventajas
+        const isOrigenVentajaDesventaja = perk.catalog === "origen" && (perk.tier === "ventajas" || perk.tier === "desventajas");
+
+        if (perk._showDelete && !isOrigenVentajaDesventaja) {
             const warning = document.createElement("span");
             warning.textContent = "⚠ Outdated perk";
             warning.classList.add("perk-warning");
@@ -1950,7 +2132,6 @@ formContainer.innerHTML = `
 	</div>
 	</div>
 `;
-
 // Show form
 formContainer.style.display = "block";
 
