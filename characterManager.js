@@ -1758,6 +1758,59 @@ function loadSelfCoreContent() {
 	}
 
 	// ===== PERKS SECTION =====
+		function showCustomPerkForm() {
+		const formContainer = document.getElementById("customPerkFormContainer");
+
+		formContainer.innerHTML = `
+			<div class="custom-form">
+				<h4>Add Custom Perk</h4>
+				<input type="text" id="customPerkName" class="custom-form-name" placeholder="Perk Name" required>
+				<textarea id="customPerkDescription" class="custom-form-description" placeholder="Perk Description" rows="3" required></textarea>
+				<div class="form-buttons">
+					<button type="button" id="cancelCustomPerk">Cancel</button>
+					<button type="button" id="saveCustomPerk">Add Perk</button>
+				</div>
+			</div>
+		`;
+		formContainer.style.display = "block";
+
+		document.getElementById("cancelCustomPerk").addEventListener("click", () => {
+			formContainer.style.display = "none";
+		});
+
+		document.getElementById("saveCustomPerk").addEventListener("click", saveCustomPerk);
+	}
+
+	function saveCustomPerk() {
+		const name = document.getElementById("customPerkName").value.trim();
+		const description = document.getElementById("customPerkDescription").value.trim();
+
+		if (!name || !description) {
+			alert("Please fill in all required fields");
+			return;
+		}
+
+		const customPerk = {
+			name,
+			description,
+			catalog: "custom",
+			tier: "custom",
+			type: "perk",
+			_showDelete: true
+		};
+
+		if (!activeCharacter.perks) {
+			activeCharacter.perks = [];
+		}
+
+		activeCharacter.perks.push(customPerk);
+
+		saveCharacterData();
+		loadSelfCoreContent();
+
+		document.getElementById("customPerkFormContainer").style.display = "none";
+	}
+
 	if (activeCharacter.perks) {
 		const perkSection = createCollapsibleSection("Perks", () => {
 			const container = document.createElement("div");
@@ -1766,7 +1819,6 @@ function loadSelfCoreContent() {
 			const filteredPerks = activeCharacter.perks.filter(perk => 
 				perk.type === "perk" || (perk.type === "restriction" && perk._showDelete)
 			);
-
 
 			const perkGroups = filteredPerks.reduce((acc, perk) => {
 				const catalog = perk.catalog || 'other';
@@ -1804,8 +1856,25 @@ function loadSelfCoreContent() {
 				container.appendChild(catalogSection);
 			});
 
+			// === Custom perk controls ===
+			const controlsDiv = document.createElement("div");
+			controlsDiv.className = "custom-perk-controls";
+
+			const addButton = document.createElement("button");
+			addButton.textContent = "+ Custom Perk";
+			addButton.addEventListener("click", showCustomPerkForm);
+			controlsDiv.appendChild(addButton);
+
+			const formContainer = document.createElement("div");
+			formContainer.id = "customPerkFormContainer";
+			formContainer.style.display = "none";
+
+			container.appendChild(controlsDiv);
+			container.appendChild(formContainer);
+
 			return container;
 		}, 'perks');
+
 		selfCoreContent.insertBefore(perkSection, document.getElementById("notesContainer"));
 	}
 
@@ -2040,14 +2109,16 @@ function createPerkList(perks) {
         // AND the perk is NOT an Origen perk in Ventajas/Desventajas
         const isOrigenVentajaDesventaja = perk.catalog === "origen" && (perk.tier === "ventajas" || perk.tier === "desventajas");
 
-        if (perk._showDelete && !isOrigenVentajaDesventaja) {
-            const warning = document.createElement("span");
-            warning.textContent = "⚠ Outdated perk";
-            warning.classList.add("perk-warning");
-            listItem.appendChild(warning);
+		if (perk._showDelete && !isOrigenVentajaDesventaja) {
+			if (perk.catalog !== "custom") {
+				const warning = document.createElement("span");
+				warning.textContent = "⚠ Outdated perk";
+				warning.classList.add("perk-warning");
+				listItem.appendChild(warning);
+			}
 
-            listItem.appendChild(createDeletePerkButton(perk));
-        }
+			listItem.appendChild(createDeletePerkButton(perk));
+		}
 
         list.appendChild(listItem);
     });
@@ -2107,39 +2178,40 @@ function toggleCollapse(e) {
 
 //Custom Modules
 function showCustomModuleForm() {
-const formContainer = document.getElementById("customModuleFormContainer");
+	const formContainer = document.getElementById("customModuleFormContainer");
 
-// Create form HTML
-formContainer.innerHTML = `
-	<div class="custom-module-form">
-	<h4>Add Custom Module</h4>
-	<input type="text" id="customModuleName" placeholder="Module Name" required>
-	<input type="text" id="customModuleEmote" placeholder="Module Icon (Emoji)" required>
-	<select id="customModuleType" required>
-		<option value="effect">Effect</option>
-		<option value="range">Range</option>
-		<option value="special">Special</option>
-	</select>
-	<textarea id="customModuleDescription" placeholder="Module Description" rows="3" required></textarea>
-	<select id="customModuleTier" required>
-		<option value="tier1">Tier 1</option>
-		<option value="tier2">Tier 2</option>
-		<option value="tier3">Tier 3</option>
-		<option value="tier4">Tier 4</option>
-		<option value="tier5">Tier 5</option>
-	</select>
-	<input type="text" id="customModuleRestriction" placeholder="Restriction (Optional)">
-	<div class="form-buttons">
-		<button type="button" id="cancelCustomModule">Cancel</button>
-		<button type="button" id="saveCustomModule">Add Module</button>
-	</div>
-	</div>
-`;
-// Show form
-formContainer.style.display = "block";
+	// Create form HTML
+	formContainer.innerHTML = `
+		<div class="custom-form">
+		<h4>Add Custom Module</h4>
+		<input type="text" id="customModuleName" class="custom-form-name" placeholder="Module Name" required>
+		<input type="text" id="customModuleEmote" class="custom-form-emote" placeholder="Module Icon" required>
+		<select id="customModuleType" required>
+			<option value="effect">Effect</option>
+			<option value="range">Range</option>
+			<option value="special">Special</option>
+		</select>
+		<select id="customModuleTier" required>
+			<option value="tier1">Tier 1</option>
+			<option value="tier2">Tier 2</option>
+			<option value="tier3">Tier 3</option>
+			<option value="tier4">Tier 4</option>
+			<option value="tier5">Tier 5</option>
+		</select>
 
-// Add event listeners
-document.getElementById("cancelCustomModule").addEventListener("click", () => {
+		<textarea id="customModuleDescription" placeholder="Module Description" rows="3" required></textarea>
+		<input type="text" id="customModuleRestriction" class="custom-form-restrictions" placeholder="Restriction (Optional)">
+		<div class="form-buttons">
+			<button type="button" id="cancelCustomModule">Cancel</button>
+			<button type="button" id="saveCustomModule">Add Module</button>
+		</div>
+		</div>
+	`;
+	// Show form
+	formContainer.style.display = "block";
+
+	// Add event listeners
+	document.getElementById("cancelCustomModule").addEventListener("click", () => {
 	formContainer.style.display = "none";
 });
 
