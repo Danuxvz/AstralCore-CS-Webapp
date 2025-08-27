@@ -3179,7 +3179,15 @@ function getTotalSlots(skill) {
     });
 
     // --- Perk-based bonuses ---
-	
+	skill.restrictions.forEach(restriction => {
+					const perk = activeCharacter.perks.find(p => 
+							p.name === restriction && p.type === "restriction"
+					);
+					if (perk) {
+							const bonus = parseInt(perk.slots) || 0;
+							slots += bonus;
+					}
+			});
     // --- Special gimmick override ---
     if (skill.restrictions.includes(" Gimmick")) {
         if (activeCharacter.perks.some(p => p.name === "Gimmick Set")) {
