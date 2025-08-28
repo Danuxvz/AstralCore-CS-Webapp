@@ -1565,10 +1565,19 @@ function hideTooltip() {
 function attachTooltipToPerkButtons() {
 	document.querySelectorAll(".perk-button").forEach(button => {
 		const perkName = button.textContent;
-		const perk = (moduleCatalog[activeCatalog] &&
-			moduleCatalog[activeCatalog].perks &&
-			moduleCatalog[activeCatalog].perks[button.dataset.tier] || [])
-			.find(p => p.name === perkName);
+		let perk;
+
+		if (button.dataset.section) {
+			perk = (moduleCatalog.origen[button.dataset.section] || [])
+				.find(p => p.name === perkName);
+		} else {
+			// Normal catalog
+			const tier = button.dataset.tier;
+			perk = (moduleCatalog[activeCatalog] &&
+				moduleCatalog[activeCatalog].perks &&
+				moduleCatalog[activeCatalog].perks[tier] || [])
+				.find(p => p.name === perkName);
+		}
 
 		if (perk) {
 			button.addEventListener("mouseenter", () => showTooltip(perk, null, button));
@@ -3275,7 +3284,6 @@ function calculateSkillCost(modules, skillRestrictions = []) {
 function factorial(n) {
     return n <= 1 ? 1 : n * factorial(n - 1);
 }
-
 
 function showRestrictionTooltip(restrictionName, element) {
 		// Create dynamic descriptions from character's perks

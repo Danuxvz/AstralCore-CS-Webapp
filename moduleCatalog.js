@@ -860,14 +860,21 @@ const moduleCatalog = {
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
 				 type: "perk" 
 				},
-				{name:"Gimmick Set", type: "perk", description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."}
+				{name:"Gimmick Draw", type: "perk", 
+					description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."
+				},
 			],
 			tier3: [
 				{ name: "Evocador Tier 4", 
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Evocador.", 
 				 type: "perk" 
 				},
-				{name:"Gimmick Draw", type: "perk", description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."}
+				{name:"Detonate", type: "perk", 
+					description: "Al acertar una tirada de ataque contra 1 único objetivo, puedes escoger uno o más de los módulos que le estén afectando y estén en tu Self Core. Por cada módulo escogido, paga 1 EP; los efectos escogidos terminan y el objetivo recibe 5 puntos de un daño elemental [🔥, ❄️, 🌪️, ⚡ y 🧱] a tu elección, por cada efecto terminado"
+				},
+				{name:"Gimmick Set", type: "perk", 
+					description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."
+				},
 			]
 		},
 	},

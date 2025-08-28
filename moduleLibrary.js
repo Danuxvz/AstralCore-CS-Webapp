@@ -283,7 +283,7 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Creas un objeto que contiene el resto de módulos dentro de este rango. Cualquier criatura puede usar una acción para consumir el objeto creado, y activar esta skill como el usuario.",
 		emote: "🎁",
-		restrictions: "Mágico"
+		restrictions: "Mágico, 1 EP, el coste de EP aumenta en +1 por cada objeto creado con esta skill que aun no haya sido utilizado."
 	},
 	
 	// Especiales
@@ -550,7 +550,7 @@ const moduleLibrary = [
 	{
 		name: "Origen 2",
 		category: "Especial",
-		description: "Todos los rangos se originan desde el usuario sin anidarse.",
+		description: "Todos los rangos a la derecha de este modulo se origina sin anidarse.",
 		emote: "⏯️",
 	},
 	{
@@ -575,6 +575,12 @@ const moduleLibrary = [
 		description: "Para cálculos de HR en esta skill, puedes sumar el resultado de ambas stats.",
 		emote: "👹",
 		restrictions: "+ 1 EP"
+	},
+	{
+		name: "DOT 3",
+		category: "Effecto",
+		description: "Por el resto de la escena, el objetivo recibe 1 punto de daño al inicio de cada ronda.",
+		emote: "🌶️", restrictions: "Este efecto puede ser resistido automáticamente, sin necesidad de una tirada enfrentada."
 	},
 	{
 		name: "Furia",
@@ -772,9 +778,9 @@ const moduleLibrary = [
 	{
 		name: "Enjambre de Proyectiles Vivientes",
 		category: "Rango",
-		description: "Invocas 3 proyectiles vivientes con los módulos anidados.",
+		description: "Invocas 3 proyectiles vivientes con los módulos anidados. Los 3 proyectiles comparten tirada de ataque.",
 		emote: "🍯",
-		restrictions: "Físico o Mágico, +1 EP"
+		restrictions: "Mágico, +2 EP, No puedes anidar otros rangos de invocación dentro de este rango"
 	},
 	{
 		name: "Familiar 3",
