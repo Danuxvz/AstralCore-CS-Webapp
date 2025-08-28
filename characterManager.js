@@ -3506,6 +3506,13 @@ function renderPerksSummary() {
 	const catalogs = [...new Set(activeCharacter.perks.map(p => p.catalog || "Origen"))];
 
 	catalogs.forEach(catalog => {
+		// Filter perks for this catalog and exclude restrictions
+		const filteredPerks = activeCharacter.perks
+			.filter(p => (p.catalog || "Origen") === catalog && p.type !== "restriction");
+
+		// 🔑 Skip rendering if only restrictions (no perks left)
+		if (filteredPerks.length === 0) return;
+
 		const archetypeDiv = document.createElement("div");
 		archetypeDiv.className = "archetype";
 
@@ -3515,10 +3522,6 @@ function renderPerksSummary() {
 
 		const perkListDiv = document.createElement("div");
 		perkListDiv.className = "perk-list";
-
-		// Filter perks for this catalog and exclude restrictions
-		const filteredPerks = activeCharacter.perks
-			.filter(p => (p.catalog || "Origen") === catalog && p.type !== "restriction");
 
 		filteredPerks.forEach(perk => {
 			const label = document.createElement("label");

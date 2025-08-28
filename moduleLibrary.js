@@ -538,7 +538,7 @@ const moduleLibrary = [
 	{
 		name: "Reacción 2",
 		category: "Especial",
-		description: "Una vez por ronda, puedes consumir una acción del próximo turno para activar fuera de turno.",
+		description: "Una vez por ronda, puedes consumir una acción del próximo turno para activar esta skill fuera de tu turno.",
 		emote: "⏰",
 	},
 	{

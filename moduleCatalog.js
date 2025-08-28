@@ -963,7 +963,7 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+1"
 				},
 				{ name: "Fragile [+1 ☐ ]", 
-				 description: "Si fallas una tirada de ataque con esta skill, recibes LR de daño.", 
+				 description: "Si fallas una tirada de ataque con esta skill, recibes HR de daño.", 
 				 type: "restriction", slots: "+1"
 				},
 
@@ -1079,7 +1079,7 @@ const moduleCatalog = {
 		ventajas: [
 			{
 			name: "Experto",
-			description: "Escoge una de tus oficios, puedes escoger un segundo efecto escogido.",
+			description: "Escoge uno de tus oficios, puedes escoger un segundo efecto escogido.",
 			type: "perk"
 			},
 			{
