@@ -1,13 +1,47 @@
 import moduleLibrary from './moduleLibrary.js';
 import moduleCatalog from './moduleCatalog.js';
+import { supabase } from "./supabase.js";
 
 //global variables
 let draggedModule = null;
-let activeCharacter = {};
+let currentUser = null;
 let activeCatalog = "";
-window.showSection = showSection;
-window.showCatalog = showCatalog;
+let currentActiveCharacterId = null;
 
+let activeCharacter = {
+	name: "Default Character",
+	stats: {
+		mig: { dice: 8, temp: 0 },
+		dex: { dice: 8, temp: 0 },
+		int: { dice: 8, temp: 0 },
+		stl: { dice: 8, temp: 0 },
+		wlp: { dice: 8, temp: 0 },
+	},
+	secondaryStats: {
+		hp: { value: 36, temp: 0 },
+		ep: { value: 8, temp: 0 },
+		df: { value: 8, temp: 0 },
+		dm: { value: 8, temp: 0 },
+		impr: { value: 1, temp: 0 },
+		mov: { value: 8, temp: 0 },
+		atk: { value: 0, temp: 0 },
+		dmg: { value: 0, temp: 0 },
+	},
+	jobs: [],
+	skills: [],
+	modules: {
+		tier1: [],
+		tier2: [],
+		tier3: [],
+		tier4: [],
+		tier5: [],
+	},
+	perks: [],
+	sp: 0,
+	ce: 0,
+	permanentBonuses: {},
+	statUpgrades: {},
+};
 const jobEffects = [
 	"Tras tirar tus stats, puedes reemplazar una de ellas por un 5.",
 	"Tus tiradas pares por debajo de 6 se consideran críticos.",
@@ -16,109 +50,291 @@ const jobEffects = [
 	"Al fallar una tirada enfrentada de tu oficio, puedes gastar 2 PE para convertir el fallo en un acierto.",
 	"Ignoras cualquier desventaja circunstancial que afecte tus tiradas del oficio."
 ];
+window.showSection = showSection;
+window.showCatalog = showCatalog;
 
-// Update the setActiveCharacter function to use the enhanced migration
-function setActiveCharacter(characterId) {
-    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-    const selectedCharacter = characters[characterId];
 
-    const currentHpInput = document.getElementById("currentHp");
-    const currentEpInput = document.getElementById("currentEp");
-    if (currentHpInput) currentHpInput.value = "";
-    if (currentEpInput) currentEpInput.value = "";
+// SupaBase handeling
+function getCurrentUser() {
+	return currentUser;
+}
 
-    if (selectedCharacter) {
-        activeCharacter = migrateCharacterData(selectedCharacter);
-		syncOldCharacterData();
-        populateCharacterData(activeCharacter);
-        console.log("Active character set:", activeCharacter);
-        
-        // Save the migrated character back to storage
-        characters[characterId] = activeCharacter;
-        localStorage.setItem('characters', JSON.stringify(characters));
-    } else {
-        console.error("Character ID not found:", characterId);
+// Add timestamp to character data
+function addTimestamps(character) {
+  const now = Date.now();
+  if (!character.createdAt) character.createdAt = now;
+  character.updatedAt = now;
+  return character;
+}
+
+// // Sync characters between localStorage and Supabase
+async function syncCharacters() {
+  if (!currentUser) return;
+  
+  try {
+    const localCharacters = JSON.parse(localStorage.getItem("characters") || "{}");
+    const remoteCharacters = await fetchCharactersFromDB(currentUser.id);
+
+    const mergedCharacters = { ...localCharacters };
+
+    for (const [id, remoteChar] of Object.entries(remoteCharacters)) {
+      const localChar = localCharacters[id];
+
+      // Ensure timestamps exist
+      if (localChar) addTimestamps(localChar);
+      if (remoteChar) addTimestamps(remoteChar);
+
+      if (!localChar || remoteChar.updatedAt > localChar.updatedAt) {
+        mergedCharacters[id] = remoteChar;
+      } else if (localChar.updatedAt > remoteChar.updatedAt) {
+        await saveCharacterToDB(id, localChar);
+      }
     }
+
+    localStorage.setItem("characters", JSON.stringify(mergedCharacters));
+    await populateCharacterSelector();
+    
+  } catch (error) {
+    console.error("Error syncing characters:", error);
+  }
 }
 
-// Navigation
-function showSection(sectionId) {
-	// Hide all sections and show the selected one
-	document.querySelectorAll('.section').forEach(section => {
-		section.style.display = (section.id === sectionId) ? 'block' : 'none';
-	});
-	renderSkills();
 
+
+
+
+// // Modify handleAuthChange to use sync instead of migrate
+// async function handleAuthChange(session) {
+//   const user = session?.user;
+//   const loginBtn = document.getElementById("loginBtn");
+//   const logoutBtn = document.getElementById("logoutBtn");
+//   const userEmail = document.getElementById("userEmail");
+
+//   if (user) {
+//     console.log("User logged in:", user);
+    
+//     loginBtn.style.display = "none";
+//     logoutBtn.style.display = "inline-block";
+//     userEmail.textContent = user.email || user.user_metadata?.full_name || "";
+
+//     if (!currentUser || currentUser.id !== user.id) {
+//       currentUser = user;
+//       await syncCharacters(); // Sync instead of migrate
+//       const characters = await populateCharacterSelector();
+      
+//       if (characters && Object.keys(characters).length > 0) {
+//         const firstCharacterId = Object.keys(characters)[0];
+//         await setActiveCharacter(firstCharacterId);
+//       }
+//     } else {
+//       currentUser = user;
+//     }
+//   } else {
+//     console.log("No active user");
+    
+//     if (currentUser !== null) {
+//       loginBtn.style.display = "inline-block";
+//       logoutBtn.style.display = "none";
+//       userEmail.textContent = "";
+//       currentUser = null;
+      
+//       const characters = await populateCharacterSelector();
+//       if (characters && Object.keys(characters).length > 0) {
+//         const firstCharacterId = Object.keys(characters)[0];
+//         await setActiveCharacter(firstCharacterId);
+//       }
+//     }
+//   }
+// }
+
+// // Add a manual sync button
+// function addSyncButton() {
+//   const syncBtn = document.createElement("button");
+//   syncBtn.id = "syncBtn";
+//   syncBtn.textContent = "Sync with Cloud";
+//   syncBtn.addEventListener("click", syncCharacters);
+  
+//   // Add it to the UI near the login buttons
+//   const authDiv = document.querySelector(".auth-section");
+//   if (authDiv) {
+//     authDiv.appendChild(syncBtn);
+//   }
+// }
+
+// // Initialize the sync button when DOM is loaded
+// document.addEventListener("DOMContentLoaded", () => {
+//   addSyncButton();
+// });
+
+
+// Login with Discord
+async function loginWithDiscord() {
+const { data, error } = await supabase.auth.signInWithOAuth({
+	provider: "discord",
+	options: {
+	redirectTo: "http://127.0.0.1:3000/index.html"
+	}
+});
+
+if (error) {
+	console.error("Login error:", error);
+	return;
 }
+
+if (data?.url) {
+	window.location.href = data.url;
+}
+}
+
+async function logout() {
+	console.log("Logging out...");
+	const { error } = await supabase.auth.signOut();
 	
-// Export Character as JSON
-document.getElementById("exportCharacter").addEventListener("click", () => {
-	const characterData = gatherCharacterData();
-	const json = JSON.stringify(characterData, null, 2);
+	if (error) {
+		console.error("Logout error:", error);
+		return;
+	}
 
-	const blob = new Blob([json], { type: "application/json" });
-	const link = document.createElement("a");
-	link.href = URL.createObjectURL(blob);
-	link.download = `${characterData.name || "character"}.json`;
-	link.click();
-});
+	console.log("Logout successful");
+}
 
-// Import Character from JSON
-document.getElementById("importCharacter").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+async function handleAuthChange(session) {
+	const user = session?.user;
+	const loginBtn = document.getElementById("loginBtn");
+	const logoutBtn = document.getElementById("logoutBtn");
+	const userEmail = document.getElementById("userEmail");
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            // Parse imported character
-            const characterData = JSON.parse(e.target.result);
+	if (user) {
+		console.log("User logged in:", user);
 
-            // Optionally migrate character
-            const migratedCharacter = typeof migrateCharacterData === "function"
-                ? migrateCharacterData(characterData)
-                : characterData;
+		loginBtn.style.display = "none";
+		logoutBtn.style.display = "inline-block";
+		userEmail.textContent = user.email || user.user_metadata?.full_name || "";
 
-            // Generate unique ID for the new character
-            const newCharacterId = `char_${Date.now()}`;
+		// Only do heavy lifting if user actually changed
+		if (!currentUser || currentUser.id !== user.id) {
+			currentUser = user;
 
-            // Load existing characters
-            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+			await syncCharacters();
+			const characters = await populateCharacterSelector();
 
-            // Add new character
-            characters[newCharacterId] = migratedCharacter;
+			if (characters && Object.keys(characters).length > 0) {
+				const firstCharacterId = Object.keys(characters)[0];
+				await setActiveCharacter(firstCharacterId);
+			}
+		} else {
+			// session refresh: just update the reference
+			currentUser = user;
+		}
+	} else {
+		console.log("No active user");
 
-            // Save to localStorage
-            localStorage.setItem('characters', JSON.stringify(characters));
+		if (currentUser !== null) {
+			loginBtn.style.display = "inline-block";
+			logoutBtn.style.display = "none";
+			userEmail.textContent = "";
 
-            // Update UI
-            const characterSelector = document.getElementById("characterSelector");
-            const newOption = new Option(migratedCharacter.name, newCharacterId);
-            characterSelector.add(newOption);
-            characterSelector.value = newCharacterId;
+			currentUser = null;
 
-            // Set as active character and populate data
-            setActiveCharacter(newCharacterId);
+			const characters = await populateCharacterSelector();
+			if (characters && Object.keys(characters).length > 0) {
+				const firstCharacterId = Object.keys(characters)[0];
+				await setActiveCharacter(firstCharacterId);
+			}
+		}
+	}
+	initializeLocalCharacters();
+}
 
-            // Reset file input
-            event.target.value = '';
-        } catch (e) {
-            alert("Error importing character: Invalid or corrupted file format");
-            console.error("Import error:", e);
-        }
-    };
-    reader.readAsText(file);
-	updateImageDisplay();
-	syncOldCharacterData();
-});
+async function saveCharacterToDB(characterId, characterData) {
+	const user = getCurrentUser();
+	if (!user) return;
+
+	try {
+		const { error } = await supabase
+			.from("characters")
+			.upsert({
+				id: characterId,
+				user_id: user.id,
+				name: characterData.name,
+				data: characterData,
+			}, {
+				onConflict: 'id'
+			});
+
+		if (error) throw error;
+		console.log("Character saved to DB:", characterId);
+	} catch (error) {
+		console.error("Error saving character to DB:", error);
+	}
+}
+
+async function fetchCharactersFromDB(userId) {
+	if (!userId) return {};
+
+	try {
+		const { data, error } = await supabase
+			.from("characters")
+			.select("*")
+			.eq("user_id", userId);
+
+		if (error) throw error;
+
+		const characters = {};
+		data.forEach(row => {
+			characters[row.id] = row.data;
+		});
+		
+		return characters;
+	} catch (error) {
+		console.error("Error fetching characters from DB:", error);
+		return {};
+	}
+}
 
 
-document.getElementById("newCharacter").addEventListener("click", () => {
-	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+// // Modify loadAllCharacters to use localStorage primarily
+// async function loadAllCharacters() {
+//   console.log("Loading all characters from localStorage...");
+//   const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+  
+//   // If user is logged in, sync in the background
+//   if (currentUser) {
+//     setTimeout(syncCharacters, 1000); // Sync after 1 second
+//   }
+  
+//   return characters;
+// }
 
-	const newCharacterId = `char_${Date.now()}`; // Unique ID based on timestamp
-	const newCharacter = {
-		name: `New Character ${Object.keys(characters).length + 1}`,
+
+// Unified function to load characters
+async function loadAllCharacters() {
+	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+	console.log("Loading all characters...");
+	const user = getCurrentUser();
+	console.log("User:", user);
+	
+	if (user) {
+		return await fetchCharactersFromDB(user.id);
+	} else {
+		return characters
+	}
+}
+
+function initializeLocalCharacters() {
+	let characters = JSON.parse(localStorage.getItem("characters") || "{}");
+	
+	const user = getCurrentUser();
+	if (Object.keys(characters).length === 0 && !user) {
+		const defaultCharacter = createLocalDefaultCharacter();
+		characters["default"] = defaultCharacter;
+		localStorage.setItem("characters", JSON.stringify(characters));
+	}
+}
+
+function createLocalDefaultCharacter() {
+	return {
+		name: "Default Character",
 		stats: {
 			mig: { dice: 8, temp: 0 },
 			dex: { dice: 8, temp: 0 },
@@ -139,14 +355,263 @@ document.getElementById("newCharacter").addEventListener("click", () => {
 		jobs: [],
 		skills: [],
 		modules: {
-			tier1: [], tier2: [], tier3: [], tier4: [], tier5: [],
+			tier1: [],
+			tier2: [],
+			tier3: [],
+			tier4: [],
+			tier5: [],
 		},
 		perks: [],
 		sp: 0,
 		ce: 0,
+		permanentBonuses: {},
+		statUpgrades: {},
 	};
+}
 
-	// Save new character
+async function setActiveCharacter(characterId) {
+	if (characterId === currentActiveCharacterId) {
+		console.log("Character already active, skipping reload:", characterId);
+		return;
+	}
+	currentActiveCharacterId = characterId;
+
+	let characters;
+	const user = getCurrentUser();
+	
+	if (user) {
+		characters = await fetchCharactersFromDB(user.id);
+	} else {
+		characters = JSON.parse(localStorage.getItem('characters') || '{}');
+	}
+	
+	const selectedCharacter = characters[characterId];
+	if (!selectedCharacter) {
+		console.error("Character ID not found:", characterId);
+		return;
+	}
+
+	// Reset current HP/EP inputs
+	const currentHpInput = document.getElementById("currentHp");
+	const currentEpInput = document.getElementById("currentEp");
+	if (currentHpInput) currentHpInput.value = "";
+	if (currentEpInput) currentEpInput.value = "";
+
+	activeCharacter = migrateCharacterData(selectedCharacter);
+	syncOldCharacterData();
+	populateCharacterData(activeCharacter);
+
+	console.log("Active character set:", activeCharacter);
+
+	// Update summary section
+	renderSummary();
+
+	if (user) {
+		const localCharacters = JSON.parse(localStorage.getItem('characters') || '{}');
+		if (localCharacters[characterId]) {
+			delete localCharacters[characterId];
+			localStorage.setItem('characters', JSON.stringify(localCharacters));
+		}
+	}
+	updateImageDisplay();
+	calculateAvailableJobs();
+}
+
+// Delete character from Supabase
+async function deleteCharacterFromDB(characterId) {
+	console.log("Deleting character:", currentActiveCharacterId);
+const { error } = await supabase
+	.from("characters")
+	.delete()
+	.eq("id", characterId
+);
+
+if (error) console.error("Error deleting:", error);
+}
+
+// Migrate local characters once after login with enhanced logic
+async function migrateLocalToSupabase(userId) {
+	const localData = JSON.parse(localStorage.getItem("characters") || "{}");
+	if (!localData || Object.keys(localData).length === 0) return;
+
+	// Fetch existing characters from DB first
+	const { data: existingChars, error } = await supabase
+		.from("characters")
+		.select("id, name, data")
+		.eq("user_id", userId);
+
+	if (error) {
+		console.error("Error fetching existing characters:", error);
+		return;
+	}
+
+	// Create a map of existing characters by data hash for quick lookup
+	const existingCharsByDataHash = {};
+	existingChars.forEach(char => {
+		const dataHash = hashCharacterData(char.data);
+		existingCharsByDataHash[dataHash] = char;
+	});
+
+	const uploadPromises = [];
+	const charactersToKeepInLocal = {};
+
+	for (const [localId, localChar] of Object.entries(localData)) {
+		const localDataHash = hashCharacterData(localChar);
+		
+		// Check if character with same data exists in DB (regardless of name)
+		const existingCharWithSameData = existingCharsByDataHash[localDataHash];
+		
+		if (existingCharWithSameData) {
+			// Same data - don't upload, keep digital only
+			console.log(`Skipping character "${localChar.name}" (same data as "${existingCharWithSameData.name}")`);
+			
+			// If names are different, update the local character to match the DB name
+			if (localChar.name !== existingCharWithSameData.name) {
+				localChar.name = existingCharWithSameData.name;
+				charactersToKeepInLocal[localId] = localChar;
+			}
+			continue;
+		}
+		
+		// Check if character with same name exists in DB but different data
+		const existingCharWithSameName = existingChars.find(char => char.name === localChar.name);
+		
+		if (existingCharWithSameName) {
+			const existingDataHash = hashCharacterData(existingCharWithSameName.data);
+			
+			if (existingDataHash !== localDataHash) {
+				// Same name but different data - rename and upload
+				console.log(`Renaming character "${localChar.name}" due to data conflict`);
+				const unsyncedName = `${localChar.name} (unsynced)`;
+				localChar.name = unsyncedName;
+				
+				// Update local storage with new name
+				charactersToKeepInLocal[localId] = localChar;
+			}
+		}
+
+		// Upload character (either as-is or renamed)
+		uploadPromises.push(
+			supabase.from("characters").insert({
+				user_id: userId,
+				name: localChar.name,
+				data: localChar,
+			}).select() // Add select to get the inserted ID
+		);
+	}
+
+	// Wait for all uploads to complete
+	const results = await Promise.allSettled(uploadPromises);
+	
+	// Check if any uploads failed
+	const hasErrors = results.some(result => result.status === 'rejected');
+	
+	if (hasErrors) {
+		console.error("Some characters failed to migrate. Keeping local copies.");
+		// Update local storage with any renamed characters
+		if (Object.keys(charactersToKeepInLocal).length > 0) {
+			const updatedLocalData = {...localData, ...charactersToKeepInLocal};
+			localStorage.setItem("characters", JSON.stringify(updatedLocalData));
+		}
+	} else {
+		// Only remove localStorage if all uploads succeeded
+		localStorage.removeItem("characters");
+		console.log("All characters migrated successfully");
+	}
+}
+
+// Helper function to create a hash of character data for comparison
+function hashCharacterData(characterData) {
+	// Create a simplified version of the character data for hashing
+	const simplifiedData = {
+		name: characterData.name,
+		stats: characterData.stats,
+		secondaryStats: characterData.secondaryStats,
+		jobs: characterData.jobs,
+		skills: characterData.skills,
+		modules: characterData.modules,
+		perks: characterData.perks,
+		sp: characterData.sp,
+		ce: characterData.ce
+	};
+	
+	// Stringify and hash the data
+	const str = JSON.stringify(simplifiedData);
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		const char = str.charCodeAt(i);
+		hash = ((hash << 5) - hash) + char;
+		hash = hash & hash; // Convert to 32-bit integer
+	}
+	return hash;
+}
+
+// Navigation
+function showSection(sectionId) {
+	// Hide all sections and show the selected one
+	document.querySelectorAll('.section').forEach(section => {
+		section.style.display = (section.id === sectionId) ? 'block' : 'none';
+	});
+	renderSkills();
+
+}
+
+// Export Character as JSON
+document.getElementById("exportCharacter").addEventListener("click", () => {
+	const characterData = gatherCharacterData();
+	const json = JSON.stringify(characterData, null, 2);
+
+	const blob = new Blob([json], { type: "application/json" });
+	const link = document.createElement("a");
+	link.href = URL.createObjectURL(blob);
+	link.download = `${characterData.name || "character"}.json`;
+	link.click();
+});
+
+// Import Character from JSON
+document.getElementById("importCharacter").addEventListener("change", async function(event) {
+	const file = event.target.files[0];
+	if (!file) return;
+
+	const reader = new FileReader();
+	reader.onload = async function(e) {
+		try {
+			const characterData = JSON.parse(e.target.result);
+			const migratedCharacter = typeof migrateCharacterData === "function"
+				? migrateCharacterData(characterData)
+				: characterData;
+
+			const newCharacterId = `char_${Date.now()}`;
+			const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+			characters[newCharacterId] = migratedCharacter;
+			localStorage.setItem('characters', JSON.stringify(characters));
+
+			const characterSelector = document.getElementById("characterSelector");
+			const newOption = new Option(migratedCharacter.name, newCharacterId);
+			characterSelector.add(newOption);
+			characterSelector.value = newCharacterId;
+
+			setActiveCharacter(newCharacterId);
+			event.target.value = '';
+
+			// Sync to backend if online
+			if (navigator.onLine) {
+				await saveCharacterToDB(newCharacterId, migratedCharacter);
+			}
+		} catch (err) {
+			alert("Error importing character: Invalid or corrupted file format");
+			console.error(err);
+		}
+	};
+	reader.readAsText(file);
+});
+
+document.getElementById("newCharacter").addEventListener("click", async () => {
+	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+	const newCharacterId = `char_${Date.now()}`; // Unique ID
+	const newCharacter = createLocalDefaultCharacter();
+	newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
+
 	characters[newCharacterId] = newCharacter;
 	localStorage.setItem('characters', JSON.stringify(characters));
 
@@ -157,71 +622,89 @@ document.getElementById("newCharacter").addEventListener("click", () => {
 	newOption.textContent = newCharacter.name;
 	characterSelector.appendChild(newOption);
 
-	// Select new character
 	characterSelector.value = newCharacterId;
-	setActiveCharacter(newCharacterId);
+	await setActiveCharacter(newCharacterId);
 	updateImageDisplay();
+
+	// Save online if user logged in
+	const user = getCurrentUser();
+	if (user) {
+		await saveCharacterToDB(newCharacterId, newCharacter);
+		// remove local copy if DB save succeeded
+		delete characters[newCharacterId];
+		localStorage.setItem('characters', JSON.stringify(characters));
+	}
 });
 
-document.getElementById("deleteCharacter").addEventListener("click", () => {
+document.getElementById("deleteCharacter").addEventListener("click", async () => {
 	const characterSelector = document.getElementById("characterSelector");
-	const characterId = characterSelector.value;
+	const characterId = currentActiveCharacterId;
 	let characters = JSON.parse(localStorage.getItem('characters') || '{}');
 
-	if (!characters[characterId]) {
-		alert("No character selected or character doesn't exist.");
-		return;
-	}
+	console.log("Current character id",characterId);
+	// if (!characters[characterId]) {
+	// 	alert("No character selected or character doesn't exist.");
+	// 	return;
+	// }
 
-	// Confirm deletion
-	if (!confirm(`Are you sure you want to delete ${characters[characterId].name}?`)) {
-		return;
-	}
+	if (!confirm(`Are you sure you want to delete ${characters[characterId].name}?`)) return;
 
-	delete characters[characterId]; // Remove from storage
+	// Remove from local storage
+	delete characters[characterId];
 	localStorage.setItem('characters', JSON.stringify(characters));
 
 	// Remove from selector
-	characterSelector.querySelector(`option[value="${characterId}"]`).remove();
+	characterSelector.querySelector(`option[value="${characterId}"]`)?.remove();
 
+	// Select a new character or create default
 	if (Object.keys(characters).length === 0) {
-		// If all characters are deleted, create a default one
 		document.getElementById("newCharacter").click();
 	} else {
-		// Select first available character
 		const firstCharacterId = Object.keys(characters)[0];
 		characterSelector.value = firstCharacterId;
 		setActiveCharacter(firstCharacterId);
 	}
 	updateImageDisplay();
+
+	// Only delete from DB if online
+	if (navigator.onLine) {
+		const user = getCurrentUser();
+		if (user) await deleteCharacterFromDB(characterId);
+	}
 });
 
-function saveCharacterData() {
-	console.log("Saving data...");
-
+async function saveCharacterData() {
+	console.log("Saving character data...");
 	const characterSelector = document.getElementById("characterSelector");
-	const selectedCharacterIndex = characterSelector.value;
+	const selectedCharacterId = characterSelector.value;
+	console.log("Selected character ID:", selectedCharacterId);
+	if (!selectedCharacterId) return;
 
-	if (!selectedCharacterIndex) {
-		console.error("No character selected to save!");
-		return;
-	}
-
-	const updatedCharacter = gatherCharacterData();
-
-	// Preserve current temp values when recalculating secondary stats
-	updatedCharacter.secondaryStats = calculateSecondaryStats(
-		updatedCharacter.stats,
-		updatedCharacter.secondaryStats 	
-	);
-
-	activeCharacter = updatedCharacter;
-	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-	characters[selectedCharacterIndex] = activeCharacter;
-	localStorage.setItem("characters", JSON.stringify(characters));
+	console.log("Gathering data...");
+	const updatedCharacter = addTimestamps(gatherCharacterData());
+	console.log("Data gathered.", updatedCharacter);
 	
-	console.log("Character data saved:", activeCharacter);
-	loadSelfCoreContent();
+	activeCharacter = updatedCharacter;
+
+	const user = getCurrentUser();
+
+  const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+  characters[selectedCharacterId] = activeCharacter;
+  localStorage.setItem("characters", JSON.stringify(characters));
+  
+  // Sync to Supabase in the background if user is logged in
+  if (currentUser) {
+    setTimeout(async () => {
+      try {
+        await saveCharacterToDB(selectedCharacterId, activeCharacter);
+        console.log("Character saved to DB in background:", selectedCharacterId);
+      } catch (error) {
+        console.error("Background save error:", error);
+      }
+    }, 0);
+  }
+  
+  console.log("Character saved locally:", selectedCharacterId);
 }
 
 // Utility function for calculating secondary stats
@@ -434,32 +917,27 @@ function populateCharacterData(data) {
 	renderSummary();
 }
 
-function populateCharacterSelector() {
-	const characterSelector = document.getElementById('characterSelector');
-	if (!characterSelector) {
-		console.error("Character selector element not found!");
-		return;
-	}
+async function populateCharacterSelector() {
+	const characterSelector = document.getElementById("characterSelector");
+	characterSelector.innerHTML = "";
+	console.log("Loading characters to selector...");
 
-	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-	if (typeof characters !== 'object' || Array.isArray(characters)) {
-		console.error("Characters in localStorage is not a valid object!", characters);
-		return;
-	}
+	const characters = await loadAllCharacters();
 
-	Object.keys(characters).forEach((key) => {
-		const char = characters[key];
-		const option = document.createElement('option');
-		option.value = key;
-		option.textContent = char.name || 'Unnamed Character';
+	console.log("Characters loaded to selector...");
+	Object.entries(characters).forEach(([id, char]) => {
+		const option = document.createElement("option");
+		option.value = id;
+		option.textContent = char.name || "Unnamed Character";
 		characterSelector.appendChild(option);
 	});
 
-	console.log("Characters populated:", characters);
+	return characters;
 }
 
+
 function updateStatUpgrades() {
-	activeCharacter.permanentBonuses = {};
+	const newBonuses = {};
 
 	Object.keys(moduleCatalog).forEach(catalogName => {
 		const catalog = moduleCatalog[catalogName];
@@ -482,11 +960,14 @@ function updateStatUpgrades() {
 				if (match) {
 					const stat = match[1].toLowerCase();
 					const amount = parseInt(match[2], 10);
-					activeCharacter.permanentBonuses[stat] = (activeCharacter.permanentBonuses[stat] || 0) + amount;
+					newBonuses[stat] = (newBonuses[stat] || 0) + amount;
 				}
 			}
 
-			const upgradesRow = document.querySelector(`#catalogContent .collapsible-section[data-tier="${tierKey}"] .stat-upgrades-row`);
+			// Update UI highlights
+			const upgradesRow = document.querySelector(
+				`#catalogContent .collapsible-section[data-tier="${tierKey}"] .stat-upgrades-row`
+			);
 			if (upgradesRow) {
 				upgradesRow.querySelectorAll(".stat-upgrade").forEach((el, index) => {
 					if (index < perksInTier) {
@@ -499,71 +980,76 @@ function updateStatUpgrades() {
 		});
 	});
 
-	saveCharacterData();
+	const bonusesChanged = JSON.stringify(newBonuses) !== JSON.stringify(activeCharacter.permanentBonuses);
+	activeCharacter.permanentBonuses = newBonuses;
+
+	if (bonusesChanged) {
+		saveCharacterData();
+	}
+
+	console.log("Updated stat upgrades:", activeCharacter.permanentBonuses);
 }
 
 function migrateCharacterData(character) {
-    if (!character) return character;
-    
-    // Migrate skill modules (old string format to new object format)
-    if (character.skills) {
-        character.skills.forEach(skill => {
-            if (skill.modules && skill.modules.length > 0) {
-                // Check if modules are in old string format
-                if (typeof skill.modules[0] === 'string') {
-                    console.log("Migrating old skill modules to new format");
-                    skill.modules = skill.modules.map(moduleName => ({
-                        name: moduleName,
-                        restriction: null
-                    }));
-                }
-            }
-        });
-    }
-    
-    // Migrate character modules to match latest library data
-    if (character.modules) {
-        Object.keys(character.modules).forEach(tier => {
-            if (Array.isArray(character.modules[tier])) {
-                character.modules[tier] = character.modules[tier].map(charModule => {
-                    const libraryModule = moduleLibrary.find(libModule => 
-                        libModule.name === charModule.name
-                    );
-                    console.log("Migrating character module", libraryModule, charModule);
-                    if (libraryModule) {
-                        return {
-                            ...libraryModule, 
-                            catalogs: charModule.catalogs || [], 
-                            restrictions: charModule.restrictions || [] 
-                        };
-                    }
-                    
-                    // If no matching library module found, keep the character's module as-is
-                    return charModule;
-                });
-            }
-        });
-    }
-    
-    return character;
+	if (!character) return character;
+	
+	// Migrate skill modules (old string format to new object format)
+	if (character.skills) {
+		character.skills.forEach(skill => {
+			if (skill.modules && skill.modules.length > 0) {
+				// Check if modules are in old string format
+				if (typeof skill.modules[0] === 'string') {
+					console.log("Migrating old skill modules to new format");
+					skill.modules = skill.modules.map(moduleName => ({
+						name: moduleName,
+						restriction: null
+					}));
+				}
+			}
+		});
+	}
+	
+	// Migrate character modules to match latest library data
+	if (character.modules) {
+		Object.keys(character.modules).forEach(tier => {
+			if (Array.isArray(character.modules[tier])) {
+				character.modules[tier] = character.modules[tier].map(charModule => {
+					const libraryModule = moduleLibrary.find(libModule => 
+						libModule.name === charModule.name
+					);
+					console.log("Migrating character module", libraryModule, charModule);
+					if (libraryModule) {
+						return {
+							...libraryModule, 
+							catalogs: charModule.catalogs || [], 
+							restrictions: charModule.restrictions || [] 
+						};
+					}
+					
+					// If no matching library module found, keep the character's module as-is
+					return charModule;
+				});
+			}
+		});
+	}
+	
+	return character;
 }
 
 function syncOldCharacterData() {
-    if (!activeCharacter) return;
+	if (!activeCharacter) return;
 	
-
-
 	function syncModule(moduleObj) {
-        const libModule = moduleLibrary.find(m => m.name === moduleObj.name);
-        if (!libModule) return moduleObj; // nothing to sync against
+		const libModule = moduleLibrary.find(m => m.name === moduleObj.name);
+		if (!libModule) return moduleObj; // nothing to sync against
 
-        let updated = false;
+		let updated = false;
 
-        // Sync description
-        if (libModule.description && moduleObj.description !== libModule.description) {
-            moduleObj.description = libModule.description;
-            updated = true;
-        }
+		// Sync description
+		if (libModule.description && moduleObj.description !== libModule.description) {
+			moduleObj.description = libModule.description;
+			updated = true;
+		}
 
 		// Normalize restrictions into arrays
 		function normalizeRestrictions(r) {
@@ -581,33 +1067,33 @@ function syncOldCharacterData() {
 			updated = true;
 		}
 
-        // Compare stringified versions for deep equality
-        if (JSON.stringify(libRestrictions) !== JSON.stringify(charRestrictions)) {
-            moduleObj.restrictions = [...libRestrictions];
-            updated = true;
-        }
+		// Compare stringified versions for deep equality
+		if (JSON.stringify(libRestrictions) !== JSON.stringify(charRestrictions)) {
+			moduleObj.restrictions = [...libRestrictions];
+			updated = true;
+		}
 
-        if (updated) {
-            console.log(`Module "${moduleObj.name}" synced from library.`);
-        }
-        return moduleObj;
-    }
+	if (updated) {
+		console.log(`Module "${moduleObj.name}" synced from library.`);
+	}
+		return moduleObj;
+	}
 
-    // --- Sync skill modules ---
-    if (activeCharacter.skills) {
-        activeCharacter.skills.forEach(skill => {
-            if (skill.modules) {
-                skill.modules = skill.modules.map(syncModule);
-            }
-        });
-    }
+	// --- Sync skill modules ---
+	if (activeCharacter.skills) {
+		activeCharacter.skills.forEach(skill => {
+			if (skill.modules) {
+				skill.modules = skill.modules.map(syncModule);
+			}
+		});
+	}
 
-    // --- Sync tiered modules ---
-    if (activeCharacter.modules) {
-        Object.keys(activeCharacter.modules).forEach(tier => {
-            activeCharacter.modules[tier] = activeCharacter.modules[tier].map(syncModule);
-        });
-    }
+	// --- Sync tiered modules ---
+	if (activeCharacter.modules) {
+		Object.keys(activeCharacter.modules).forEach(tier => {
+			activeCharacter.modules[tier] = activeCharacter.modules[tier].map(syncModule);
+		});
+	}
 
 	// --- Sync Perks ---
 	if (activeCharacter.perks) {
@@ -616,7 +1102,7 @@ function syncOldCharacterData() {
 
 			const catalogObj = moduleCatalog[perk.catalog];
 			if (!catalogObj) {
-				console.log(`Delete: ${perk.name} → catalog "${perk.catalog}" not found.`);
+				// console.log(`Delete: ${perk.name} → catalog "${perk.catalog}" not found.`);
 				perk._showDelete = true;
 				return;
 			}
@@ -636,7 +1122,7 @@ function syncOldCharacterData() {
 			const match = catalogTier.find(p => p.name === perk.name);
 
 			if (!match) {
-				console.log(`Delete: ${perk.name} → not found in tier "${perk.tier}".`);
+				// console.log(`Delete: ${perk.name} → not found in tier "${perk.tier}".`);
 				perk._showDelete = true;
 				return;
 			}
@@ -650,16 +1136,16 @@ function syncOldCharacterData() {
 				const slotsCat = Number(match.slots || 0);
 
 				if (descChar !== descCat) {
-					console.log(`Delete: ${perk.name} → description mismatch.`);
+					// console.log(`Delete: ${perk.name} → description mismatch.`);
 					perk._showDelete = true;
 				}
 				if (slotsChar !== slotsCat) {
-					console.log(`Delete: ${perk.name} → slots mismatch (char: ${slotsChar}, cat: ${slotsCat}).`);
+					// console.log(`Delete: ${perk.name} → slots mismatch (char: ${slotsChar}, cat: ${slotsCat}).`);
 					perk._showDelete = true;
 				}
 			} else {
 				if (descChar !== descCat) {
-					console.log(`Delete: ${perk.name} → description mismatch.`);
+					// console.log(`Delete: ${perk.name} → description mismatch.`);
 					perk._showDelete = true;
 				}
 			}
@@ -667,182 +1153,139 @@ function syncOldCharacterData() {
 	}
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-	const characterSelector = document.getElementById("characterSelector");
+async function initApp() {
+	try {
+		console.log("initApp start");
 
-	// Check if characters exist in localStorage
-	let characters = JSON.parse(localStorage.getItem('characters') || '{}');
-	if (Object.keys(characters).length === 0) {
-		// Create a default character if none exist
-		const defaultCharacter = {
-			name: "Default Character",
-			stats: {
-				mig: { dice: 8, temp: 0 },
-				dex: { dice: 8, temp: 0 },
-				int: { dice: 8, temp: 0 },
-				stl: { dice: 8, temp: 0 },
-				wlp: { dice: 8, temp: 0 },
-			},
-			secondaryStats: {
-				hp: { value: 36, temp: 0 },
-				ep: { value: 8, temp: 0 },
-				df: { value: 8, temp: 0 },
-				dm: { value: 8, temp: 0 },
-				impr: { value: 1, temp: 0 },
-				mov: { value: 8, temp: 0 },
-				atk: { value: 0, temp: 0 },
-				dmg: { value: 0, temp: 0 },
-			},
-			jobs: [],
-			skills: [],
-			modules: {
-				tier1: [],
-				tier2: [],
-				tier3: [],
-				tier4: [],
-				tier5: [],			
-			},
-			perks:[],
-			sp: { value: 0, temp: 0 },
-			ce: { value: 0, temp: 0 },
-			permanentBonuses: {},
-			statUpgrades: {},
+		const characterSelector = document.getElementById("characterSelector");
 
+		const characters = await populateCharacterSelector();
 
-		};
+		// --- 3. Set first character as active ---
+		const firstCharacterId = Object.keys(characters)[0];
+		if (firstCharacterId) {
+			await setActiveCharacter(firstCharacterId);
+			characterSelector.value = firstCharacterId;
+		}
 
-		// Save default character to localStorage
-		characters["default"] = defaultCharacter;
-		localStorage.setItem('characters', JSON.stringify(characters));
-	}
-
-	// Populate the selector
-	populateCharacterSelector();
-
-	// Load the first character as active
-	const firstCharacterId = Object.keys(characters)[0];
-	if (firstCharacterId) {
-		setActiveCharacter(firstCharacterId);
-	}
-
-	// Handle character selection changes
-	characterSelector.addEventListener("change", event => {
-		setActiveCharacter(event.target.value);
-	});
-
-	// Reusable function to attach event listeners and save data
-	function attachSaveListeners(elements, callback) {
-		elements.forEach(id => {
-			const element = document.getElementById(id);
-			if (element) {
-				const eventType = element.tagName === 'SELECT' ? 'change' : 'input';
-				element.addEventListener(eventType, () => {
-					saveCharacterData();
-					populateCharacterData(activeCharacter);
-					if (callback) callback();
-				});
-			} else {
-				console.warn(`Element with ID "${id}" not found.`);
-			}
+		characterSelector.addEventListener("change", event => {
+			setActiveCharacter(event.target.value);
 		});
-	}
 
-	// Listeners for character data
-	const charNameInput = document.getElementById("charName");
-	if (charNameInput) {
-		attachSaveListeners([charNameInput.id]);
-	} else {
-		console.warn("Character name input element not found.");
-	}
+		function attachSaveListeners(elements, callback) {
+			elements.forEach(id => {
+				const element = document.getElementById(id);
+				if (element) {
+					const eventType = element.tagName === 'SELECT' ? 'change' : 'input';
+					element.addEventListener(eventType, () => {
+						saveCharacterData();
+						populateCharacterData(activeCharacter);
+						if (callback) callback();
+					});
+				} else {
+					console.warn(`Element with ID "${id}" not found.`);
+				}
+			});
+		}
 
-	const stats = ['mig', 'dex', 'wlp', 'int', 'stl'];
-	const statsIds = stats.map(stat => [`${stat}Dice`, `${stat}Temp`]).flat();
-	attachSaveListeners(statsIds);
+		// Character name
+		const charNameInput = document.getElementById("charName");
+		if (charNameInput) attachSaveListeners([charNameInput.id]);
 
-	const secondaryStats = ['hp', 'ep', 'df', 'dm', 'impr', 'mov', 'atk', 'dmg'];
-	const secondaryStatsIds = secondaryStats.map(stat => [`${stat}`, `${stat}Temp`]).flat();
-	attachSaveListeners(secondaryStatsIds);
+		// Primary stats
+		const stats = ['mig', 'dex', 'wlp', 'int', 'stl'];
+		attachSaveListeners(stats.map(stat => [`${stat}Dice`, `${stat}Temp`]).flat());
 
-	// Set up jobs section
-	const addJobButton = document.getElementById("addJob");
-	if (addJobButton) {
-		addJobButton.addEventListener("click", addJob);
-	} else {
-		console.warn("Add Job button not found.");
-	}
-	
-	document.getElementById("currentHp").addEventListener("input", renderSummary);
-	document.getElementById("currentEp").addEventListener("input", renderSummary);
+		// Secondary stats
+		const secondaryStats = ['hp', 'ep', 'df', 'dm', 'impr', 'mov', 'atk', 'dmg'];
+		attachSaveListeners(secondaryStats.map(stat => [`${stat}`, `${stat}Temp`]).flat());
 
-	// Attach event listeners for CE and SP inputs across all sections
-	document.querySelectorAll('#ce, #sp, #ceCore, #spSkills').forEach(input => {
-		input.addEventListener("change", () => {
-			activeCharacter.secondaryStats.ce = parseInt(document.getElementById("ce").value) || 0;
-			activeCharacter.secondaryStats.sp = parseInt(document.getElementById("sp").value) || 0;
-			saveCharacterData();
-			syncExperienceInputs();
-			updateCEDisplay();
-			updateSPDisplay();
+		// Jobs
+		const addJobButton = document.getElementById("addJob");
+		if (addJobButton) addJobButton.addEventListener("click", addJob);
+
+		// Current HP/EP summary
+		document.getElementById("currentHp").addEventListener("input", renderSummary);
+		document.getElementById("currentEp").addEventListener("input", renderSummary);
+
+		// CE/SP inputs
+		document.querySelectorAll('#ce, #sp, #ceCore, #spSkills').forEach(input => {
+			input.addEventListener("change", () => {
+				activeCharacter.secondaryStats.ce = parseInt(document.getElementById("ce").value) || 0;
+				activeCharacter.secondaryStats.sp = parseInt(document.getElementById("sp").value) || 0;
+				saveCharacterData();
+				syncExperienceInputs();
+				updateCEDisplay();
+				updateSPDisplay();
+			});
 		});
-	});
-	
-	// Add skill button
-	document.getElementById("addSkill").addEventListener("click", () => {
-		if (!activeCharacter.skills) activeCharacter.skills = [];
 
-		const newSkill = {
-			name: "",
-			restrictions: [],
-			stats: ["mig", "dex"],
-			description: "",
-			modules: [] 
-		};
+		// Add skill button
+		const addSkillButton = document.getElementById("addSkill");
+		if (addSkillButton) {
+			addSkillButton.addEventListener("click", () => {
+				if (!activeCharacter.skills) activeCharacter.skills = [];
 
-		// Push immediately to character skills so it has an index
-		activeCharacter.skills.push(newSkill);
-		const index = activeCharacter.skills.length - 1;
+				const newSkill = {
+					name: "",
+					restrictions: [],
+					stats: ["mig", "dex"],
+					description: "",
+					modules: []
+				};
 
-		// Create the form for this skill
-		const skillForm = createSkillForm(newSkill, index);
+				activeCharacter.skills.push(newSkill);
+				const index = activeCharacter.skills.length - 1;
+				const skillForm = createSkillForm(newSkill, index);
 
-		// Append form to DOM
-		document.getElementById("skillsList").appendChild(skillForm);
+				document.getElementById("skillsList").appendChild(skillForm);
+				renderSkills();
+				saveCharacterData(); // Save after adding new skill
+			});
+		} else {
+			console.warn("Add Skill button not found!");
+		}
 
-		renderSkills();
-	});
 
-	syncOldCharacterData();
-	setupCharacterImage();
-	calculateAvailableJobs();
-	loadSelfCoreContent();
-	loadOriginPerks();
-	updateSPDisplay();
+		// Other setup calls
+		syncOldCharacterData();
+		setupCharacterImage();
+		calculateAvailableJobs();
+		loadSelfCoreContent();
+		loadOriginPerks();
+		updateSPDisplay();
+
+		console.log("initApp finished");
+	} catch (err) {
+		console.error("initApp crashed:", err);
+		activeCharacter = createLocalDefaultCharacter();
+	}
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+	console.log("DOMContentLoaded");
+
+	const { data: { session } } = await supabase.auth.getSession();
+	supabase.auth.onAuthStateChange((_event, session) => handleAuthChange(session));
+
+	document.getElementById("loginBtn").addEventListener("click", loginWithDiscord);
+	document.getElementById("logoutBtn").addEventListener("click", logout);
+
+	await initApp();
 });
 
+
 function calculateAvailableJobs() {
-	// Retrieve the selected character's data
-	const characterSelector = document.getElementById("characterSelector");
-	const selectedCharacterIndex = characterSelector.value;
-
-	if (!selectedCharacterIndex) {
-		console.error("No character selected for calculating available jobs!");
+	if (!activeCharacter || !activeCharacter.stats) {
+		console.error("No active character for calculating available jobs!");
 		return;
 	}
 
-	// Load character data from localStorage
-	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-	const selectedCharacter = characters[selectedCharacterIndex];
-
-	if (!selectedCharacter) {
-		console.error("Character data not found!");
-		return;
-	}
-
-	// Retrieve stats from JSON
-	const intBase = parseInt(selectedCharacter.stats.int.dice || 8);
-	const intTemp = parseInt(selectedCharacter.stats.int.temp || 0);
-	const wlpBase = parseInt(selectedCharacter.stats.wlp.dice || 8);
-	const wlpTemp = parseInt(selectedCharacter.stats.wlp.temp || 0);
+	// Retrieve stats from active character
+	const intBase = parseInt(activeCharacter.stats.int?.dice || 8);
+	const intTemp = parseInt(activeCharacter.stats.int?.temp || 0);
+	const wlpBase = parseInt(activeCharacter.stats.wlp?.dice || 8);
+	const wlpTemp = parseInt(activeCharacter.stats.wlp?.temp || 0);
 
 	// Calculate totals
 	const intTotal = intBase + intTemp;
@@ -850,7 +1293,7 @@ function calculateAvailableJobs() {
 
 	// Calculate available jobs
 	const maxJobs = Math.floor((intTotal + wlpTotal) / 6) || 1;
-	const jobs = selectedCharacter.jobs || [];
+	const jobs = activeCharacter.jobs || [];
 	const availableJobs = maxJobs - jobs.length;
 
 	// Update the UI
@@ -863,6 +1306,7 @@ function calculateAvailableJobs() {
 
 	return availableJobs;
 }
+
 
 function createDropdown(jobId) {
 	const dropdown = document.createElement("div");
@@ -1457,48 +1901,54 @@ function loadOriginPerks() {
 }
 
 function createPerkButton(perk, section) {
-const button = document.createElement('button');
-button.className = 'perk-button';
-button.textContent = perk.name;
-button.title = perk.description;
-button.dataset.section = section;
+	const button = document.createElement('button');
+	button.className = 'perk-button';
+	button.textContent = perk.name;
+	button.title = perk.description;
+	button.dataset.section = section;
 
-// Check if already learned
-const isLearned = activeCharacter.perks.some(p => 
-	p.name === perk.name && p.catalog === 'origen'
-);
+	// Check if already learned - safely handle undefined perks
+	const isLearned = (activeCharacter.perks || []).some(p => 
+		p.name === perk.name && p.catalog === 'origen'
+	);
 
-if (isLearned) button.classList.add(`learned-${section}`);
+	if (isLearned) button.classList.add(`learned-${section}`);
 
-button.addEventListener('click', () => {
-	const sectionType = button.dataset.section;
-	button.classList.toggle(`learned-${sectionType}`);
-	toggleOriginPerk(perk, sectionType);
-});
+	button.addEventListener('click', () => {
+		const sectionType = button.dataset.section;
+		button.classList.toggle(`learned-${sectionType}`);
+		toggleOriginPerk(perk, sectionType);
+	});
 
-return button;
+	return button;
 }
 
 function toggleOriginPerk(perk, section) {
-const index = activeCharacter.perks?.findIndex(p => 
-	p.name === perk.name && p.catalog === 'origen'
-);
+	if (!activeCharacter) return;
+	
+	// Ensure perks array exists
+	if (!activeCharacter.perks) {
+		activeCharacter.perks = [];
+	}
+	
+	const index = activeCharacter.perks.findIndex(p => 
+		p.name === perk.name && p.catalog === 'origen'
+	);
 
-if (index > -1) {
-	// Remove perk
-	activeCharacter.perks.splice(index, 1);
-} else {
-	// Add perk with section type
-	activeCharacter.perks.push({
-	...perk,
-	catalog: 'origen',
-	tier: section
-	});
+	if (index > -1) {
+		// Remove perk
+		activeCharacter.perks.splice(index, 1);
+	} else {
+		// Add perk with section type
+		activeCharacter.perks.push({
+			...perk,
+			catalog: 'origen',
+			tier: section
+		});
+	}
+
+	saveCharacterData();
 }
-
-saveCharacterData();
-}
-
 // Show tooltip on hover
 function showTooltip(item, restriction, button) {
 	if (!item || typeof item !== "object") return; // <-- Guard against undefined or non-object
@@ -1587,16 +2037,19 @@ function attachTooltipToPerkButtons() {
 }
 
 function updatePerkAvailability(coreName, tier) {
-	const modulesInTier = activeCharacter.modules[tier]?.length || 0;
+	if (!activeCharacter || !activeCharacter.modules) return;
+	
+	const modulesInTier = (activeCharacter.modules[tier] || []).length;
 
 	const perksAvailable = Math.floor(modulesInTier / 3);
-	const existingPerks = activeCharacter.perks.filter(p => p.tier === tier
-	).length;
+	const existingPerks = (activeCharacter.perks || [])
+		.filter(p => p.tier === tier && p.catalog !== "SecretRestrictions")
+		.length;
 	
 	let availablePerks = Math.max(perksAvailable - existingPerks, 0);
 	if (tier == "tier1") {
-	availablePerks = Math.max(perksAvailable + 1 - existingPerks, 0);
-}
+		availablePerks = Math.max(perksAvailable + 1 - existingPerks, 0);
+	}
 
 	// Target the PERK SECTION TITLE instead of tier title
 	const perkTitle = document.querySelector(`#catalogContent .perkTitle[data-tier="${tier}"]`);
@@ -1618,7 +2071,6 @@ function updatePerkAvailability(coreName, tier) {
 	}
 	loadSelfCoreContent();
 }
-
 
 
 //Selfcore section		
@@ -2082,41 +2534,41 @@ function loadSelfCoreContent() {
 }
 
 function createPerkList(perks) {
-    const list = document.createElement("ul");
-    list.className = "perks-list";
+	const list = document.createElement("ul");
+	list.className = "perks-list";
 
-    function createDeletePerkButton(perk) {
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Delete";
-        deleteButton.classList.add("delete-perk-button");
-        deleteButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (confirm(`Are you sure you want to delete the perk "${perk.name}"?`)) {
-                const index = activeCharacter.perks.findIndex(p =>
-                    p.name === perk.name && p.catalog === perk.catalog && p.tier === perk.tier
-                );
-                if (index !== -1) {
-                    activeCharacter.perks.splice(index, 1);
-                    saveCharacterData();
-                    loadSelfCoreContent(); // Refresh the display
-                }
-            }
-        });
-        return deleteButton;
-    }
+	function createDeletePerkButton(perk) {
+		const deleteButton = document.createElement("button");
+		deleteButton.textContent = "Delete";
+		deleteButton.classList.add("delete-perk-button");
+		deleteButton.addEventListener("click", (e) => {
+			e.stopPropagation();
+			if (confirm(`Are you sure you want to delete the perk "${perk.name}"?`)) {
+				const index = activeCharacter.perks.findIndex(p =>
+					p.name === perk.name && p.catalog === perk.catalog && p.tier === perk.tier
+				);
+				if (index !== -1) {
+					activeCharacter.perks.splice(index, 1);
+					saveCharacterData();
+					loadSelfCoreContent(); // Refresh the display
+				}
+			}
+		});
+		return deleteButton;
+	}
 
-    perks.forEach(perk => {
-        const listItem = document.createElement("li");
+	perks.forEach(perk => {
+		const listItem = document.createElement("li");
 
-        const perkContent = document.createElement("div");
-        perkContent.className = "perk-content";
-        perkContent.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
+		const perkContent = document.createElement("div");
+		perkContent.className = "perk-content";
+		perkContent.innerHTML = `<strong>${perk.name}</strong>: ${perk.description}`;
 
-        listItem.appendChild(perkContent);
+		listItem.appendChild(perkContent);
 
-        // Only add warning + delete button if _showDelete is true
-        // AND the perk is NOT an Origen perk in Ventajas/Desventajas
-        const isOrigenVentajaDesventaja = perk.catalog === "origen" && (perk.tier === "ventajas" || perk.tier === "desventajas");
+		// Only add warning + delete button if _showDelete is true
+		// AND the perk is NOT an Origen perk in Ventajas/Desventajas
+		const isOrigenVentajaDesventaja = perk.catalog === "origen" && (perk.tier === "ventajas" || perk.tier === "desventajas");
 
 		if (perk._showDelete && !isOrigenVentajaDesventaja) {
 			if (perk.catalog !== "custom") {
@@ -2129,10 +2581,10 @@ function createPerkList(perks) {
 			listItem.appendChild(createDeletePerkButton(perk));
 		}
 
-        list.appendChild(listItem);
-    });
+		list.appendChild(listItem);
+	});
 
-    return list;
+	return list;
 }
 
 function createCollapsibleSection(title, contentGenerator, storageKey) {
@@ -2228,100 +2680,100 @@ document.getElementById("saveCustomModule").addEventListener("click", saveCustom
 }
 
 function saveCustomModule() {
-  const name = document.getElementById("customModuleName").value;
-  const emote = document.getElementById("customModuleEmote").value;
-  const category = document.getElementById("customModuleType").value;
-  const description = document.getElementById("customModuleDescription").value;
-  const tier = document.getElementById("customModuleTier").value;
-  const restriction = document.getElementById("customModuleRestriction").value;
-  
-  // Validate inputs
-  if (!name || !emote || !description || !tier) {
-    alert("Please fill in all required fields");
-    return;
-  }
-  
-  // Create custom module object
-  const customModule = {
-    name,
-    emote,
-    description,
+const name = document.getElementById("customModuleName").value;
+const emote = document.getElementById("customModuleEmote").value;
+const category = document.getElementById("customModuleType").value;
+const description = document.getElementById("customModuleDescription").value;
+const tier = document.getElementById("customModuleTier").value;
+const restriction = document.getElementById("customModuleRestriction").value;
+
+// Validate inputs
+if (!name || !emote || !description || !tier) {
+	alert("Please fill in all required fields");
+	return;
+}
+
+// Create custom module object
+const customModule = {
+	name,
+	emote,
+	description,
 	category: category || null,
-    restriction: restriction || null,
-    catalogs: ["Custom"],
-    restrictions: restriction ? [restriction] : [],
-    isCustom: true // Flag to identify custom modules
-  };
-  
-  // Initialize customModules if it doesn't exist
-  if (!activeCharacter.customModules) {
-    activeCharacter.customModules = {
-      tier1: [], tier2: [], tier3: [], tier4: [], tier5: []
-    };
-  }
-  
-  // Add module to the appropriate tier
-  activeCharacter.customModules[tier].push(customModule);
-  
-  // Also add to the main modules array for the character
-  if (!activeCharacter.modules[tier]) {
-    activeCharacter.modules[tier] = [];
-  }
-  activeCharacter.modules[tier].push(customModule);
-  
-  // Save character data
-  saveCharacterData();
-  
-  // Reload self core content to show the new module
-  loadSelfCoreContent();
-  
-  // Hide the form
-  document.getElementById("customModuleFormContainer").style.display = "none";
+	restriction: restriction || null,
+	catalogs: ["Custom"],
+	restrictions: restriction ? [restriction] : [],
+	isCustom: true // Flag to identify custom modules
+};
+
+// Initialize customModules if it doesn't exist
+if (!activeCharacter.customModules) {
+	activeCharacter.customModules = {
+	tier1: [], tier2: [], tier3: [], tier4: [], tier5: []
+	};
+}
+
+// Add module to the appropriate tier
+activeCharacter.customModules[tier].push(customModule);
+
+// Also add to the main modules array for the character
+if (!activeCharacter.modules[tier]) {
+	activeCharacter.modules[tier] = [];
+}
+activeCharacter.modules[tier].push(customModule);
+
+// Save character data
+saveCharacterData();
+
+// Reload self core content to show the new module
+loadSelfCoreContent();
+
+// Hide the form
+document.getElementById("customModuleFormContainer").style.display = "none";
 }
 
 function toggleRemovalMode() {
-  const isOn = document.body.classList.toggle("removal-mode");
-  console.log("Removal mode:", isOn ? "ON" : "OFF");
+const isOn = document.body.classList.toggle("removal-mode");
+console.log("Removal mode:", isOn ? "ON" : "OFF");
 }
 
 function removeCustomModule(moduleName, tier) {
-  if (!activeCharacter.modules || !activeCharacter.modules[tier]) return;
+if (!activeCharacter.modules || !activeCharacter.modules[tier]) return;
 
-  // Remove from main modules
-  activeCharacter.modules[tier] = activeCharacter.modules[tier].filter(m => m.name !== moduleName);
+// Remove from main modules
+activeCharacter.modules[tier] = activeCharacter.modules[tier].filter(m => m.name !== moduleName);
 
-  // Also remove from customModules if it exists
-  if (activeCharacter.customModules && activeCharacter.customModules[tier]) {
-    activeCharacter.customModules[tier] = activeCharacter.customModules[tier].filter(m => m.name !== moduleName);
-  }
+// Also remove from customModules if it exists
+if (activeCharacter.customModules && activeCharacter.customModules[tier]) {
+	activeCharacter.customModules[tier] = activeCharacter.customModules[tier].filter(m => m.name !== moduleName);
+}
 
-  saveCharacterData();
-  loadSelfCoreContent();
+saveCharacterData();
+loadSelfCoreContent();
 }
 
 
 
 
 function findModuleDefByName(name) {
-  let m = moduleLibrary.find(x => x.name === name);
-  if (m) return m;
+let m = moduleLibrary.find(x => x.name === name);
+if (m) return m;
 
-  if (activeCharacter.modules) {
-    for (let t = 1; t <= 5; t++) {
-      const arr = activeCharacter.modules["tier" + t] || [];
-      const hit = arr.find(x => x.name === name);
-      if (hit) return hit;
-    }
-  }
+if (activeCharacter.modules) {
+	for (let t = 1; t <= 5; t++) {
+	const arr = activeCharacter.modules["tier" + t] || [];
+	const hit = arr.find(x => x.name === name);
+	if (hit) return hit;
+	}
+}
 
-  if (activeCharacter.customModules) {
-    for (let t = 1; t <= 5; t++) {
-      const arr = activeCharacter.customModules["tier" + t] || [];
-      const hit = arr.find(x => x.name === name);
-      if (hit) return hit;
-    }
-  }
-  return null;
+if (activeCharacter.customModules) {
+	for (let t = 1; t <= 5; t++) {
+	const arr = activeCharacter.customModules["tier" + t] || [];
+	const hit = arr.find(x => x.name === name);
+	if (hit) return hit;
+	}
+}
+return null;
 }
 
 // Skill creation/editing form
@@ -2514,7 +2966,7 @@ function createSkillForm(skill = {}, index) {
 			return {
 				name: moduleName,
 				emote: moduleObj?.emote || slot.textContent || "❓",
-			    category: slot.dataset.category || null,
+				category: slot.dataset.category || null,
 				restriction: moduleObj?.restriction || null,
 
 			};
@@ -3046,122 +3498,122 @@ function handleModuleUnhover(e) {
 }	
 
 function handleDragStart(e) {
-    const moduleSlot = e.target;
-    if (!moduleSlot.dataset.module) {
-        e.preventDefault();
-        return;
-    }
-    
-    draggedModule = moduleSlot;
-    moduleSlot.classList.add('dragging');
-    e.dataTransfer.setData('text/plain', moduleSlot.dataset.module);
-    e.dataTransfer.effectAllowed = 'move';
+	const moduleSlot = e.target;
+	if (!moduleSlot.dataset.module) {
+		e.preventDefault();
+		return;
+	}
+	
+	draggedModule = moduleSlot;
+	moduleSlot.classList.add('dragging');
+	e.dataTransfer.setData('text/plain', moduleSlot.dataset.module);
+	e.dataTransfer.effectAllowed = 'move';
 }
 
 function handleDragEnd(e) {
-    const moduleSlot = e.target;
-    moduleSlot.classList.remove('dragging');
-    draggedModule = null;
-    
-    Array.from(moduleSlot.parentElement.children).forEach(slot => {
-        slot.classList.remove('drop-target');
-    });
-    
-    const restrictionIcon = moduleSlot.querySelector('.restriction-icon');
-    if (restrictionIcon && !moduleSlot.dataset.module) {
-        restrictionIcon.style.opacity = 0;
-    }
+	const moduleSlot = e.target;
+	moduleSlot.classList.remove('dragging');
+	draggedModule = null;
+	
+	Array.from(moduleSlot.parentElement.children).forEach(slot => {
+		slot.classList.remove('drop-target');
+	});
+	
+	const restrictionIcon = moduleSlot.querySelector('.restriction-icon');
+	if (restrictionIcon && !moduleSlot.dataset.module) {
+		restrictionIcon.style.opacity = 0;
+	}
 }
 
 // Update the handleDrop function to properly handle restriction icons
 function handleDrop(e) {
-    e.preventDefault();
-    const target = e.target;
-    if (target.classList.contains('module-slot')) {
-        target.classList.remove('drop-target');
-        
-        // Store all elements and data from both slots
-        const draggedContent = draggedModule.innerHTML;
-        const draggedModuleData = draggedModule.dataset.module;
-        const draggedCategory = draggedModule.dataset.category;
-        
-        const targetContent = target.innerHTML;
-        const targetModuleData = target.dataset.module;
-        const targetCategory = target.dataset.category;
-        
-        // Swap everything including HTML content
-        draggedModule.innerHTML = targetContent;
-        draggedModule.dataset.module = targetModuleData;
-        draggedModule.dataset.category = targetCategory;
-        
-        target.innerHTML = draggedContent;
-        target.dataset.module = draggedModuleData;
-        target.dataset.category = draggedCategory;
-        
-        // Update empty class states
-        draggedModule.classList.toggle('empty', !draggedModule.dataset.module);
-        target.classList.toggle('empty', !target.dataset.module);
-        
-        // Reattach event listeners to the restriction icons in both slots
-        reattachRestrictionIconListeners(draggedModule);
-        reattachRestrictionIconListeners(target);
-    }
+	e.preventDefault();
+	const target = e.target;
+	if (target.classList.contains('module-slot')) {
+		target.classList.remove('drop-target');
+		
+		// Store all elements and data from both slots
+		const draggedContent = draggedModule.innerHTML;
+		const draggedModuleData = draggedModule.dataset.module;
+		const draggedCategory = draggedModule.dataset.category;
+		
+		const targetContent = target.innerHTML;
+		const targetModuleData = target.dataset.module;
+		const targetCategory = target.dataset.category;
+		
+		// Swap everything including HTML content
+		draggedModule.innerHTML = targetContent;
+		draggedModule.dataset.module = targetModuleData;
+		draggedModule.dataset.category = targetCategory;
+		
+		target.innerHTML = draggedContent;
+		target.dataset.module = draggedModuleData;
+		target.dataset.category = draggedCategory;
+		
+		// Update empty class states
+		draggedModule.classList.toggle('empty', !draggedModule.dataset.module);
+		target.classList.toggle('empty', !target.dataset.module);
+		
+		// Reattach event listeners to the restriction icons in both slots
+		reattachRestrictionIconListeners(draggedModule);
+		reattachRestrictionIconListeners(target);
+	}
 }
 
 // Add this helper function to reattach event listeners to restriction icons
 function reattachRestrictionIconListeners(slot) {
-    const restrictionIcon = slot.querySelector('.restriction-icon');
-    if (!restrictionIcon) return;
-    
-    // Get the skill and module index
-    const skillElement = slot.closest('.skill-form') || slot.closest('.skill');
-    if (!skillElement) return;
-    
-    let skillIndex;
-    if (skillElement.id.startsWith('skill-')) {
-        skillIndex = parseInt(skillElement.id.replace('skill-', ''));
-    } else {
-        // For forms, we need to find the index differently
-        const forms = document.querySelectorAll('.skill-form');
-        skillIndex = Array.from(forms).indexOf(skillElement);
-    }
-    
-    const allSlots = Array.from(slot.parentElement.children);
-    const moduleIndex = allSlots.indexOf(slot);
-    
-    const skill = activeCharacter.skills[skillIndex];
-    if (!skill || !skill.modules) return;
-    
-    // Reattach tooltip and click events
-    restrictionIcon.addEventListener("mouseenter", () => {
-        const moduleName = slot.dataset.module;
-        const module = moduleLibrary.find(m => m.name === moduleName);
-        if (!module) return;
-        
-        const moduleObj = skill.modules[moduleIndex];
-        const restriction = moduleObj?.restriction || null;
-        showTooltip(module, restriction, restrictionIcon);
-    });
-    
-    restrictionIcon.addEventListener("mouseleave", hideTooltip);
-    
-    restrictionIcon.addEventListener("click", (e) => {
-        e.stopPropagation();
-        showGenericModuleRestrictions(restrictionIcon, skill, moduleIndex);
-    });
-    
-    // Reattach hover behavior for the slot
-    slot.addEventListener("mouseenter", () => {
-        if (restrictionIcon && !restrictionIcon.style.opacity) {
-            restrictionIcon.style.opacity = 1;
-        }
-    });
-    
-    slot.addEventListener("mouseleave", () => {
-        if (restrictionIcon && restrictionIcon.style.opacity === "1") {
-            restrictionIcon.style.opacity = 0;
-        }
-    });
+	const restrictionIcon = slot.querySelector('.restriction-icon');
+	if (!restrictionIcon) return;
+	
+	// Get the skill and module index
+	const skillElement = slot.closest('.skill-form') || slot.closest('.skill');
+	if (!skillElement) return;
+	
+	let skillIndex;
+	if (skillElement.id.startsWith('skill-')) {
+		skillIndex = parseInt(skillElement.id.replace('skill-', ''));
+	} else {
+		// For forms, we need to find the index differently
+		const forms = document.querySelectorAll('.skill-form');
+		skillIndex = Array.from(forms).indexOf(skillElement);
+	}
+	
+	const allSlots = Array.from(slot.parentElement.children);
+	const moduleIndex = allSlots.indexOf(slot);
+	
+	const skill = activeCharacter.skills[skillIndex];
+	if (!skill || !skill.modules) return;
+	
+	// Reattach tooltip and click events
+	restrictionIcon.addEventListener("mouseenter", () => {
+		const moduleName = slot.dataset.module;
+		const module = moduleLibrary.find(m => m.name === moduleName);
+		if (!module) return;
+		
+		const moduleObj = skill.modules[moduleIndex];
+		const restriction = moduleObj?.restriction || null;
+		showTooltip(module, restriction, restrictionIcon);
+	});
+	
+	restrictionIcon.addEventListener("mouseleave", hideTooltip);
+	
+	restrictionIcon.addEventListener("click", (e) => {
+		e.stopPropagation();
+		showGenericModuleRestrictions(restrictionIcon, skill, moduleIndex);
+	});
+	
+	// Reattach hover behavior for the slot
+	slot.addEventListener("mouseenter", () => {
+		if (restrictionIcon && !restrictionIcon.style.opacity) {
+			restrictionIcon.style.opacity = 1;
+		}
+	});
+	
+	slot.addEventListener("mouseleave", () => {
+		if (restrictionIcon && restrictionIcon.style.opacity === "1") {
+			restrictionIcon.style.opacity = 0;
+		}
+	});
 }
 
 function handleDragOver(e) {
@@ -3174,20 +3626,20 @@ function handleDragOver(e) {
 }
 
 function getTotalSlots(skill) {
-    let slots = 5; // Base slots
+	let slots = 5; // Base slots
 
-    // --- Normal restrictions ---
-    skill.restrictions.forEach(restriction => {
-        switch (restriction) {
-            case 'Doble [+2 ☐ ]': slots += 2; break;
-            case '+1 PE [+1 ☐ ]': slots += 1; break;
-            case '+3 PE [+2 ☐ ]': slots += 2; break;
-            case '+6 PE [+3 ☐ ]': slots += 3; break;
-            case '+10 PE [+4 ☐ ]': slots += 4; break;
-        }
-    });
+	// --- Normal restrictions ---
+	skill.restrictions.forEach(restriction => {
+		switch (restriction) {
+			case 'Doble [+2 ☐ ]': slots += 2; break;
+			case '+1 PE [+1 ☐ ]': slots += 1; break;
+			case '+3 PE [+2 ☐ ]': slots += 2; break;
+			case '+6 PE [+3 ☐ ]': slots += 3; break;
+			case '+10 PE [+4 ☐ ]': slots += 4; break;
+		}
+	});
 
-    // --- Perk-based bonuses ---
+	// --- Perk-based bonuses ---
 	skill.restrictions.forEach(restriction => {
 					const perk = activeCharacter.perks.find(p => 
 							p.name === restriction && p.type === "restriction"
@@ -3197,92 +3649,92 @@ function getTotalSlots(skill) {
 							slots += bonus;
 					}
 			});
-    // --- Special gimmick override ---
-    if (skill.restrictions.includes(" Gimmick")) {
-        if (activeCharacter.perks.some(p => p.name === "Gimmick Set")) {
-            slots = 2;
-        } else {
-            slots = 1;
-        }
-    }
+	// --- Special gimmick override ---
+	if (skill.restrictions.includes(" Gimmick")) {
+		if (activeCharacter.perks.some(p => p.name === "Gimmick Set")) {
+			slots = 2;
+		} else {
+			slots = 1;
+		}
+	}
 
 	if (skill.restrictions.includes(" Transformación")) {
-        if (activeCharacter.perks.some(p => p.name === "Bendición De Luna 2")) {
-            slots = 3;
-        }
+		if (activeCharacter.perks.some(p => p.name === "Bendición De Luna 2")) {
+			slots = 3;
+		}
 		else if (activeCharacter.perks.some(p => p.name === "Bendición De Luna")) {
-            slots = 2;
-        }
+			slots = 2;
+		}
 		else {
-            slots = 1;
-        }
-    }
+			slots = 1;
+		}
+	}
 
 
-    return slots;
+	return slots;
 }
 
 // Calculate skill cost
 function calculateSkillCost(modules, skillRestrictions = []) {
-    // Group modules by name
-    const grouped = modules.reduce((acc, m) => {
-        acc[m.name] = acc[m.name] || [];
-        acc[m.name].push(m);
-        return acc;
-    }, {});
+	// Group modules by name
+	const grouped = modules.reduce((acc, m) => {
+		acc[m.name] = acc[m.name] || [];
+		acc[m.name].push(m);
+		return acc;
+	}, {});
 
-    let cost = 0;
+	let cost = 0;
 
-    for (const [name, mods] of Object.entries(grouped)) {
-        const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
-            (activeCharacter.modules[tk] || []).some(m => m.name === name)
-        );
-        const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
+	for (const [name, mods] of Object.entries(grouped)) {
+		const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
+			(activeCharacter.modules[tk] || []).some(m => m.name === name)
+		);
+		const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
 
-        const X = mods.length;
-        cost += (X * tierNum) + (X > 1 ? factorial(X - 1) : 0);
-    }
+		const X = mods.length;
+		cost += (X * tierNum) + (X > 1 ? factorial(X - 1) : 0);
+	}
 
-    // Handle Ineficiente
-    if (skillRestrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
+	// Handle Ineficiente
+	if (skillRestrictions.includes("Ineficiente [+2 ☐ ]")) cost *= 2;
 
-    // Handle module restrictions
-    modules.forEach(moduleObj => {
-        if (!moduleObj.restriction) return;
+	// Handle module restrictions
+	modules.forEach(moduleObj => {
+		if (!moduleObj.restriction) return;
 
-        let restrictionType = typeof moduleObj.restriction === 'string'
-            ? moduleObj.restriction
-            : moduleObj.restriction.type;
+		let restrictionType = typeof moduleObj.restriction === 'string'
+			? moduleObj.restriction
+			: moduleObj.restriction.type;
 
-        if (!restrictionType) return;
+		if (!restrictionType) return;
 
-        if (restrictionType.includes("-1 SP")) cost -= 1;
-        else if (restrictionType.includes("-2 SP")) cost -= 2;
-        else if (restrictionType.includes("-3 SP")) cost -= 3;
-        else if (restrictionType.includes("Maestria")) {
-            const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
-                (activeCharacter.modules[tk] || []).some(m => m.name === moduleObj.name)
-            );
-            const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
-            cost -= tierNum;
-        }
-    });
+		if (restrictionType.includes("-1 SP")) cost -= 1;
+		else if (restrictionType.includes("-2 SP")) cost -= 2;
+		else if (restrictionType.includes("-3 SP")) cost -= 3;
+		else if (restrictionType.includes("Maestria")) {
+			const tierKey = Object.keys(activeCharacter.modules || {}).find(tk =>
+				(activeCharacter.modules[tk] || []).some(m => m.name === moduleObj.name)
+			);
+			const tierNum = tierKey ? parseInt(tierKey.replace("tier", ""), 10) : 1;
+			cost -= tierNum;
+		}
+	});
 
-    // Force cost = 0 if Gimmick or Transformación restriction is active
-    if (
-        skillRestrictions.includes(" Gimmick") ||
-        // skillRestrictions.includes("") ||
-        skillRestrictions.includes(" Transformación")
-    ) {
-        cost = 0;
-    }
+	// Force cost = 0 if Gimmick or Transformación restriction is active
+	if (
+		skillRestrictions.includes(" Gimmick") ||
+		// skillRestrictions.includes("") ||
+		skillRestrictions.includes(" Transformación")
+	) {
+		cost = 0;
+	}
 
-    return Math.max(cost, 0);
+	return Math.max(cost, 0);
 }
 
 // Helper factorial
 function factorial(n) {
-    return n <= 1 ? 1 : n * factorial(n - 1);
+	return n <= 1 ? 1 : n * factorial(n - 1);
 }
 
 function showRestrictionTooltip(restrictionName, element) {
@@ -3359,10 +3811,11 @@ function getModuleRestrictions(moduleName) {
 function renderSummary() {
 	if (!activeCharacter) return;
 
-	// Stats
+	// Get current HP/EP values from inputs or activeCharacter
 	const currentHpInput = document.getElementById("currentHp");
 	const currentEpInput = document.getElementById("currentEp");
-
+	
+	// Calculate max values
 	const recalculated = calculateSecondaryStats(
 		activeCharacter.stats,
 		activeCharacter.secondaryStats,
@@ -3372,18 +3825,16 @@ function renderSummary() {
 	const maxHp = recalculated.hp.value + recalculated.hp.temp;
 	const maxEp = recalculated.ep.value + recalculated.ep.temp;
 
+	// Update activeCharacter with current values
 	if (currentHpInput) {
-		activeCharacter.currentHP =
-		parseInt(currentHpInput.value, 10) || activeCharacter.currentHP || maxHp;
+		activeCharacter.currentHP = parseInt(currentHpInput.value, 10) || activeCharacter.currentHP || maxHp;
 	}
 	if (currentEpInput) {
-		activeCharacter.currentEP =
-		parseInt(currentEpInput.value, 10) || activeCharacter.currentEP || maxEp;
+		activeCharacter.currentEP = parseInt(currentEpInput.value, 10) || activeCharacter.currentEP || maxEp;
 	}
 	
 	const currentHp = activeCharacter.currentHP;
 	const currentEp = activeCharacter.currentEP;
-	
 
 	// Calculate percentage
 	const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
@@ -3396,101 +3847,103 @@ function renderSummary() {
 	if (hpBar) hpBar.style.width = hpPercent + "%";
 	if (epBar) epBar.style.width = epPercent + "%";
 
-	// Update summaries
-	
-	renderSkillsSummary();
-	renderPerksSummary();
-
+	// Update input values
 	if (currentHpInput) currentHpInput.value = currentHp;
 	if (currentEpInput) currentEpInput.value = currentEp;
+	
+	// Update skills and perks summaries
+	renderSkillsSummary();
+	renderPerksSummary();
+	
+	// Save changes to Supabase
 	saveCharacterData();
 }
 
 function renderSkillsSummary() {
-    const summarySkills = document.getElementById("summary-skills");
-    summarySkills.innerHTML = "";
+	const summarySkills = document.getElementById("summary-skills");
+	summarySkills.innerHTML = "";
 
-    if (!activeCharacter.skills || activeCharacter.skills.length === 0) {
-        summarySkills.innerHTML = "<div class='no-skills'>No skills learned yet</div>";
-        return;
-    }
+	if (!activeCharacter.skills || activeCharacter.skills.length === 0) {
+		summarySkills.innerHTML = "<div class='no-skills'>No skills learned yet</div>";
+		return;
+	}
 
-    activeCharacter.skills.forEach(skill => {
-        if (!skill.stats) skill.stats = ["mig", "dex"];
+	activeCharacter.skills.forEach(skill => {
+		if (!skill.stats) skill.stats = ["mig", "dex"];
 
-        const skillDiv = document.createElement("div");
-        skillDiv.className = "summary-skill";
+		const skillDiv = document.createElement("div");
+		skillDiv.className = "summary-skill";
 
-        // --- Header: name + restrictions ---
-        const headerDiv = document.createElement("div");
-        headerDiv.className = "skill-header";
+		// --- Header: name + restrictions ---
+		const headerDiv = document.createElement("div");
+		headerDiv.className = "skill-header";
 
-        const nameDiv = document.createElement("div");
-        nameDiv.className = "skill-name";
-        nameDiv.textContent = skill.name;
-        headerDiv.appendChild(nameDiv);
+		const nameDiv = document.createElement("div");
+		nameDiv.className = "skill-name";
+		nameDiv.textContent = skill.name;
+		headerDiv.appendChild(nameDiv);
 
-        if (skill.restrictions && skill.restrictions.length > 0) {
-            const restrictionDiv = document.createElement("div");
-            restrictionDiv.className = "skill-restriction";
-            restrictionDiv.textContent = `${skill.restrictions.join(", ")}`;
-            restrictionDiv.style.marginLeft = "10px";
-            headerDiv.appendChild(restrictionDiv);
-        }
+		if (skill.restrictions && skill.restrictions.length > 0) {
+			const restrictionDiv = document.createElement("div");
+			restrictionDiv.className = "skill-restriction";
+			restrictionDiv.textContent = `${skill.restrictions.join(", ")}`;
+			restrictionDiv.style.marginLeft = "10px";
+			headerDiv.appendChild(restrictionDiv);
+		}
 
-        // --- Stats ---
-        const statsDiv = document.createElement("div");
-        statsDiv.className = "skill-stats";
-        const stat1 = skill.stats[0] || "mig";
-        const stat2 = skill.stats[1] || "dex";
+		// --- Stats ---
+		const statsDiv = document.createElement("div");
+		statsDiv.className = "skill-stats";
+		const stat1 = skill.stats[0] || "mig";
+		const stat2 = skill.stats[1] || "dex";
 
-        const moduleMod = (skill.modules.filter(m => m.name === "Apuntar").length * 2);
-        const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
-        const totalATK = baseAtk + moduleMod;
+		const moduleMod = (skill.modules.filter(m => m.name === "Apuntar").length * 2);
+		const baseAtk = (activeCharacter.secondaryStats.atk.value || 0) + (activeCharacter.secondaryStats.atk.temp || 0);
+		const totalATK = baseAtk + moduleMod;
 
-        statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
-                            `${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
+		statsDiv.textContent = `${stat1.toUpperCase()} (d${activeCharacter.stats[stat1].dice}) + ` +
+							`${stat2.toUpperCase()} (d${activeCharacter.stats[stat2].dice}) + ${totalATK}`;
 
-        // --- Modules ---
-        const modulesDiv = document.createElement("div");
-        modulesDiv.className = "skill-modules";
+		// --- Modules ---
+		const modulesDiv = document.createElement("div");
+		modulesDiv.className = "skill-modules";
 
-        skill.modules.forEach(moduleObj => {
+		skill.modules.forEach(moduleObj => {
 
 			const found = findModuleDefByName(moduleObj.name);
 
 			const displayEmote = found?.emote ?? saved.emote ?? "?";
-            const displayCategory = moduleObj.category ?? moduleObj.category ?? "Custom";
-            const span = document.createElement("span");
-            span.className = "module-slot";
-            span.textContent = displayEmote;
-            span.dataset.module = moduleObj.name;
-            span.dataset.category = displayCategory;
-            span.title = moduleObj.name;
+			const displayCategory = moduleObj.category ?? moduleObj.category ?? "Custom";
+			const span = document.createElement("span");
+			span.className = "module-slot";
+			span.textContent = displayEmote;
+			span.dataset.module = moduleObj.name;
+			span.dataset.category = displayCategory;
+			span.title = moduleObj.name;
 
-            // Restriction handling (only show if restriction exists)
-            if (moduleObj.restriction) {
-                const restrictionIcon = document.createElement("div");
-                restrictionIcon.className = "restriction-icon";
-                restrictionIcon.textContent = "R";
+			// Restriction handling (only show if restriction exists)
+			if (moduleObj.restriction) {
+				const restrictionIcon = document.createElement("div");
+				restrictionIcon.className = "restriction-icon";
+				restrictionIcon.textContent = "R";
 
-                restrictionIcon.addEventListener("mouseenter", () => {
-                    showTooltip(resolvedModule, moduleObj.restriction, restrictionIcon);
-                });
-                restrictionIcon.addEventListener("mouseleave", hideTooltip);
+				restrictionIcon.addEventListener("mouseenter", () => {
+					showTooltip(resolvedModule, moduleObj.restriction, restrictionIcon);
+				});
+				restrictionIcon.addEventListener("mouseleave", hideTooltip);
 
-                span.appendChild(restrictionIcon);
-            }
+				span.appendChild(restrictionIcon);
+			}
 
-            modulesDiv.appendChild(span);
-        });
+			modulesDiv.appendChild(span);
+		});
 
-        skillDiv.appendChild(headerDiv);
-        skillDiv.appendChild(statsDiv);
-        skillDiv.appendChild(modulesDiv);
+		skillDiv.appendChild(headerDiv);
+		skillDiv.appendChild(statsDiv);
+		skillDiv.appendChild(modulesDiv);
 
-        summarySkills.appendChild(skillDiv);
-    });
+		summarySkills.appendChild(skillDiv);
+	});
 }
 
 function renderPerksSummary() {
