@@ -219,7 +219,7 @@ async function loginWithDiscord() {
 const { data, error } = await supabase.auth.signInWithOAuth({
 	provider: "discord",
 	options: {
-	redirectTo: "http://127.0.0.1:3000/index.html"
+	redirectTo: "https://potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 	}
 });
 
