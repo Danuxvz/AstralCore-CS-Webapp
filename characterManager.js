@@ -63,35 +63,112 @@ function getCurrentUser() {
 function addTimestamps(character) {
   const now = Date.now();
   if (!character.createdAt) character.createdAt = now;
-  character.updatedAt = now;
+  if (!character.updatedAt) character.updatedAt = now;
   return character;
 }
 
-// // Sync characters between localStorage and Supabase
 async function syncCharacters() {
   if (!currentUser) return;
-  
+
   try {
+    const userId = currentUser.id;
     const localCharacters = JSON.parse(localStorage.getItem("characters") || "{}");
-    const remoteCharacters = await fetchCharactersFromDB(currentUser.id);
+    console.log("Fetching characters from DB...");
+    const remoteCharacters = await fetchCharactersFromDB(userId);
+    console.log("Characters fetched from DB.");
 
     const mergedCharacters = { ...localCharacters };
 
-    for (const [id, remoteChar] of Object.entries(remoteCharacters)) {
-      const localChar = localCharacters[id];
+    // Build a lookup for remote characters by hash and name
+    const remoteByHash = {};
+    const remoteByName = {};
+    
+    for (const [remoteId, remoteChar] of Object.entries(remoteCharacters)) {
+      addTimestamps(remoteChar);
+      const hash = hashCharacterData(remoteChar);
+      remoteByHash[hash] = { id: remoteId, data: remoteChar };
+      remoteByName[remoteChar.name] = { id: remoteId, data: remoteChar, hash: hash };
+    }
 
-      // Ensure timestamps exist
-      if (localChar) addTimestamps(localChar);
-      if (remoteChar) addTimestamps(remoteChar);
+    // Process local characters
+    for (const [localId, localChar] of Object.entries(localCharacters)) {
+      addTimestamps(localChar);
+      const localHash = hashCharacterData(localChar);
 
-      if (!localChar || remoteChar.updatedAt > localChar.updatedAt) {
-        mergedCharacters[id] = remoteChar;
-      } else if (localChar.updatedAt > remoteChar.updatedAt) {
-        await saveCharacterToDB(id, localChar);
+      const remoteMatch = remoteByHash[localHash];
+
+      if (!remoteMatch) {
+        // Check if a character with the same name exists (even if data is different)
+        const sameNameChar = remoteByName[localChar.name];
+        
+        if (sameNameChar) {
+          // Character with same name exists but different data
+          if (localChar.updatedAt > sameNameChar.data.updatedAt) {
+            console.log(`Updating remote "${sameNameChar.data.name}" with newer local copy`);
+            localChar.updatedAt = Date.now();
+            await saveCharacterToDB(sameNameChar.id, localChar);
+            mergedCharacters[sameNameChar.id] = localChar;
+            if (localId !== sameNameChar.id) delete mergedCharacters[localId];
+          } else {
+            console.log(`Updating local "${localChar.name}" with newer remote copy`);
+            sameNameChar.data.updatedAt = Date.now();
+            mergedCharacters[localId] = sameNameChar.data;
+          }
+        } else {
+          // Completely new character → upload
+          console.log(`Uploading new character`, localChar);
+          localChar.updatedAt = Date.now();
+          const { data, error } = await supabase
+            .from("characters")
+            .insert({
+              user_id: userId,
+              name: localChar.name,
+              data: localChar,
+            })
+            .select("id, data")
+            .single();
+
+          if (error) {
+            console.error("Failed to upload character:", error);
+          } else if (data) {
+            mergedCharacters[data.id] = localChar;
+            if (localId !== data.id) delete mergedCharacters[localId];
+
+            const uploadedHash = hashCharacterData(localChar);
+            remoteByHash[uploadedHash] = { id: data.id, data: localChar };
+            remoteByName[localChar.name] = { id: data.id, data: localChar, hash: uploadedHash };
+          }
+        }
+      } else {
+        // Found an exact match
+        console.log(`Character "${localChar.name}" is already synced.`);
+        // Ensure we're using the remote ID
+        if (localId !== remoteMatch.id) {
+          mergedCharacters[remoteMatch.id] = localChar;
+          delete mergedCharacters[localId];
+        }
       }
     }
 
+    // Process remote-only characters
+    for (const [remoteId, remoteChar] of Object.entries(remoteCharacters)) {
+      const remoteHash = hashCharacterData(remoteChar);
+      const alreadyLocal = Object.entries(mergedCharacters).some(
+        ([localId, c]) => localId === remoteId || hashCharacterData(c) === remoteHash
+      );
+
+      if (!alreadyLocal) {
+        console.log(`Downloading new remote character "${remoteChar.name}"`);
+        remoteChar.updatedAt = Date.now();
+        mergedCharacters[remoteId] = remoteChar;
+      }
+    }
+
+    // Save merged characters back locally
     localStorage.setItem("characters", JSON.stringify(mergedCharacters));
+    console.log("Sync complete. Local is up-to-date.");
+
+    // Update the character selector
     await populateCharacterSelector();
     
   } catch (error) {
@@ -99,73 +176,43 @@ async function syncCharacters() {
   }
 }
 
+function normalizeCharacterData(character) {
+  return {
+    name: character.name,
+    stats: character.stats,
+    secondaryStats: character.secondaryStats,
+    jobs: (character.jobs || []).map(j => ({ id: j.id, title: j.title, effect: j.effect })),
+    skills: (character.skills || []).map(s => ({
+      name: s.name,
+      restrictions: [...(s.restrictions || [])].sort(), // ✅ sorted
+      stats: [...(s.stats || [])].sort(),
+      description: s.description,
+      modules: [...(s.modules || [])].sort()
+    })),
+    modules: {
+      tier1: [...(character.modules?.tier1 || [])].sort(),
+      tier2: [...(character.modules?.tier2 || [])].sort(),
+      tier3: [...(character.modules?.tier3 || [])].sort(),
+      tier4: [...(character.modules?.tier4 || [])].sort(),
+      tier5: [...(character.modules?.tier5 || [])].sort()
+    },
+    perks: [...(character.perks || [])].sort(),
+    sp: character.sp || 0,
+    ce: character.ce || 0
+  };
+}
 
-
-
-
-// // Modify handleAuthChange to use sync instead of migrate
-// async function handleAuthChange(session) {
-//   const user = session?.user;
-//   const loginBtn = document.getElementById("loginBtn");
-//   const logoutBtn = document.getElementById("logoutBtn");
-//   const userEmail = document.getElementById("userEmail");
-
-//   if (user) {
-//     console.log("User logged in:", user);
-    
-//     loginBtn.style.display = "none";
-//     logoutBtn.style.display = "inline-block";
-//     userEmail.textContent = user.email || user.user_metadata?.full_name || "";
-
-//     if (!currentUser || currentUser.id !== user.id) {
-//       currentUser = user;
-//       await syncCharacters(); // Sync instead of migrate
-//       const characters = await populateCharacterSelector();
-      
-//       if (characters && Object.keys(characters).length > 0) {
-//         const firstCharacterId = Object.keys(characters)[0];
-//         await setActiveCharacter(firstCharacterId);
-//       }
-//     } else {
-//       currentUser = user;
-//     }
-//   } else {
-//     console.log("No active user");
-    
-//     if (currentUser !== null) {
-//       loginBtn.style.display = "inline-block";
-//       logoutBtn.style.display = "none";
-//       userEmail.textContent = "";
-//       currentUser = null;
-      
-//       const characters = await populateCharacterSelector();
-//       if (characters && Object.keys(characters).length > 0) {
-//         const firstCharacterId = Object.keys(characters)[0];
-//         await setActiveCharacter(firstCharacterId);
-//       }
-//     }
-//   }
-// }
-
-// // Add a manual sync button
-// function addSyncButton() {
-//   const syncBtn = document.createElement("button");
-//   syncBtn.id = "syncBtn";
-//   syncBtn.textContent = "Sync with Cloud";
-//   syncBtn.addEventListener("click", syncCharacters);
-  
-//   // Add it to the UI near the login buttons
-//   const authDiv = document.querySelector(".auth-section");
-//   if (authDiv) {
-//     authDiv.appendChild(syncBtn);
-//   }
-// }
-
-// // Initialize the sync button when DOM is loaded
-// document.addEventListener("DOMContentLoaded", () => {
-//   addSyncButton();
-// });
-
+function hashCharacterData(characterData) {
+  const normalized = normalizeCharacterData(characterData);
+  const str = JSON.stringify(normalized);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 32-bit int
+  }
+  return hash;
+}
 
 // Login with Discord
 async function loginWithDiscord() {
@@ -199,74 +246,149 @@ async function logout() {
 }
 
 async function handleAuthChange(session) {
-	const user = session?.user;
-	const loginBtn = document.getElementById("loginBtn");
-	const logoutBtn = document.getElementById("logoutBtn");
-	const userEmail = document.getElementById("userEmail");
+  const user = session?.user;
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userEmail = document.getElementById("userEmail");
 
-	if (user) {
-		console.log("User logged in:", user);
+  if (user) {
+    console.log("User logged in:", user);
 
-		loginBtn.style.display = "none";
-		logoutBtn.style.display = "inline-block";
-		userEmail.textContent = user.email || user.user_metadata?.full_name || "";
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    userEmail.textContent = user.email || user.user_metadata?.full_name || "";
 
-		// Only do heavy lifting if user actually changed
-		if (!currentUser || currentUser.id !== user.id) {
-			currentUser = user;
+    // Only do heavy lifting if user actually changed
+    if (!currentUser || currentUser.id !== user.id) {
+      currentUser = user;
 
-			await syncCharacters();
-			const characters = await populateCharacterSelector();
+      await syncCharacters();
+      const characters = await populateCharacterSelector();
 
-			if (characters && Object.keys(characters).length > 0) {
-				const firstCharacterId = Object.keys(characters)[0];
-				await setActiveCharacter(firstCharacterId);
-			}
-		} else {
-			// session refresh: just update the reference
-			currentUser = user;
-		}
-	} else {
-		console.log("No active user");
+      if (characters && Object.keys(characters).length > 0) {
+        const firstCharacterId = Object.keys(characters)[0];
+        await setActiveCharacter(firstCharacterId);
+      }
+    } else {
+      // session refresh: just update the reference
+      currentUser = user;
+      // Only sync if we haven't synced recently (within last minute)
+      const lastSync = localStorage.getItem('lastSyncTime');
+      const currentTime = Date.now();
+      if (!lastSync || (currentTime - parseInt(lastSync)) > 60000) {
+        setTimeout(syncCharacters, 30000);
+        localStorage.setItem('lastSyncTime', currentTime.toString());
+      }
+    }
+  } else {
+    console.log("No active user");
 
-		if (currentUser !== null) {
-			loginBtn.style.display = "inline-block";
-			logoutBtn.style.display = "none";
-			userEmail.textContent = "";
+    if (currentUser !== null) {
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      userEmail.textContent = "";
 
-			currentUser = null;
+      currentUser = null;
 
-			const characters = await populateCharacterSelector();
-			if (characters && Object.keys(characters).length > 0) {
-				const firstCharacterId = Object.keys(characters)[0];
-				await setActiveCharacter(firstCharacterId);
-			}
-		}
-	}
-	initializeLocalCharacters();
+      const characters = await populateCharacterSelector();
+      
+      // Try to keep the same character active if it exists in local storage
+      if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
+        await setActiveCharacter(currentActiveCharacterId);
+      } else if (Object.keys(characters).length > 0) {
+        // Fallback to the first character if the current one doesn't exist
+        const firstCharacterId = Object.keys(characters)[0];
+        await setActiveCharacter(firstCharacterId);
+      }
+    }
+  }
+  initializeLocalCharacters();
 }
 
 async function saveCharacterToDB(characterId, characterData) {
-	const user = getCurrentUser();
-	if (!user) return;
+    const user = getCurrentUser();
+    if (!user) return;
 
-	try {
-		const { error } = await supabase
-			.from("characters")
-			.upsert({
-				id: characterId,
-				user_id: user.id,
-				name: characterData.name,
-				data: characterData,
-			}, {
-				onConflict: 'id'
-			});
+    try {
+        // Check if this is a local ID (starts with "char_")
+        if (characterId.startsWith('char_')) {
+            // For local IDs, we need to find if this character already exists in DB
+            const remoteCharacters = await fetchCharactersFromDB(user.id);
+            const characterHash = hashCharacterData(characterData);
+            
+            let foundInDB = false;
+            for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
+                if (hashCharacterData(dbChar) === characterHash) {
+                    // Character exists in DB, update it
+                    const { error } = await supabase
+                        .from("characters")
+                        .update({
+                            user_id: user.id,
+                            name: characterData.name,
+                            data: characterData,
+                        })
+                        .eq("id", dbId);
 
-		if (error) throw error;
-		console.log("Character saved to DB:", characterId);
-	} catch (error) {
-		console.error("Error saving character to DB:", error);
-	}
+                    if (error) throw error;
+                    foundInDB = true;
+                    
+                    // Update local storage to use the DB ID
+                    const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+                    characters[dbId] = characterData;
+                    delete characters[characterId];
+                    localStorage.setItem("characters", JSON.stringify(characters));
+                    
+                    // Update active character ID if needed
+                    if (currentActiveCharacterId === characterId) {
+                        currentActiveCharacterId = dbId;
+                    }
+                    break;
+                }
+            }
+            
+            if (!foundInDB) {
+                // Character doesn't exist in DB, create it with a UUID
+                const { data, error } = await supabase
+                    .from("characters")
+                    .insert({
+                        user_id: user.id,
+                        name: characterData.name,
+                        data: characterData,
+                    })
+                    .select("id")
+                    .single();
+
+                if (error) throw error;
+                
+                // Update local storage to use the new ID
+                const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+                characters[data.id] = characterData;
+                delete characters[characterId];
+                localStorage.setItem("characters", JSON.stringify(characters));
+                
+                // Update active character ID if needed
+                if (currentActiveCharacterId === characterId) {
+                    currentActiveCharacterId = data.id;
+                }
+            }
+        } else {
+            // Character ID is already a UUID, just upsert
+            const { error } = await supabase
+                .from("characters")
+                .upsert({
+                    id: characterId,
+                    user_id: user.id,
+                    name: characterData.name,
+                    data: characterData,
+                }, {
+                    onConflict: 'id'
+                });
+
+            if (error) throw error;
+        }
+    } catch (error) {
+        console.error("Error saving character to DB:", error);
+    }
 }
 
 async function fetchCharactersFromDB(userId) {
@@ -292,21 +414,6 @@ async function fetchCharactersFromDB(userId) {
 	}
 }
 
-
-// // Modify loadAllCharacters to use localStorage primarily
-// async function loadAllCharacters() {
-//   console.log("Loading all characters from localStorage...");
-//   const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-  
-//   // If user is logged in, sync in the background
-//   if (currentUser) {
-//     setTimeout(syncCharacters, 1000); // Sync after 1 second
-//   }
-  
-//   return characters;
-// }
-
-
 // Unified function to load characters
 async function loadAllCharacters() {
 	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
@@ -314,11 +421,8 @@ async function loadAllCharacters() {
 	const user = getCurrentUser();
 	console.log("User:", user);
 	
-	if (user) {
-		return await fetchCharactersFromDB(user.id);
-	} else {
-		return characters
-	}
+	return characters
+	
 }
 
 function initializeLocalCharacters() {
@@ -370,51 +474,54 @@ function createLocalDefaultCharacter() {
 }
 
 async function setActiveCharacter(characterId) {
-	if (characterId === currentActiveCharacterId) {
-		console.log("Character already active, skipping reload:", characterId);
-		return;
-	}
-	currentActiveCharacterId = characterId;
+    if (characterId === currentActiveCharacterId) {
+        console.log("Character already active, skipping reload:", characterId);
+        return;
+    }
+    
+    const user = getCurrentUser();
+    let characters = JSON.parse(localStorage.getItem('characters') || '{}');
+    let selectedCharacter = characters[characterId];
+    
+    // If character not found in local storage and user is logged in, check DB
+    if (!selectedCharacter && user) {
+        try {
+            const remoteCharacters = await fetchCharactersFromDB(user.id);
+            selectedCharacter = remoteCharacters[characterId];
+            
+            if (selectedCharacter) {
+                // Add this character to local storage
+                characters[characterId] = selectedCharacter;
+                localStorage.setItem('characters', JSON.stringify(characters));
+            }
+        } catch (error) {
+            console.error("Error fetching character from DB:", error);
+        }
+    }
+    
+    if (!selectedCharacter) {
+        console.error("Character ID not found:", characterId);
+        return;
+    }
+    
+    currentActiveCharacterId = characterId;
 
-	let characters;
-	const user = getCurrentUser();
-	
-	if (user) {
-		characters = await fetchCharactersFromDB(user.id);
-	} else {
-		characters = JSON.parse(localStorage.getItem('characters') || '{}');
-	}
-	
-	const selectedCharacter = characters[characterId];
-	if (!selectedCharacter) {
-		console.error("Character ID not found:", characterId);
-		return;
-	}
+    // Reset current HP/EP inputs
+    const currentHpInput = document.getElementById("currentHp");
+    const currentEpInput = document.getElementById("currentEp");
+    if (currentHpInput) currentHpInput.value = "";
+    if (currentEpInput) currentEpInput.value = "";
 
-	// Reset current HP/EP inputs
-	const currentHpInput = document.getElementById("currentHp");
-	const currentEpInput = document.getElementById("currentEp");
-	if (currentHpInput) currentHpInput.value = "";
-	if (currentEpInput) currentEpInput.value = "";
+    activeCharacter = migrateCharacterData(selectedCharacter);
+    syncOldCharacterData();
+    populateCharacterData(activeCharacter);
 
-	activeCharacter = migrateCharacterData(selectedCharacter);
-	syncOldCharacterData();
-	populateCharacterData(activeCharacter);
+    console.log("Active character set:", activeCharacter);
 
-	console.log("Active character set:", activeCharacter);
-
-	// Update summary section
-	renderSummary();
-
-	if (user) {
-		const localCharacters = JSON.parse(localStorage.getItem('characters') || '{}');
-		if (localCharacters[characterId]) {
-			delete localCharacters[characterId];
-			localStorage.setItem('characters', JSON.stringify(localCharacters));
-		}
-	}
-	updateImageDisplay();
-	calculateAvailableJobs();
+    // Update summary section
+    renderSummary();
+    updateImageDisplay();
+    calculateAvailableJobs();
 }
 
 // Delete character from Supabase
@@ -427,123 +534,6 @@ const { error } = await supabase
 );
 
 if (error) console.error("Error deleting:", error);
-}
-
-// Migrate local characters once after login with enhanced logic
-async function migrateLocalToSupabase(userId) {
-	const localData = JSON.parse(localStorage.getItem("characters") || "{}");
-	if (!localData || Object.keys(localData).length === 0) return;
-
-	// Fetch existing characters from DB first
-	const { data: existingChars, error } = await supabase
-		.from("characters")
-		.select("id, name, data")
-		.eq("user_id", userId);
-
-	if (error) {
-		console.error("Error fetching existing characters:", error);
-		return;
-	}
-
-	// Create a map of existing characters by data hash for quick lookup
-	const existingCharsByDataHash = {};
-	existingChars.forEach(char => {
-		const dataHash = hashCharacterData(char.data);
-		existingCharsByDataHash[dataHash] = char;
-	});
-
-	const uploadPromises = [];
-	const charactersToKeepInLocal = {};
-
-	for (const [localId, localChar] of Object.entries(localData)) {
-		const localDataHash = hashCharacterData(localChar);
-		
-		// Check if character with same data exists in DB (regardless of name)
-		const existingCharWithSameData = existingCharsByDataHash[localDataHash];
-		
-		if (existingCharWithSameData) {
-			// Same data - don't upload, keep digital only
-			console.log(`Skipping character "${localChar.name}" (same data as "${existingCharWithSameData.name}")`);
-			
-			// If names are different, update the local character to match the DB name
-			if (localChar.name !== existingCharWithSameData.name) {
-				localChar.name = existingCharWithSameData.name;
-				charactersToKeepInLocal[localId] = localChar;
-			}
-			continue;
-		}
-		
-		// Check if character with same name exists in DB but different data
-		const existingCharWithSameName = existingChars.find(char => char.name === localChar.name);
-		
-		if (existingCharWithSameName) {
-			const existingDataHash = hashCharacterData(existingCharWithSameName.data);
-			
-			if (existingDataHash !== localDataHash) {
-				// Same name but different data - rename and upload
-				console.log(`Renaming character "${localChar.name}" due to data conflict`);
-				const unsyncedName = `${localChar.name} (unsynced)`;
-				localChar.name = unsyncedName;
-				
-				// Update local storage with new name
-				charactersToKeepInLocal[localId] = localChar;
-			}
-		}
-
-		// Upload character (either as-is or renamed)
-		uploadPromises.push(
-			supabase.from("characters").insert({
-				user_id: userId,
-				name: localChar.name,
-				data: localChar,
-			}).select() // Add select to get the inserted ID
-		);
-	}
-
-	// Wait for all uploads to complete
-	const results = await Promise.allSettled(uploadPromises);
-	
-	// Check if any uploads failed
-	const hasErrors = results.some(result => result.status === 'rejected');
-	
-	if (hasErrors) {
-		console.error("Some characters failed to migrate. Keeping local copies.");
-		// Update local storage with any renamed characters
-		if (Object.keys(charactersToKeepInLocal).length > 0) {
-			const updatedLocalData = {...localData, ...charactersToKeepInLocal};
-			localStorage.setItem("characters", JSON.stringify(updatedLocalData));
-		}
-	} else {
-		// Only remove localStorage if all uploads succeeded
-		localStorage.removeItem("characters");
-		console.log("All characters migrated successfully");
-	}
-}
-
-// Helper function to create a hash of character data for comparison
-function hashCharacterData(characterData) {
-	// Create a simplified version of the character data for hashing
-	const simplifiedData = {
-		name: characterData.name,
-		stats: characterData.stats,
-		secondaryStats: characterData.secondaryStats,
-		jobs: characterData.jobs,
-		skills: characterData.skills,
-		modules: characterData.modules,
-		perks: characterData.perks,
-		sp: characterData.sp,
-		ce: characterData.ce
-	};
-	
-	// Stringify and hash the data
-	const str = JSON.stringify(simplifiedData);
-	let hash = 0;
-	for (let i = 0; i < str.length; i++) {
-		const char = str.charCodeAt(i);
-		hash = ((hash << 5) - hash) + char;
-		hash = hash & hash; // Convert to 32-bit integer
-	}
-	return hash;
 }
 
 // Navigation
@@ -569,102 +559,147 @@ document.getElementById("exportCharacter").addEventListener("click", () => {
 });
 
 // Import Character from JSON
-document.getElementById("importCharacter").addEventListener("change", async function(event) {
-	const file = event.target.files[0];
-	if (!file) return;
-
-	const reader = new FileReader();
-	reader.onload = async function(e) {
-		try {
-			const characterData = JSON.parse(e.target.result);
-			const migratedCharacter = typeof migrateCharacterData === "function"
-				? migrateCharacterData(characterData)
-				: characterData;
-
-			const newCharacterId = `char_${Date.now()}`;
-			const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-			characters[newCharacterId] = migratedCharacter;
-			localStorage.setItem('characters', JSON.stringify(characters));
-
-			const characterSelector = document.getElementById("characterSelector");
-			const newOption = new Option(migratedCharacter.name, newCharacterId);
-			characterSelector.add(newOption);
-			characterSelector.value = newCharacterId;
-
-			setActiveCharacter(newCharacterId);
-			event.target.value = '';
-
-			// Sync to backend if online
-			if (navigator.onLine) {
-				await saveCharacterToDB(newCharacterId, migratedCharacter);
-			}
-		} catch (err) {
-			alert("Error importing character: Invalid or corrupted file format");
-			console.error(err);
-		}
-	};
-	reader.readAsText(file);
-});
-
 document.getElementById("newCharacter").addEventListener("click", async () => {
-	const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-	const newCharacterId = `char_${Date.now()}`; // Unique ID
-	const newCharacter = createLocalDefaultCharacter();
-	newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
+    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+    const newCharacterId = `char_${Date.now()}`;
+    const newCharacter = createLocalDefaultCharacter();
+    newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
 
-	characters[newCharacterId] = newCharacter;
-	localStorage.setItem('characters', JSON.stringify(characters));
+    // Create character in local storage first
+    characters[newCharacterId] = newCharacter;
+    localStorage.setItem('characters', JSON.stringify(characters));
 
-	// Update selector
-	const characterSelector = document.getElementById("characterSelector");
-	const newOption = document.createElement("option");
-	newOption.value = newCharacterId;
-	newOption.textContent = newCharacter.name;
-	characterSelector.appendChild(newOption);
+    // Update selector
+    const characterSelector = document.getElementById("characterSelector");
+    const newOption = document.createElement("option");
+    newOption.value = newCharacterId;
+    newOption.textContent = newCharacter.name;
+    characterSelector.appendChild(newOption);
+    characterSelector.value = newCharacterId;
 
-	characterSelector.value = newCharacterId;
-	await setActiveCharacter(newCharacterId);
-	updateImageDisplay();
+    await setActiveCharacter(newCharacterId);
+    updateImageDisplay();
 
-	// Save online if user logged in
-	const user = getCurrentUser();
-	if (user) {
-		await saveCharacterToDB(newCharacterId, newCharacter);
-		// remove local copy if DB save succeeded
-		delete characters[newCharacterId];
-		localStorage.setItem('characters', JSON.stringify(characters));
-	}
+    // Trigger sync to upload to Supabase if user is logged in
+    const user = getCurrentUser();
+    if (user) {
+        // Store the current character data for later matching
+        const characterData = newCharacter;
+        
+        // Sync and then find the UUID for this character
+        setTimeout(async () => {
+            await syncCharacters();
+            
+            // Find the UUID for this character in the database
+            try {
+                const remoteCharacters = await fetchCharactersFromDB(user.id);
+                const characterHash = hashCharacterData(characterData);
+                
+                for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
+                    if (hashCharacterData(dbChar) === characterHash) {
+                        // Found the matching character with UUID, set it as active
+                        currentActiveCharacterId = dbId;
+                        characterSelector.value = dbId;
+                        break;
+                    }
+                }
+            } catch (error) {
+                console.error("Error finding UUID for new character:", error);
+            }
+        }, 1000);
+    }
 });
 
+// Update the Import Character handler
+document.getElementById("importCharacter").addEventListener("change", async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const characterData = JSON.parse(e.target.result);
+            const migratedCharacter = typeof migrateCharacterData === "function"
+                ? migrateCharacterData(characterData)
+                : characterData;
+
+            const newCharacterId = `char_${Date.now()}`;
+            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+            characters[newCharacterId] = migratedCharacter;
+            localStorage.setItem('characters', JSON.stringify(characters));
+
+            const characterSelector = document.getElementById("characterSelector");
+            const newOption = new Option(migratedCharacter.name, newCharacterId);
+            characterSelector.add(newOption);
+            characterSelector.value = newCharacterId;
+
+            await setActiveCharacter(newCharacterId);
+            event.target.value = '';
+
+            // Trigger sync to upload to Supabase if user is logged in
+            const user = getCurrentUser();
+            if (user) {
+                // Store the character data for later matching
+                const importedCharacterData = migratedCharacter;
+                
+                setTimeout(async () => {
+                    await syncCharacters();
+                    
+                    // Find the UUID for this character in the database
+                    try {
+                        const remoteCharacters = await fetchCharactersFromDB(user.id);
+                        const characterHash = hashCharacterData(importedCharacterData);
+                        
+                        for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
+                            if (hashCharacterData(dbChar) === characterHash) {
+                                // Found the matching character with UUID, set it as active
+                                currentActiveCharacterId = dbId;
+                                characterSelector.value = dbId;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error finding UUID for imported character:", error);
+                    }
+                }, 1000);
+            }
+        } catch (err) {
+            alert("Error importing character: Invalid or corrupted file format");
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Delete Character button handler
 document.getElementById("deleteCharacter").addEventListener("click", async () => {
-	const characterSelector = document.getElementById("characterSelector");
-	const characterId = currentActiveCharacterId;
-	let characters = JSON.parse(localStorage.getItem('characters') || '{}');
+    const characterSelector = document.getElementById("characterSelector");
+    const characterId = currentActiveCharacterId;
+    let characters = JSON.parse(localStorage.getItem('characters') || '{}');
 
-	console.log("Current character id",characterId);
-	// if (!characters[characterId]) {
-	// 	alert("No character selected or character doesn't exist.");
-	// 	return;
-	// }
+    if (!characters[characterId]) {
+        alert("No character selected or character doesn't exist.");
+        return;
+    }
 
-	if (!confirm(`Are you sure you want to delete ${characters[characterId].name}?`)) return;
+    if (!confirm(`Are you sure you want to delete ${characters[characterId].name}?`)) return;
 
-	// Remove from local storage
-	delete characters[characterId];
-	localStorage.setItem('characters', JSON.stringify(characters));
+    // Remove from local storage
+    delete characters[characterId];
+    localStorage.setItem('characters', JSON.stringify(characters));
 
-	// Remove from selector
-	characterSelector.querySelector(`option[value="${characterId}"]`)?.remove();
+    // Remove from selector
+    characterSelector.querySelector(`option[value="${characterId}"]`)?.remove();
 
-	// Select a new character or create default
-	if (Object.keys(characters).length === 0) {
-		document.getElementById("newCharacter").click();
-	} else {
-		const firstCharacterId = Object.keys(characters)[0];
-		characterSelector.value = firstCharacterId;
-		setActiveCharacter(firstCharacterId);
-	}
-	updateImageDisplay();
+    // Select a new character or create default
+    if (Object.keys(characters).length === 0) {
+        document.getElementById("newCharacter").click();
+    } else {
+        const firstCharacterId = Object.keys(characters)[0];
+        characterSelector.value = firstCharacterId;
+        await setActiveCharacter(firstCharacterId);
+    }
+    updateImageDisplay();
 
 	// Only delete from DB if online
 	if (navigator.onLine) {
@@ -674,37 +709,37 @@ document.getElementById("deleteCharacter").addEventListener("click", async () =>
 });
 
 async function saveCharacterData() {
-	console.log("Saving character data...");
-	const characterSelector = document.getElementById("characterSelector");
-	const selectedCharacterId = characterSelector.value;
-	console.log("Selected character ID:", selectedCharacterId);
-	if (!selectedCharacterId) return;
+    console.log("Saving character data...");
+    const characterSelector = document.getElementById("characterSelector");
+    const selectedCharacterId = characterSelector.value;
+    console.log("Selected character ID:", selectedCharacterId);
+    if (!selectedCharacterId) return;
 
-	console.log("Gathering data...");
-	const updatedCharacter = addTimestamps(gatherCharacterData());
-	console.log("Data gathered.", updatedCharacter);
-	
-	activeCharacter = updatedCharacter;
+    console.log("Gathering data...");
+    const updatedCharacter = addTimestamps(gatherCharacterData());
+    console.log("Data gathered.", updatedCharacter);
+    
+    activeCharacter = updatedCharacter;
 
-	const user = getCurrentUser();
+    const user = getCurrentUser();
 
-  const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-  characters[selectedCharacterId] = activeCharacter;
-  localStorage.setItem("characters", JSON.stringify(characters));
-  
-  // Sync to Supabase in the background if user is logged in
-  if (currentUser) {
-    setTimeout(async () => {
-      try {
-        await saveCharacterToDB(selectedCharacterId, activeCharacter);
-        console.log("Character saved to DB in background:", selectedCharacterId);
-      } catch (error) {
-        console.error("Background save error:", error);
-      }
-    }, 0);
-  }
-  
-  console.log("Character saved locally:", selectedCharacterId);
+    const characters = JSON.parse(localStorage.getItem("characters") || "{}");
+    characters[selectedCharacterId] = activeCharacter;
+    localStorage.setItem("characters", JSON.stringify(characters));
+    
+    // Sync to Supabase in the background if user is logged in
+    if (currentUser) {
+        setTimeout(async () => {
+            try {
+                await saveCharacterToDB(selectedCharacterId, activeCharacter);
+                console.log("Character saved to DB in background:", selectedCharacterId);
+            } catch (error) {
+                console.error("Background save error:", error);
+            }
+        }, 0);
+    }
+    
+    console.log("Character saved locally:", selectedCharacterId);
 }
 
 // Utility function for calculating secondary stats
@@ -918,23 +953,38 @@ function populateCharacterData(data) {
 }
 
 async function populateCharacterSelector() {
-	const characterSelector = document.getElementById("characterSelector");
-	characterSelector.innerHTML = "";
-	console.log("Loading characters to selector...");
-
-	const characters = await loadAllCharacters();
-
-	console.log("Characters loaded to selector...");
-	Object.entries(characters).forEach(([id, char]) => {
-		const option = document.createElement("option");
-		option.value = id;
-		option.textContent = char.name || "Unnamed Character";
-		characterSelector.appendChild(option);
-	});
-
-	return characters;
+    const characterSelector = document.getElementById("characterSelector");
+    const currentSelection = characterSelector.value; // Store current selection
+    
+    console.log("Loading characters to selector...");
+    const characters = await loadAllCharacters();
+    
+    // Clear and repopulate
+    characterSelector.innerHTML = "";
+    
+    console.log("Characters loaded to selector...");
+    Object.entries(characters).forEach(([id, char]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = char.name || "Unnamed Character";
+        characterSelector.appendChild(option);
+    });
+    
+    // Try to restore the previous selection if it still exists
+    if (currentSelection && characters[currentSelection]) {
+        characterSelector.value = currentSelection;
+    } 
+    // If the previous selection doesn't exist but we have an active character, try to select it
+    else if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
+        characterSelector.value = currentActiveCharacterId;
+    }
+    // Fallback: select the first character if nothing else works
+    else if (Object.keys(characters).length > 0) {
+        characterSelector.value = Object.keys(characters)[0];
+    }
+    
+    return characters;
 }
-
 
 function updateStatUpgrades() {
 	const newBonuses = {};
@@ -1017,7 +1067,7 @@ function migrateCharacterData(character) {
 					const libraryModule = moduleLibrary.find(libModule => 
 						libModule.name === charModule.name
 					);
-					console.log("Migrating character module", libraryModule, charModule);
+					// console.log("Migrating character module", libraryModule, charModule);
 					if (libraryModule) {
 						return {
 							...libraryModule, 
@@ -1161,7 +1211,6 @@ async function initApp() {
 
 		const characters = await populateCharacterSelector();
 
-		// --- 3. Set first character as active ---
 		const firstCharacterId = Object.keys(characters)[0];
 		if (firstCharacterId) {
 			await setActiveCharacter(firstCharacterId);
