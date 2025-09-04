@@ -115,18 +115,19 @@ async function syncCharacters() {
             mergedCharacters[localId] = sameNameChar.data;
           }
         } else {
-          // Completely new character → upload
-          console.log(`Uploading new character`, localChar);
-          localChar.updatedAt = Date.now();
-          const { data, error } = await supabase
-            .from("characters")
-            .insert({
-              user_id: userId,
-              name: localChar.name,
-              data: localChar,
-            })
-            .select("id, data")
-            .single();
+        // Completely new character → upload
+          	console.log(`Uploading new character`, localChar);
+          	localChar.updatedAt = Date.now();
+			const { data, error } = await supabase
+			.from("characters")
+			.insert({
+				user_id: userId,
+				name: localChar.name,
+				data: localChar,
+				discord_id: currentUser?.user_metadata?.provider_id || null 
+			})
+			.select("id, data")
+			.single();
 
           if (error) {
             console.error("Failed to upload character:", error);
@@ -219,7 +220,8 @@ async function loginWithDiscord() {
 const { data, error } = await supabase.auth.signInWithOAuth({
 	provider: "discord",
 	options: {
-	redirectTo: "https://potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+	// redirectTo: "http://127.0.0.1:3000/index.html"
+	redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 	}
 });
 
@@ -253,6 +255,7 @@ async function handleAuthChange(session) {
 
   if (user) {
     console.log("User logged in:", user);
+	console.log("Logged in Discord user ID:", user.user_metadata.provider_id);
 
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
@@ -348,15 +351,16 @@ async function saveCharacterToDB(characterId, characterData) {
             
             if (!foundInDB) {
                 // Character doesn't exist in DB, create it with a UUID
-                const { data, error } = await supabase
-                    .from("characters")
-                    .insert({
-                        user_id: user.id,
-                        name: characterData.name,
-                        data: characterData,
-                    })
-                    .select("id")
-                    .single();
+				const { data, error } = await supabase
+				.from("characters")
+				.insert({
+					user_id: user.id,
+					name: characterData.name,
+					data: characterData,
+					discord_id: user.user_metadata?.provider_id || null
+				})
+				.select("id")
+				.single();
 
                 if (error) throw error;
                 
