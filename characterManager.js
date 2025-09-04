@@ -3013,6 +3013,9 @@ function createSkillForm(skill = {}, index) {
 		const modules = Array.from(moduleSlots.children).map((slot, i) => {
 			const moduleName = slot.dataset.module;
 			if (!moduleName) return null;
+			const moduleObj = (index > -1) ? activeCharacter.skills[index].modules[i] : currentSkill.modules[i];
+
+
 
 			// Find the module definition from the library
 			const moduleDef = moduleLibrary.find(m => m.name === moduleName) || 
@@ -3021,12 +3024,17 @@ function createSkillForm(skill = {}, index) {
 			// Get the restriction icon if it exists
 			const restrictionIcon = slot.querySelector('.restriction-icon');
 			const hasRestriction = restrictionIcon && restrictionIcon.style.opacity !== "0";
-			
+						
+			// return {
+			// 	name: moduleName,
+			// 	emote: moduleObj?.emote || slot.textContent || "❓",
+			// 	category: slot.dataset.category || null,
 			return {
 				name: moduleName,
 				emote: moduleDef?.emote || "❓", // Use the correct emote from library
 				category: moduleDef?.category || null,
-				restriction: hasRestriction ? moduleDef?.restriction || null : null
+				// restriction: hasRestriction ? moduleDef?.restriction || null : null
+				restriction: moduleObj?.restriction || null,
 			};
 		}).filter(Boolean);
 
