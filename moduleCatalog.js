@@ -853,7 +853,9 @@ const moduleCatalog = {
 				description: "Consigues una gimmick de 1 espacio. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Durante las escenas de laboratorio puedes cambiar la restricción o el módulo de tus gimmicks pagando 5 SP por cada cambio realizado. <br> Al utilizar una skill, si pagas el precio de la restricción o cumples con sus requisitos puedes activar una gimmick para aplicar sus módulos de efecto a uno de los rangos de la skill. Tras activar una gimmick de esta forma, no puedes volver a utilizarla hasta el inicio de tu siguiente turno." 
 				},
 				{ name: "Elementalist", type: "perk",
-				description: "Una vez por ronda, al utilizar una skill con un o más de un módulo de elemento [🔥, ❄️, 🌪️, ⚡ y 🧱], puedes cambiarlos libremente a otro elemento de la lista a tu elección." },
+				description: "Una vez por ronda, al utilizar una skill con un o más de un módulo de elemento [🔥, ❄️, 🌪️, ⚡ y 🧱], puedes cambiarlos libremente a otro elemento de la lista a tu elección." 
+				},
+
 			],
 			tier2: [
 				{ name: "Evocador Tier 3", 
@@ -863,6 +865,11 @@ const moduleCatalog = {
 				{name:"Gimmick Draw", type: "perk", 
 					description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."
 				},
+				{name:"Elemental Backslash [+2 ☐ ]",
+					description: "Tras usar esta skill, ganas vulnerabilidad a 1 tipo de daño elemental [🔥, ❄️, 🌪️, ⚡ y 🧱] (definido durante creación) hasta el final de tu siguiente turno.",
+					type: "restriction", slots: "+2"
+				},
+
 			],
 			tier3: [
 				{ name: "Evocador Tier 4", 
@@ -874,6 +881,14 @@ const moduleCatalog = {
 				},
 				{name:"Gimmick Set", type: "perk", 
 					description: "Puedes equipar un módulo de efecto adicional a tus gimmicks con restricciones de +2 ☐ o más espacios."
+				},
+				{name:"Tactician [+2 ☐ ]",
+					description: "Esta skill solo afecta a objetivos que esté actualmente bajo el efecto de uno o más módulos que estén en tu Self Core.",
+					type: "restriction", slots: "+2"
+				},
+				{name:"Elemental Imbalance [+3 ☐ ]",
+					description: "Esta skill debe tener al menos 1 módulo elemental [🔥, ❄️, 🌪️, ⚡ y 🧱]. Tras usar esta skill, ganas Vulnerabilidad a un elemento en base al módulo elemental de la skill: \n[🔥→❄️, ❄️→⚡, ⚡→🧱, 🧱→🌪️, 🌪️→🔥]. \nMantienes esta Vulnerabilidad hasta que vuelvas a usar una skill con esta restricción.",
+					type: "restriction", slots: "+3"
 				},
 			]
 		},
