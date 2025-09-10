@@ -217,22 +217,22 @@ function hashCharacterData(characterData) {
 
 // Login with Discord
 async function loginWithDiscord() {
-const { data, error } = await supabase.auth.signInWithOAuth({
-	provider: "discord",
-	options: {
-	// redirectTo: "http://127.0.0.1:3000/index.html"
-	redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+	const { data, error } = await supabase.auth.signInWithOAuth({
+		provider: "discord",
+		options: {
+			redirectTo: "http://127.0.0.1:3000/index.html"
+			// redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+		}
+	});
+
+	if (error) {
+		console.error("Login error:", error);
+		return;
 	}
-});
 
-if (error) {
-	console.error("Login error:", error);
-	return;
-}
-
-if (data?.url) {
-	window.location.href = data.url;
-}
+	if (data?.url) {
+		window.location.href = data.url;
+	}
 }
 
 async function logout() {
@@ -255,7 +255,7 @@ async function handleAuthChange(session) {
 
   if (user) {
     console.log("User logged in:", user);
-	console.log("Logged in Discord user ID:", user.user_metadata.provider_id);
+    console.log("Logged in Discord user ID:", user.user_metadata.provider_id);
 
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
@@ -265,6 +265,7 @@ async function handleAuthChange(session) {
     if (!currentUser || currentUser.id !== user.id) {
       currentUser = user;
 
+      // First sync characters, then populate selector
       await syncCharacters();
       const characters = await populateCharacterSelector();
 
@@ -273,14 +274,21 @@ async function handleAuthChange(session) {
         await setActiveCharacter(firstCharacterId);
       }
     } else {
-      // session refresh: just update the reference
+      // Session refresh - just update the reference
       currentUser = user;
+      
       // Only sync if we haven't synced recently (within last minute)
       const lastSync = localStorage.getItem('lastSyncTime');
       const currentTime = Date.now();
-      if (!lastSync || (currentTime - parseInt(lastSync)) > 60000) {
-        setTimeout(syncCharacters, 30000);
-        localStorage.setItem('lastSyncTime', currentTime.toString());
+      
+      // Only sync if visible and not just returning from long absence
+      if (document.visibilityState === 'visible' && 
+          (!lastSync || (currentTime - parseInt(lastSync)) > 60000)) {
+        // Use a small delay to avoid race conditions
+        setTimeout(() => {
+          syncCharacters();
+          localStorage.setItem('lastSyncTime', currentTime.toString());
+        }, 2000);
       }
     }
   } else {
@@ -307,7 +315,6 @@ async function handleAuthChange(session) {
   }
   initializeLocalCharacters();
 }
-
 async function saveCharacterToDB(characterId, characterData) {
     const user = getCurrentUser();
     if (!user) return;
@@ -519,6 +526,7 @@ async function setActiveCharacter(characterId) {
     activeCharacter = migrateCharacterData(selectedCharacter);
     syncOldCharacterData();
     populateCharacterData(activeCharacter);
+	console.log("character data populated by set active character")
 
     console.log("Active character set:", activeCharacter);
 
@@ -564,53 +572,64 @@ document.getElementById("exportCharacter").addEventListener("click", () => {
 
 // Import Character from JSON
 document.getElementById("newCharacter").addEventListener("click", async () => {
-    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-    const newCharacterId = `char_${Date.now()}`;
-    const newCharacter = createLocalDefaultCharacter();
-    newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
-
-    // Create character in local storage first
-    characters[newCharacterId] = newCharacter;
-    localStorage.setItem('characters', JSON.stringify(characters));
-
-    // Update selector
-    const characterSelector = document.getElementById("characterSelector");
-    const newOption = document.createElement("option");
-    newOption.value = newCharacterId;
-    newOption.textContent = newCharacter.name;
-    characterSelector.appendChild(newOption);
-    characterSelector.value = newCharacterId;
-
-    await setActiveCharacter(newCharacterId);
-    updateImageDisplay();
-
-    // Trigger sync to upload to Supabase if user is logged in
     const user = getCurrentUser();
+    const characterSelector = document.getElementById("characterSelector");
+    
     if (user) {
-        // Store the current character data for later matching
-        const characterData = newCharacter;
-        
-        // Sync and then find the UUID for this character
-        setTimeout(async () => {
-            await syncCharacters();
+        // User is logged in - create character directly in database
+        try {
+            const newCharacter = createLocalDefaultCharacter();
+            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+            newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
             
-            // Find the UUID for this character in the database
-            try {
-                const remoteCharacters = await fetchCharactersFromDB(user.id);
-                const characterHash = hashCharacterData(characterData);
-                
-                for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
-                    if (hashCharacterData(dbChar) === characterHash) {
-                        // Found the matching character with UUID, set it as active
-                        currentActiveCharacterId = dbId;
-                        characterSelector.value = dbId;
-                        break;
-                    }
-                }
-            } catch (error) {
-                console.error("Error finding UUID for new character:", error);
-            }
-        }, 1000);
+            // Create character in database
+            const { data, error } = await supabase
+                .from("characters")
+                .insert({
+                    user_id: user.id,
+                    name: newCharacter.name,
+                    data: newCharacter,
+                    discord_id: user.user_metadata?.provider_id || null
+                })
+                .select("id, data")
+                .single();
+
+            if (error) throw error;
+            
+            // Add to local storage with UUID from database
+            characters[data.id] = newCharacter;
+            localStorage.setItem('characters', JSON.stringify(characters));
+            
+            // Update selector and set as active
+            await populateCharacterSelector();
+            characterSelector.value = data.id;
+            await setActiveCharacter(data.id);
+            updateImageDisplay();
+            
+        } catch (error) {
+            console.error("Error creating character in database:", error);
+            alert("Failed to create character. Please check your connection.");
+        }
+    } else {
+        // User is not logged in - create character locally
+        const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+        const newCharacterId = `char_${Date.now()}`;
+        const newCharacter = createLocalDefaultCharacter();
+        newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
+
+        // Create character in local storage
+        characters[newCharacterId] = newCharacter;
+        localStorage.setItem('characters', JSON.stringify(characters));
+
+        // Update selector
+        const newOption = document.createElement("option");
+        newOption.value = newCharacterId;
+        newOption.textContent = newCharacter.name;
+        characterSelector.appendChild(newOption);
+        characterSelector.value = newCharacterId;
+
+        await setActiveCharacter(newCharacterId);
+        updateImageDisplay();
     }
 });
 
@@ -627,45 +646,55 @@ document.getElementById("importCharacter").addEventListener("change", async func
                 ? migrateCharacterData(characterData)
                 : characterData;
 
-            const newCharacterId = `char_${Date.now()}`;
-            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-            characters[newCharacterId] = migratedCharacter;
-            localStorage.setItem('characters', JSON.stringify(characters));
-
-            const characterSelector = document.getElementById("characterSelector");
-            const newOption = new Option(migratedCharacter.name, newCharacterId);
-            characterSelector.add(newOption);
-            characterSelector.value = newCharacterId;
-
-            await setActiveCharacter(newCharacterId);
-            event.target.value = '';
-
-            // Trigger sync to upload to Supabase if user is logged in
             const user = getCurrentUser();
+            const characterSelector = document.getElementById("characterSelector");
+            
             if (user) {
-                // Store the character data for later matching
-                const importedCharacterData = migratedCharacter;
-                
-                setTimeout(async () => {
-                    await syncCharacters();
+                // User is logged in - create character directly in database
+                try {
+                    const { data, error } = await supabase
+                        .from("characters")
+                        .insert({
+                            user_id: user.id,
+                            name: migratedCharacter.name,
+                            data: migratedCharacter,
+                            discord_id: user.user_metadata?.provider_id || null
+                        })
+                        .select("id, data")
+                        .single();
+
+                    if (error) throw error;
                     
-                    // Find the UUID for this character in the database
-                    try {
-                        const remoteCharacters = await fetchCharactersFromDB(user.id);
-                        const characterHash = hashCharacterData(importedCharacterData);
-                        
-                        for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
-                            if (hashCharacterData(dbChar) === characterHash) {
-                                // Found the matching character with UUID, set it as active
-                                currentActiveCharacterId = dbId;
-                                characterSelector.value = dbId;
-                                break;
-                            }
-                        }
-                    } catch (error) {
-                        console.error("Error finding UUID for imported character:", error);
-                    }
-                }, 1000);
+                    // Add to local storage with UUID from database
+                    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+                    characters[data.id] = migratedCharacter;
+                    localStorage.setItem('characters', JSON.stringify(characters));
+                    
+                    // Update selector and set as active
+                    await populateCharacterSelector();
+                    characterSelector.value = data.id;
+                    await setActiveCharacter(data.id);
+                    event.target.value = '';
+                    updateImageDisplay();
+                    
+                } catch (error) {
+                    console.error("Error importing character to database:", error);
+                    alert("Failed to import character. Please check your connection.");
+                }
+            } else {
+                // User is not logged in - create character locally
+                const newCharacterId = `char_${Date.now()}`;
+                const characters = JSON.parse(localStorage.getItem('characters') || '{}');
+                characters[newCharacterId] = migratedCharacter;
+                localStorage.setItem('characters', JSON.stringify(characters));
+
+                const newOption = new Option(migratedCharacter.name, newCharacterId);
+                characterSelector.add(newOption);
+                characterSelector.value = newCharacterId;
+
+                await setActiveCharacter(newCharacterId);
+                event.target.value = '';
+                updateImageDisplay();
             }
         } catch (err) {
             alert("Error importing character: Invalid or corrupted file format");
@@ -692,8 +721,14 @@ document.getElementById("deleteCharacter").addEventListener("click", async () =>
     delete characters[characterId];
     localStorage.setItem('characters', JSON.stringify(characters));
 
-    // Remove from selector
-    characterSelector.querySelector(`option[value="${characterId}"]`)?.remove();
+    // Remove from database if user is logged in and online
+    const user = getCurrentUser();
+    if (user && navigator.onLine) {
+        await deleteCharacterFromDB(characterId);
+    }
+
+    // Update selector
+    await populateCharacterSelector();
 
     // Select a new character or create default
     if (Object.keys(characters).length === 0) {
@@ -704,12 +739,6 @@ document.getElementById("deleteCharacter").addEventListener("click", async () =>
         await setActiveCharacter(firstCharacterId);
     }
     updateImageDisplay();
-
-	// Only delete from DB if online
-	if (navigator.onLine) {
-		const user = getCurrentUser();
-		if (user) await deleteCharacterFromDB(characterId);
-	}
 });
 
 async function saveCharacterData() {
@@ -967,11 +996,22 @@ async function populateCharacterSelector() {
     characterSelector.innerHTML = "";
     
     console.log("Characters loaded to selector...");
+    
+    // Use a Set to track unique character names to prevent duplicates
+    const uniqueNames = new Set();
+    
     Object.entries(characters).forEach(([id, char]) => {
-        const option = document.createElement("option");
-        option.value = id;
-        option.textContent = char.name || "Unnamed Character";
-        characterSelector.appendChild(option);
+        // Ensure we don't add duplicates
+        if (!uniqueNames.has(char.name)) {
+            uniqueNames.add(char.name);
+            
+            const option = document.createElement("option");
+            option.value = id;
+            option.textContent = char.name || "Unnamed Character";
+            characterSelector.appendChild(option);
+        } else {
+            console.warn(`Duplicate character name skipped: ${char.name}`);
+        }
     });
     
     // Try to restore the previous selection if it still exists
@@ -989,7 +1029,6 @@ async function populateCharacterSelector() {
     
     return characters;
 }
-
 function updateStatUpgrades() {
 	const newBonuses = {};
 
@@ -1233,6 +1272,7 @@ async function initApp() {
 					element.addEventListener(eventType, () => {
 						saveCharacterData();
 						populateCharacterData(activeCharacter);
+						console.log("character data populated by initAPP")
 						if (callback) callback();
 					});
 				} else {
@@ -1669,6 +1709,7 @@ function learnModule(coreName, tier, moduleName, restriction) {
 	updateStatUpgrades();
 	saveCharacterData();
 	populateCharacterData(activeCharacter);
+	
 }
 	
 function loadLearnedModules() {
