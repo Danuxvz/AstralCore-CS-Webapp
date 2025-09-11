@@ -76,46 +76,36 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +1", 
-					description: "Permanent +1 to Max HP"
+					name: "HP +4", 
 				},
 				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
+					name: "DM +1", 
 				},
 				{ 
-							name: "EP +1", 
-							description: "Permanent +1 to Max Energy Points"
-						},
-						{
-							name: "HP +2", 
-							description: "Permanent +2 to Max HP"
-						},
-						{ 
-							name: "EP +1", 
-							description: "Permanent +1 to Max Energy Points"
+					name: "Oficio +1", 
+				},
+				{
+					name: "EP +2", 
+				},
+				{ 
+					name: "DM +1", 
 				}
 			],
 			tier2: [
 				{ 
 					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
 				},
 				{ 
 					name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
 				},
 				{ 
-							name: "DM +1", 
-							description: "Permanent +1 to Magic Defense"
-						},
-						{
-							name: "HP +5", 
-							description: "Permanent +5 to Max HP"
-						},
-						{ 
-							name: "EP +2", 
-							description: "Permanent +2 to Max Energy Points"
+					name: "DM +1", 
+				},
+				{
+					name: "HP +5", 
+				},
+				{ 
+					name: "EP +2", 
 				}
 			],
 			tier3: [
@@ -167,7 +157,6 @@ const moduleCatalog = {
 						},
 						{ 
 							name: "Job +1", 
-							description: "Permanent +1 to the amount of jobs you can learn"
 				}
 			],
 			tier2: [
@@ -189,7 +178,6 @@ const moduleCatalog = {
 						},
 						{ 
 							name: "Oficio +1", 
-							description: "Permanent +1 to the amount of jobs you can have"
 				}
 			],
 			tier3: [
@@ -729,7 +717,6 @@ const moduleCatalog = {
 						},
 						{ 
 							name: "Oficio +1", 
-							description: "Permanent +1 to the amount of jobs you can have"
 				}
 			],
 			tier3: [
@@ -768,27 +755,27 @@ const moduleCatalog = {
 				{ name: "On Call Workforce", 
 				 description: "Si tienes una o más invocaciones en escena, puedes usar una acción para activar este perk y retirar prematuramente una de ellas. Mientras esté guardada de esta forma, la invocación ignora los límites de tiempo y deja de recibir daño. En cualquier momento, puedes gastar una acción para traerla de vuelta sin necesidad de pagar nuevamente sus requerimientos.", 
 				 type: "perk", 
-				},				
+				},			
+				{ name: "Team Lead", 
+				 description: "Al utilizar módulos de Rango de objetivo, siempre puedes seleccionar a tus invocaciones activas como uno de tus objetivos de la skill, aun si no cumplen los requerimientos para ser seleccionados.", 
+				 type: "perk" 
+				},
 				{ name: "Contractual Obligations [+1 ☐ ]", 
 				 description: "Si no puedes pagar uno de los costes o cumplir uno de los requerimientos de modulos en esta skill, entonces no puedes usar esta skill en absoluto.", 
 				 type: "restriction", slots: "+1"
 				},				
-				{ name: "Maestria 1", 
-				 description: "Ganas maestría en un módulo Tier 1.", 
-				 type: "perk" 
-				},
 			],
 			tier2: [
 				{ name: "Invocador Tier 3", 
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Invocador.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Team Synergy", 
+				 description: "Una vez por turno, mientras tengas a una invocación a rango de toque, puedes utilizar una acción para que la invocación tome un turno adicional inmediatamente.", 
 				 type: "perk" 
 				},
-				{ name: "Placeholder", 
-				 description: ".", 
+				{ name: "Cut your losses", 
+				 description: "Cuando un ataque contra ti acierta, puedes cambiar el objetivo a una de tus invocaciones a 1 casilla de ti. Una vez activas este perk, no puedes volver a activarlo hasta el inicio de tu siguiente turno.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
@@ -803,6 +790,10 @@ const moduleCatalog = {
 			tier3: [
 				{ name: "Invocador Tier 4", 
 				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks de Invocador.", 
+				 type: "perk" 
+				},
+				{ name: "Avatar", 
+				 description: `Al utilizar el módulo de 🧚, puedes cambiar su duración de "pasiva" a "escena", para invocar al familiar en forma de un Avatar.<br>El Avatar comparte turno contigo, siempre se mantiene a 1 casilla de ti y es inmune a los efectos de área. Al hacer tiradas de Stats, el usuario puede reemplazar una o ambas de sus Stats por las de su Avatar. <br>En combate, el avatar puede utilizar 1 acción durante tu turno para: <br>>- Utilizar una de sus skills. <br>- Utilizar una acción de movimiento para desplazar a su usuario. <br>- Utilizar una secundaria. <br>- Aplicar sus efectos pasivos al usuario hasta el inicio de su siguiente ronda.`, 
 				 type: "perk" 
 				},
 				{ name: "Worker's Wrongs [+3 ☐ ]", 
@@ -934,7 +925,6 @@ const moduleCatalog = {
 				},
 				{ 
 					name: "Oficio +1", 
-					description: "Permanent +1 to the amount of jobs you can have"
 				}
 			],
 			tier3: [

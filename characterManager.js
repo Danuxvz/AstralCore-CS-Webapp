@@ -224,8 +224,8 @@ async function loginWithDiscord() {
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "discord",
 		options: {
-			redirectTo: "http://127.0.0.1:3000/index.html"
-			// redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+			// redirectTo: "http://127.0.0.1:3000/index.html"
+			redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 		}
 	});
 
@@ -1574,16 +1574,19 @@ function updateCEDisplay() {
 	
 }
 
-// Update calculateUsedCE function
 function calculateUsedCE() {
 	if (!activeCharacter.modules) return 0;
-	
-	return Object.entries(activeCharacter.modules).reduce((total, [tierKey, modules]) => {
-		const tierNumber = parseInt(tierKey.replace("tier", "")) || 0;
 
-		// Count each module separately for each catalog it belongs to
-		return total + modules.reduce((sum, module) => sum + (module.catalogs.length * tierNumber), 0);
-	}, 0);
+	let total = 0;
+	for (const [tierKey, modules] of Object.entries(activeCharacter.modules)) {
+		const tierNumber = parseInt(tierKey.replace("tier", "")) || 0;
+		for (const module of modules) {
+			for (const catalog of module.catalogs) {
+				if (catalog !== "Custom") total += tierNumber;
+			}
+		}
+	}
+	return total;
 }
 
 function syncExperienceInputs() {

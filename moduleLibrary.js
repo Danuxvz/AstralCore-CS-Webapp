@@ -522,6 +522,13 @@ const moduleLibrary = [
 		restrictions: "Mágico"
 	},
 	{
+		name: "Área Viviente 2",
+		category: "Rango",
+		description: "Invocas 1 área viviente de 3x3 casillas que contiene los módulos dentro de este rango. Las áreas vivientes tienen un MOV de 2 y HR+15 de HP, y pueden ocupar los mismos espacios que otras criaturas. <br>En combate toman su turno directamente después del usuario, y únicamente pueden utilizar una acción de movimiento. Cuando un área viviente ocupa el espacio de una o mas criaturas, las criaturas entran en el área viviente, o empiezan su turno dentro del área viviente, esta hace una tirada de ataque con las stats de esta skill, en un acierto el área viviente pierde -5 HP y aplica los efectos de este rango.",
+		emote: "⛵",
+		restrictions: "Fisico o Magico."
+	},
+	{
 		name: "Crear 2",
 		category: "Rango",
 		description: "Creas 3 objetos pequeños que contienen los modulos anidados dentro de este rango. Cualquier criatura puede usar una acción para consumir estos objetos, y activar la skill.",
@@ -764,7 +771,7 @@ const moduleLibrary = [
 	{
 		name: "Objetivo Multiple 3",
 		category: "Rango",
-		description: "Afectas a todos los objetivos que a 5 casillas o menos de ti que estés viendo.",
+		description: "Afectas a todos los objetivos a 5 casillas o menos de ti que estés viendo.",
 		emote: "👀",
 		restrictions: "Mágico"
 	},	
@@ -776,16 +783,23 @@ const moduleLibrary = [
 		restrictions: "Mágico, consumes un objeto relacionado al objetivo(un mechon de pelo, una pertenencia, etc)"
 	},
 	{
+		name: "Enjambre de Áreas Vivientes",
+		category: "Rango",
+		description: "Invocas a 3 áreas vivientes de 1 casilla que contiene los módulos dentro de este rango. En sus turnos, las 3 áreas comparten la misma tirada de ataque.",
+		emote: "🛟",
+		restrictions: "Fisico o Magico, +1 EP, No puedes anidar otros rangos de invocación dentro de este rango."
+	},
+	{
 		name: "Enjambre de Proyectiles Vivientes",
 		category: "Rango",
-		description: "Invocas 3 proyectiles vivientes con los módulos anidados. Los 3 proyectiles comparten tirada de ataque.",
+		description: "Invocas 3 proyectiles vivientes con los módulos anidados. En sus turnos, los 3 proyectiles comparten la misma tirada de ataque.",
 		emote: "🍯",
-		restrictions: "Mágico, +2 EP, No puedes anidar otros rangos de invocación dentro de este rango"
+		restrictions: "Mágico, +1 EP, No puedes anidar otros rangos de invocación dentro de este rango"
 	},
 	{
 		name: "Familiar 3",
 		category: "Rango",
-		description: "Una skill con este módulo debe ser activa como pasiva. Invocas a un familiar. El familiar es una criatura independiente, leal, pero capaz de tomar sus propias decisiones. <br>Al ser creado, el familiar recibe los módulos de efecto de este rango como efectos pasivos.	El familiar tiene un d6 para todas sus stats y 10 HP máximos, pero es incapaz de usar energía. <br>Durante creación puedes gastar +1 EP para elegir una de las siguientes mejoras, puedes tomar cada opción más de una vez:",
+		description: "Una skill con este módulo debe ser activa como pasiva. Invocas a un familiar. El familiar es una criatura independiente, leal, pero capaz de tomar sus propias decisiones. <br>Cuando el familiar es creado, este recibe los módulos de efecto de este rango como efectos pasivos.	El familiar tiene un d6 para todas sus stats y 10 HP máximos, pero es incapaz de usar energía. <br>Durante creación puedes gastar +1 EP para elegir una de las siguientes mejoras, puedes tomar cada opción más de una vez:",
 		effects: 
 		[
 			{emote: "-", description: "Aumentar dos de las stats base del familiar en un tamaño o una stat en 2 tamaños."},
