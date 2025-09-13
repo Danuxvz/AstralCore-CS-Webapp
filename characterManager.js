@@ -72,7 +72,7 @@ async function syncCharacters() {
 
     try {
         const userId = currentUser.id;
-        const localCharacters = JSON.parse(localStorage.getItem("characters") || "{}");
+        const localCharacters = await getCharacterList();
         console.log("Fetching characters from DB...");
         const remoteCharacters = await fetchCharactersFromDB(userId);
         console.log("Characters fetched from DB.");
@@ -91,7 +91,9 @@ async function syncCharacters() {
         }
 
         // Process local characters
-        for (const [localId, localChar] of Object.entries(localCharacters)) {
+        for (const [localId, localCharData] of Object.entries(localCharacters)) {
+            // Load the full character data from IndexedDB
+            const localChar = await loadCharacter(localId);
             addTimestamps(localChar);
             const localHash = hashCharacterData(localChar);
 
@@ -108,11 +110,15 @@ async function syncCharacters() {
                         localChar.updatedAt = Date.now();
                         await saveCharacterToDB(sameNameChar.id, localChar);
                         mergedCharacters[sameNameChar.id] = localChar;
-                        if (localId !== sameNameChar.id) delete mergedCharacters[localId];
+                        if (localId !== sameNameChar.id) {
+                            await deleteCharacterFromLocalDB(localId);
+                            delete mergedCharacters[localId];
+                        }
                     } else {
                         console.log(`Updating local "${localChar.name}" with newer remote copy`);
                         sameNameChar.data.updatedAt = Date.now();
                         mergedCharacters[localId] = sameNameChar.data;
+                        await saveCharacterToDB(localId, sameNameChar.data);
                     }
                 } else {
                     // Completely new character → upload
@@ -133,7 +139,10 @@ async function syncCharacters() {
                         console.error("Failed to upload character:", error);
                     } else if (data) {
                         mergedCharacters[data.id] = localChar;
-                        if (localId !== data.id) delete mergedCharacters[localId];
+                        if (localId !== data.id) {
+                            await deleteCharacterFromLocalDB(localId);
+                            delete mergedCharacters[localId];
+                        }
 
                         const uploadedHash = hashCharacterData(localChar);
                         remoteByHash[uploadedHash] = { id: data.id, data: localChar };
@@ -146,6 +155,7 @@ async function syncCharacters() {
                 // Ensure we're using the remote ID
                 if (localId !== remoteMatch.id) {
                     mergedCharacters[remoteMatch.id] = localChar;
+                    await deleteCharacterFromLocalDB(localId);
                     delete mergedCharacters[localId];
                 }
             }
@@ -162,11 +172,10 @@ async function syncCharacters() {
                 console.log(`Downloading new remote character "${remoteChar.name}"`);
                 remoteChar.updatedAt = Date.now();
                 mergedCharacters[remoteId] = remoteChar;
+                await saveCharacterToDB(remoteId, remoteChar);
             }
         }
 
-        // Save merged characters back locally
-        localStorage.setItem("characters", JSON.stringify(mergedCharacters));
         console.log("Sync complete. Local is up-to-date.");
 
         // Update the character selector
@@ -224,8 +233,8 @@ async function loginWithDiscord() {
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "discord",
 		options: {
-			// redirectTo: "http://127.0.0.1:3000/index.html"
-			redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+			redirectTo: "http://127.0.0.1:3000/index.html"
+			// redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 		}
 	});
 
@@ -331,88 +340,84 @@ async function handleAuthChange(session) {
 
 async function saveCharacterToDB(characterId, characterData) {
     const user = currentUser;
-    if (!user) return;
-
+    
+    // First save to IndexedDB
     try {
-        // Check if this is a local ID (starts with "char_")
-        if (characterId.startsWith('char_')) {
-            // For local IDs, we need to find if this character already exists in DB
-            const remoteCharacters = await fetchCharactersFromDB(user.id);
-            const characterHash = hashCharacterData(characterData);
-            
-            let foundInDB = false;
-            for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
-                if (hashCharacterData(dbChar) === characterHash) {
-                    // Character exists in DB, update it
-                    const { error } = await supabase
+        await saveCharacterToIndexedDB(characterId, characterData);
+    } catch (error) {
+        console.error("Error saving to IndexedDB:", error);
+    }
+    
+    // Then sync to Supabase if user is logged in
+    if (user) {
+        try {
+            // Check if this is a local ID (starts with "char_")
+            if (characterId.startsWith('char_')) {
+                // For local IDs, we need to find if this character already exists in DB
+                const remoteCharacters = await fetchCharactersFromDB(user.id);
+                const characterHash = hashCharacterData(characterData);
+                
+                let foundInDB = false;
+                for (const [dbId, dbChar] of Object.entries(remoteCharacters)) {
+                    if (hashCharacterData(dbChar) === characterHash) {
+                        // Character exists in DB, update it
+                        const { error } = await supabase
+                            .from("characters")
+                            .update({
+                                user_id: user.id,
+                                name: characterData.name,
+                                data: characterData,
+                            })
+                            .eq("id", dbId);
+
+                        if (error) throw error;
+                        foundInDB = true;
+                        break;
+                    }
+                }
+                
+                if (!foundInDB) {
+                    // Character doesn't exist in DB, create it with a UUID
+                    const { data, error } = await supabase
                         .from("characters")
-                        .update({
+                        .insert({
                             user_id: user.id,
                             name: characterData.name,
                             data: characterData,
+                            discord_id: user.user_metadata?.provider_id || null
                         })
-                        .eq("id", dbId);
+                        .select("id")
+                        .single();
 
                     if (error) throw error;
-                    foundInDB = true;
                     
-                    // Update local storage to use the DB ID
-                    const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-                    characters[dbId] = characterData;
-                    delete characters[characterId];
-                    localStorage.setItem("characters", JSON.stringify(characters));
+                    // Update IndexedDB to use the new ID
+                    await saveCharacterToIndexedDB(data.id, characterData);
+                    await deleteCharacterFromLocalDB(characterId);
                     
                     // Update active character ID if needed
                     if (currentActiveCharacterId === characterId) {
-                        currentActiveCharacterId = dbId;
+                        currentActiveCharacterId = data.id;
                     }
-                    break;
                 }
-            }
-            
-            if (!foundInDB) {
-                // Character doesn't exist in DB, create it with a UUID
-				const { data, error } = await supabase
-				.from("characters")
-				.insert({
-					user_id: user.id,
-					name: characterData.name,
-					data: characterData,
-					discord_id: user.user_metadata?.provider_id || null
-				})
-				.select("id")
-				.single();
+            } else {
+                // Character ID is already a UUID, just upsert
+                const { error } = await supabase
+                    .from("characters")
+                    .upsert({
+                        id: characterId,
+                        user_id: user.id,
+                        name: characterData.name,
+                        data: characterData,
+                    }, {
+                        onConflict: 'id'
+                    });
 
                 if (error) throw error;
-                
-                // Update local storage to use the new ID
-                const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-                characters[data.id] = characterData;
-                delete characters[characterId];
-                localStorage.setItem("characters", JSON.stringify(characters));
-                
-                // Update active character ID if needed
-                if (currentActiveCharacterId === characterId) {
-                    currentActiveCharacterId = data.id;
-                }
             }
-        } else {
-            // Character ID is already a UUID, just upsert
-            const { error } = await supabase
-                .from("characters")
-                .upsert({
-                    id: characterId,
-                    user_id: user.id,
-                    name: characterData.name,
-                    data: characterData,
-                }, {
-                    onConflict: 'id'
-                });
-
-            if (error) throw error;
+        } catch (error) {
+            console.error("Error saving character to Supabase:", error);
         }
-    } catch (error) {
-        console.error("Error saving character to DB:", error);
     }
 }
 
@@ -439,6 +444,182 @@ async function fetchCharactersFromDB(userId) {
 	}
 }
 
+async function deleteCharacterFromDB(characterId) {
+	console.log("Deleting character:", currentActiveCharacterId);
+const { error } = await supabase
+	.from("characters")
+	.delete()
+	.eq("id", characterId
+);
+
+if (error) console.error("Error deleting:", error);
+}
+
+
+
+
+
+//LocalStorage + IndexDB handeling
+const DB_NAME = 'CharacterManagerDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'characters';
+let db = null;
+
+//IndexedDB
+function openLocalDatabase() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            db = request.result;
+            resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const database = event.target.result;
+            
+            // Create object store if it doesn't exist
+            if (!database.objectStoreNames.contains(STORE_NAME)) {
+                const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                store.createIndex('name', 'name', { unique: false });
+                store.createIndex('updatedAt', 'updatedAt', { unique: false });
+            }
+        };
+    });
+}
+
+async function getCharacterList() {
+    if (!db) await openLocalDatabase();
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            const characterList = {};
+            request.result.forEach(character => {
+                characterList[character.id] = {
+                    id: character.id,
+                    name: character.name || "Unnamed Character", // Ensure we have a name
+                    updatedAt: character.updatedAt
+                };
+            });
+            resolve(characterList);
+        };
+    });
+}
+
+async function loadCharacter(id) {
+    if (!db) await openLocalDatabase();
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(id);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            if (request.result) {
+                // Create a deep copy to prevent reference issues
+                const characterCopy = JSON.parse(JSON.stringify(request.result));
+                resolve(characterCopy);
+            } else {
+                resolve(null);
+            }
+        };
+    });
+}
+
+async function saveActiveCharacter() {
+    if (!activeCharacter || !currentActiveCharacterId) return;
+    
+    if (!db) await openLocalDatabase();
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Add ID and timestamp to character data
+        const characterWithId = {
+            ...activeCharacter,
+            id: currentActiveCharacterId,
+            updatedAt: Date.now()
+        };
+        
+        const request = store.put(characterWithId);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            console.log("Character saved to IndexedDB:", currentActiveCharacterId);
+            resolve(request.result);
+        };
+    });
+}
+
+async function deleteCharacterFromLocalDB(id) {
+    if (!db) await openLocalDatabase();
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(id);
+		console.log(`Deleted character ${id}`)
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+    });
+}
+
+async function saveCharacterToIndexedDB(id, characterData) {
+    if (!db) await openLocalDatabase();
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Add ID and timestamp to character data
+        const characterWithId = {
+            ...characterData,
+            id: id,
+            updatedAt: Date.now()
+        };
+        
+        const request = store.put(characterWithId);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+    });
+}
+
+async function migrateFromLocalStorage() {
+    try {
+        // Check if we have old data in localStorage
+        const oldCharacters = JSON.parse(localStorage.getItem("characters") || "{}");
+        
+        if (Object.keys(oldCharacters).length > 0) {
+            console.log("Migrating characters from localStorage to IndexedDB...");
+            
+            // Save each character to IndexedDB
+            for (const [id, character] of Object.entries(oldCharacters)) {
+                await saveCharacterToIndexedDB(id, character);
+            }
+            
+            // Remove old data
+            localStorage.removeItem("characters");
+            localStorage.removeItem("characters_index");
+            
+            console.log("Migration completed successfully");
+        }
+    } catch (error) {
+        console.error("Error during migration:", error);
+    }
+}
+
+
+
 // Unified function to load characters
 async function loadAllCharacters() {
 	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
@@ -450,15 +631,34 @@ async function loadAllCharacters() {
 	
 }
 
-function initializeLocalCharacters() {
-	let characters = JSON.parse(localStorage.getItem("characters") || "{}");
-	
-	const user = currentUser;
-	if (Object.keys(characters).length === 0 && !user) {
-		const defaultCharacter = createLocalDefaultCharacter();
-		characters["default"] = defaultCharacter;
-		localStorage.setItem("characters", JSON.stringify(characters));
-	}
+async function initializeLocalCharacters() {
+    try {
+        // Open database
+        await openLocalDatabase();
+        
+        // Migrate from localStorage if needed
+        await migrateFromLocalStorage();
+        
+        // Check if we have any characters
+        const characters = await getCharacterList();
+        const user = currentUser;
+        
+        if (Object.keys(characters).length === 0 && !user) {
+            const defaultCharacter = createLocalDefaultCharacter();
+            const defaultId = "default";
+            await saveCharacterToIndexedDB(defaultId, defaultCharacter);
+            
+            // Set as active character
+            activeCharacter = defaultCharacter;
+            currentActiveCharacterId = defaultId;
+        } else if (Object.keys(characters).length > 0) {
+            // Load the first character
+            const firstCharacterId = Object.keys(characters)[0];
+            await setActiveCharacter(firstCharacterId);
+        }
+    } catch (error) {
+        console.error("Error initializing characters:", error);
+    }
 }
 
 function createLocalDefaultCharacter() {
@@ -498,91 +698,77 @@ function createLocalDefaultCharacter() {
 	};
 }
 
-async function setActiveCharacter(characterId) {
+async function setActiveCharacter(characterId, skipSave = false) {
     if (characterId === currentActiveCharacterId) {
         console.log("Character already active, skipping reload:", characterId);
         return;
     }
     
+    // Save current character before switching unless skipSave is true
+    if (activeCharacter && currentActiveCharacterId && !skipSave) {
+        await saveActiveCharacter();
+    }
+    
+    // Rest of the function remains the same...
     // If we're in the middle of a sync, wait for it to complete
     if (isSyncing) {
         console.log("Sync in progress, deferring character switch");
-        setTimeout(() => setActiveCharacter(characterId), 500);
+        setTimeout(() => setActiveCharacter(characterId, skipSave), 500);
         return;
     }
     
     const user = currentUser;
-    let characters = JSON.parse(localStorage.getItem('characters') || '{}');
-    let selectedCharacter = characters[characterId];
+    let selectedCharacter = null;
     
-    // If character not found in local storage and user is logged in, check DB
-    if (!selectedCharacter && user) {
-        try {
-            const remoteCharacters = await fetchCharactersFromDB(user.id);
-            selectedCharacter = remoteCharacters[characterId];
-            
-            if (selectedCharacter) {
-                // Add this character to local storage
-                characters[characterId] = selectedCharacter;
-                localStorage.setItem('characters', JSON.stringify(characters));
+    try {
+        // Try to get character from IndexedDB
+        selectedCharacter = await loadCharacter(characterId);
+        
+        // If character not found in IndexedDB and user is logged in, check DB
+        if (!selectedCharacter && user) {
+            try {
+                const remoteCharacters = await fetchCharactersFromDB(user.id);
+                selectedCharacter = remoteCharacters[characterId];
+                
+                if (selectedCharacter) {
+                    // Add this character to IndexedDB
+                    await saveCharacterToDB(characterId, selectedCharacter);
+                }
+            } catch (error) {
+                console.error("Error fetching character from DB:", error);
             }
-        } catch (error) {
-            console.error("Error fetching character from DB:", error);
         }
-    }
-    
-    if (!selectedCharacter) {
-        console.error("Character ID not found:", characterId);
-        return;
-    }
-    
-    currentActiveCharacterId = characterId;
-
-    // Reset current HP/EP inputs
-    const currentHpInput = document.getElementById("currentHp");
-    const currentEpInput = document.getElementById("currentEp");
-    if (currentHpInput) currentHpInput.value = "";
-    if (currentEpInput) currentEpInput.value = "";
-
-    // Create a deep copy of the character data to prevent reference issues
-    const characterCopy = JSON.parse(JSON.stringify(selectedCharacter));
-    activeCharacter = migrateCharacterData(characterCopy);
-    syncOldCharacterData();
-    populateCharacterData(activeCharacter);
-    
-    console.log("Active character set:", activeCharacter.name);
-
-    // Update summary section
-    renderSummary();
-    updateImageDisplay();
-    calculateAvailableJobs();
-}
-
-// Add a deep copy function to ensure data isolation
-function deepCopy(obj) {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (obj instanceof Date) return new Date(obj.getTime());
-    if (obj instanceof Array) return obj.map(item => deepCopy(item));
-    
-    const copiedObj = {};
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            copiedObj[key] = deepCopy(obj[key]);
+        
+        if (!selectedCharacter) {
+            console.error("Character ID not found:", characterId);
+            return;
         }
-    }
-    return copiedObj;
-}
-// Delete character from Supabase
-async function deleteCharacterFromDB(characterId) {
-	console.log("Deleting character:", currentActiveCharacterId);
-const { error } = await supabase
-	.from("characters")
-	.delete()
-	.eq("id", characterId
-);
+        
+        currentActiveCharacterId = characterId;
+        activeCharacter = selectedCharacter;
 
-if (error) console.error("Error deleting:", error);
+        // Reset current HP/EP inputs
+        const currentHpInput = document.getElementById("currentHp");
+        const currentEpInput = document.getElementById("currentEp");
+        if (currentHpInput) currentHpInput.value = "";
+        if (currentEpInput) currentEpInput.value = "";
+
+        // Process the character data
+        activeCharacter = migrateCharacterData(activeCharacter);
+        syncOldCharacterData();
+        populateCharacterData(activeCharacter);
+        
+        console.log("Active character set:", activeCharacter.name);
+
+        // Update summary section
+        renderSummary();
+        updateImageDisplay();
+        calculateAvailableJobs();
+    } catch (error) {
+        console.error("Error setting active character:", error);
+    }
 }
+
 
 // Navigation
 function showSection(sectionId) {
@@ -611,61 +797,60 @@ document.getElementById("newCharacter").addEventListener("click", async () => {
     const user = currentUser;
     const characterSelector = document.getElementById("characterSelector");
     
-    if (user) {
-        // User is logged in - create character directly in database
-        try {
+    try {
+        const characters = await getCharacterList();
+        
+        if (user) {
+            // User is logged in - create character directly in database
+            try {
+                const newCharacter = createLocalDefaultCharacter();
+                newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
+                
+                // Create character in database
+                const { data, error } = await supabase
+                    .from("characters")
+                    .insert({
+                        user_id: user.id,
+                        name: newCharacter.name,
+                        data: newCharacter,
+                        discord_id: user.user_metadata?.provider_id || null
+                    })
+                    .select("id, data")
+                    .single();
+
+                if (error) throw error;
+                
+                // Add to IndexedDB with UUID from database
+                await saveCharacterToDB(data.id, newCharacter);
+                
+                // Update selector and set as active
+                await populateCharacterSelector();
+                characterSelector.value = data.id;
+                await setActiveCharacter(data.id);
+                updateImageDisplay();
+                
+            } catch (error) {
+                console.error("Error creating character in database:", error);
+                alert("Failed to create character. Please check your connection.");
+            }
+        } else {
+            // User is not logged in - create character locally
+            const newCharacterId = `char_${Date.now()}`;
             const newCharacter = createLocalDefaultCharacter();
-            const characters = JSON.parse(localStorage.getItem('characters') || '{}');
             newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
-            
-            // Create character in database
-            const { data, error } = await supabase
-                .from("characters")
-                .insert({
-                    user_id: user.id,
-                    name: newCharacter.name,
-                    data: newCharacter,
-                    discord_id: user.user_metadata?.provider_id || null
-                })
-                .select("id, data")
-                .single();
 
-            if (error) throw error;
-            
-            // Add to local storage with UUID from database
-            characters[data.id] = newCharacter;
-            localStorage.setItem('characters', JSON.stringify(characters));
-            
-            // Update selector and set as active
+            // Create character in IndexedDB
+            await saveCharacterToDB(newCharacterId, newCharacter);
+
+            // Update selector
             await populateCharacterSelector();
-            characterSelector.value = data.id;
-            await setActiveCharacter(data.id);
+            characterSelector.value = newCharacterId;
+
+            await setActiveCharacter(newCharacterId);
             updateImageDisplay();
-            
-        } catch (error) {
-            console.error("Error creating character in database:", error);
-            alert("Failed to create character. Please check your connection.");
         }
-    } else {
-        // User is not logged in - create character locally
-        const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-        const newCharacterId = `char_${Date.now()}`;
-        const newCharacter = createLocalDefaultCharacter();
-        newCharacter.name = `New Character ${Object.keys(characters).length + 1}`;
-
-        // Create character in local storage
-        characters[newCharacterId] = newCharacter;
-        localStorage.setItem('characters', JSON.stringify(characters));
-
-        // Update selector
-        const newOption = document.createElement("option");
-        newOption.value = newCharacterId;
-        newOption.textContent = newCharacter.name;
-        characterSelector.appendChild(newOption);
-        characterSelector.value = newCharacterId;
-
-        await setActiveCharacter(newCharacterId);
-        updateImageDisplay();
+    } catch (error) {
+        console.error("Error creating new character:", error);
     }
 });
 
@@ -701,10 +886,8 @@ document.getElementById("importCharacter").addEventListener("change", async func
 
                     if (error) throw error;
                     
-                    // Add to local storage with UUID from database
-                    const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-                    characters[data.id] = migratedCharacter;
-                    localStorage.setItem('characters', JSON.stringify(characters));
+                    // Add to IndexedDB with UUID from database
+                    await saveCharacterToDB(data.id, migratedCharacter);
                     
                     // Update selector and set as active
                     await populateCharacterSelector();
@@ -720,14 +903,11 @@ document.getElementById("importCharacter").addEventListener("change", async func
             } else {
                 // User is not logged in - create character locally
                 const newCharacterId = `char_${Date.now()}`;
-                const characters = JSON.parse(localStorage.getItem('characters') || '{}');
-                characters[newCharacterId] = migratedCharacter;
-                localStorage.setItem('characters', JSON.stringify(characters));
+                await saveCharacterToDB(newCharacterId, migratedCharacter);
 
-                const newOption = new Option(migratedCharacter.name, newCharacterId);
-                characterSelector.add(newOption);
+                // Update selector and set as active
+                await populateCharacterSelector();
                 characterSelector.value = newCharacterId;
-
                 await setActiveCharacter(newCharacterId);
                 event.target.value = '';
                 updateImageDisplay();
@@ -744,37 +924,42 @@ document.getElementById("importCharacter").addEventListener("change", async func
 document.getElementById("deleteCharacter").addEventListener("click", async () => {
     const characterSelector = document.getElementById("characterSelector");
     const characterId = currentActiveCharacterId;
-    let characters = JSON.parse(localStorage.getItem('characters') || '{}');
+    
+    try {
+        const character = await loadCharacter(characterId);
+        
+        if (!character) {
+            alert("No character selected or character doesn't exist.");
+            return;
+        }
 
-    if (!characters[characterId]) {
-        alert("No character selected or character doesn't exist.");
-        return;
+        if (!confirm(`Are you sure you want to delete ${character.name}?`)) return;
+
+        // Remove from IndexedDB
+        await deleteCharacterFromLocalDB(characterId);
+
+        // Remove from database if user is logged in and online
+        const user = currentUser;
+        if (user && navigator.onLine) {
+            await deleteCharacterFromDB(characterId);
+        }
+
+        // Update selector
+        await populateCharacterSelector();
+
+        // Select a new character or create default - use skipSave to prevent saving the deleted character
+        const characters = await getCharacterList();
+        if (Object.keys(characters).length === 0) {
+            document.getElementById("newCharacter").click();
+        } else {
+            const firstCharacterId = Object.keys(characters)[0];
+            characterSelector.value = firstCharacterId;
+            await setActiveCharacter(firstCharacterId, true); // Skip save here
+        }
+        updateImageDisplay();
+    } catch (error) {
+        console.error("Error deleting character:", error);
     }
-
-    if (!confirm(`Are you sure you want to delete ${characters[characterId].name}?`)) return;
-
-    // Remove from local storage
-    delete characters[characterId];
-    localStorage.setItem('characters', JSON.stringify(characters));
-
-    // Remove from database if user is logged in and online
-    const user = currentUser;
-    if (user && navigator.onLine) {
-        await deleteCharacterFromDB(characterId);
-    }
-
-    // Update selector
-    await populateCharacterSelector();
-
-    // Select a new character or create default
-    if (Object.keys(characters).length === 0) {
-        document.getElementById("newCharacter").click();
-    } else {
-        const firstCharacterId = Object.keys(characters)[0];
-        characterSelector.value = firstCharacterId;
-        await setActiveCharacter(firstCharacterId);
-    }
-    updateImageDisplay();
 });
 
 async function saveCharacterData() {
@@ -784,31 +969,30 @@ async function saveCharacterData() {
     console.log("Selected character ID:", selectedCharacterId);
     if (!selectedCharacterId) return;
 
-    console.log("Gathering data...");
     const updatedCharacter = addTimestamps(gatherCharacterData());
     console.log("Data gathered.", updatedCharacter);
     
     activeCharacter = updatedCharacter;
 
-    const user = currentUser;
-
-    const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-    characters[selectedCharacterId] = activeCharacter;
-    localStorage.setItem("characters", JSON.stringify(characters));
-    
-    // Sync to Supabase in the background if user is logged in
-    if (currentUser) {
-        setTimeout(async () => {
-            try {
-                await saveCharacterToDB(selectedCharacterId, activeCharacter);
-                console.log("Character saved to DB in background:", selectedCharacterId);
-            } catch (error) {
-                console.error("Background save error:", error);
-            }
-        }, 0);
+    try {
+        // Save to IndexedDB
+        await saveActiveCharacter();
+        console.log("Character saved to IndexedDB:", selectedCharacterId);
+        
+        // Sync to Supabase in the background if user is logged in
+        if (currentUser) {
+            setTimeout(async () => {
+                try {
+                    await saveCharacterToDB(selectedCharacterId, activeCharacter);
+                    console.log("Character saved to Supabase in background:", selectedCharacterId);
+                } catch (error) {
+                    console.error("Background save error:", error);
+                }
+            }, 0);
+        }
+    } catch (error) {
+        console.error("Error saving character to IndexedDB:", error);
     }
-    
-    console.log("Character saved locally:", selectedCharacterId);
 }
 
 // Utility function for calculating secondary stats
@@ -1026,7 +1210,7 @@ async function populateCharacterSelector() {
     const currentSelection = characterSelector.value; // Store current selection
     
     console.log("Loading characters to selector...");
-    const characters = await loadAllCharacters();
+    const characters = await getCharacterList();
     
     // Clear and repopulate
     characterSelector.innerHTML = "";
@@ -1054,6 +1238,7 @@ async function populateCharacterSelector() {
     
     return characters;
 }
+
 
 function updateStatUpgrades() {
 	const newBonuses = {};
@@ -1384,6 +1569,7 @@ async function initApp() {
 document.addEventListener("DOMContentLoaded", async () => {
 	console.log("DOMContentLoaded");
 
+	await openLocalDatabase();
 	const { data: { session } } = await supabase.auth.getSession();
 	supabase.auth.onAuthStateChange((_event, session) => handleAuthChange(session));
 
