@@ -325,7 +325,7 @@ async function handleAuthChange(session) {
 
       const characters = await populateCharacterSelector();
       
-      // Try to keep the same character active if it exists in local storage
+    //   Try to keep the same character active if it exists in local storage
       if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
         await setActiveCharacter(currentActiveCharacterId);
       } else if (Object.keys(characters).length > 0) {
@@ -335,7 +335,6 @@ async function handleAuthChange(session) {
       }
     }
   }
-  initializeLocalCharacters();
 }
 
 async function saveCharacterToDB(characterId, characterData) {
@@ -1460,7 +1459,8 @@ function syncOldCharacterData() {
 async function initApp() {
 	try {
 		console.log("initApp start");
-
+					console.log("Change on selector!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+		initializeLocalCharacters();
 		const characterSelector = document.getElementById("characterSelector");
 
 		const characters = await populateCharacterSelector();
