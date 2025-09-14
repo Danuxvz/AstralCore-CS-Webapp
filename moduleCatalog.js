@@ -76,13 +76,13 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +4", 
-				},
-				{ 
 					name: "DM +1", 
 				},
 				{ 
-					name: "Oficio +1", 
+					name: "HP +4", 
+				},
+				{ 
+					name: "Job +1", 
 				},
 				{
 					name: "EP +2", 
@@ -93,42 +93,38 @@ const moduleCatalog = {
 			],
 			tier2: [
 				{ 
-					name: "HP +3", 
+					name: "HP +4", 
 				},
 				{ 
-					name: "EP +1", 
+					name: "DMG +1", 
 				},
 				{ 
-					name: "DM +1", 
+					name: "Job +1", 
 				},
 				{
-					name: "HP +5", 
+					name: "HP +6", 
 				},
 				{ 
-					name: "EP +2", 
+					name: "DM +2", 
 				}
 			],
 			tier3: [
 				{ 
-					name: "HP +4", 
-					description: "Permanent +4 to Max HP"
+					name: "EP +1", 
 				},
 				{
-							name: "IMPR +1", 
-							description: "Permanent +2 to Max HP (Total +5)"
-						},
+					name: "DM +1", 
+				},
 				
 				{ 
-							name: "Stat Up!", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
-						},
-				{ 
-					name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
+					name: "Stat Up!", 
+					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
 				},
-						{ 
-							name: "HP +5", 
-							description: "Permanent +5 to the amount of Jobs you can learn."
+				{ 
+					name: "HP +6", 
+				},
+				{ 
+					name: "DMG +2", 
 				}
 			],
 			},
@@ -140,66 +136,54 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +1", 
-					description: "Permanent +1 to Max HP"
+					name: "DF +1", 
 				},
 				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
+					name: "HP +4", 
 				},
 				{ 
-							name: "EP +1", 
-							description: "Permanent +1 to Max Energy Points"
-						},
-						{
-							name: "HP +3", 
-							description: "Permanent +3 to Max HP"
-						},
-						{ 
-							name: "Job +1", 
+					name: "HP +8", 
+				},
+				{
+					name: "EP +2", 
+				},
+				{ 
+					name: "DMG +2", 
 				}
 			],
 			tier2: [
 				{ 
-					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
+					name: "HP +4", 
 				},
 				{ 
-					name: "HP +5", 
-					description: "Permanent +5 to Max HP"
+					name: "DF +1", 
 				},
 				{ 
-							name: "DF +1", 
-							description: "Permanent +1 to Defense"
-						},
-						{
-							name: "EP+1 ", 
-							description: "Permanent +1 to Max Energy Points"
-						},
-						{ 
-							name: "Oficio +1", 
+					name: "Job +1", 
+				},
+				{
+					name: "HP +6", 
+				},
+				{ 
+					name: "DMG +2", 
 				}
 			],
 			tier3: [
 				{ 
 					name: "HP +4", 
-					description: "Permanent +4 to Max HP"
 				},
 				{ 
-					name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
+					name: "DMG +1", 
 				},				
 				{ 
-							name: "Stat Up!", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
-						},
+					name: "Stat Up!", 
+					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+				},
 				{
-							name: "HP +4", 
-							description: "Permanent +4 to Max HP"
-						},
-						{ 
-							name: "DF +1", 
-							description: "Permanent +1 to your Defense."
+					name: "EP +1", 
+				},
+				{ 
+					name: "DF +2", 
 				}
 			],			
 		},
@@ -213,6 +197,14 @@ const moduleCatalog = {
 				 description: "Tienes 1 espacio de módulo específico para transformación, puedes colocar cualquier módulo de tu self core en estos espacios. Al activar una transformación con 🐺, todos los módulos de este perk son activados sobre ti como si fueran los efectos de una skill pasiva. Cuando 🐺 termina, tambien lo hacen todos los modulos activados por esta perk.", 
 				type:"perk"
 				},
+				{ name: "Interés Común", 
+				 description: `Al usar la acción de Resistir, puedes aplicar uno de los siguientes beneficios adicionales: <br>
+				- Resiste un módulo adicional. <br>
+				- Resiste el mismo módulo sobre hasta 2 objetivos adicionales dentro de tu rango de toque. <br>
+				- Elimina el área de efecto resistida por completo. <br>
+				`, 
+				type:"perk"
+				},
 				{ name: "Umbra Vadium [+1 ☐ ]", 
 				 description: "Solo puedes usar esta skill mientras estas en oscuridad parcial o total.", 
 				 type: "restriction", slots: "+1"
@@ -221,10 +213,6 @@ const moduleCatalog = {
 				 description: "Debes explicar de forma audible y dramática los efectos de esta skill antes de activarla.", 
 				 type: "restriction", slots: "+1"
 				},
-				{ name: "Habes Corpus [+1 ☐ ]", 
-				 description: "Solo puedes usar esta skill mientras estás bajo el efecto del módulo 🐺.", 
-				 type: "restriction", slots: "+1"
-				},								
 			],
 			tier2: [
 				{ name: "Paladín Oscuro Tier 3", 
@@ -239,13 +227,13 @@ const moduleCatalog = {
 				 description: "Mientras seas afectado por 🐺, puedes incrementar en 1 tamaño una de tus stats, al hacerlo, reduce en 1 tamaño una stat distinta. Estos efectos no pueden ser resistidos", 
 				 type: "perk" 
 				},
-				{ name: "Corpus Amittere [+2 ☐ ]", 
-				 description: "Sólo puedes usar esta skill mientras estés bajo el efecto de 🐺. 🐺 termina tras utilizar esta skill.", 
-				 type: "restriction", slots: "+2"
-				},				
-				{ name: "Maestria 2", 
-				 description: "Ganas maestría en un módulo Tier 2.", 
-				 type: "perk" 
+				{ name: "Habes Corpus [+1 ☐ ]", 
+				 description: "Solo puedes usar esta skill mientras estás bajo el efecto del módulo 🐺.", 
+				 type: "restriction", slots: "+1"
+				},
+				{ name: "Ex Post Facto [-2 ☐ ]:", 
+				 description: "Puedes usar esta skill como una acción gratuita directamente después de utilizar una acción de resistencia.", 
+				 type: "restriction", slots: "-2"
 				},
 			],
 			tier3: [
@@ -264,11 +252,11 @@ const moduleCatalog = {
 				{ name: "Legem Terrae [+3 ☐ ]", 
 				 description: "Si esta skill es utilizada en cualquier momento de forma que Rompa las leyes locales, pierdes permanentemente esta skill y el SE gastado en ella.", 
 				 type: "restriction", slots: "+3"
-				},				
-				{ name: "Maestria 3", 
-				 description: "Ganas maestría en un módulo Tier 3 de la Corte De Luna.", 
-				 type: "perk" 
 				},
+				{ name: "Corpus Amittere [+2 ☐ ]", 
+				 description: "Sólo puedes usar esta skill mientras estés bajo el efecto de 🐺. 🐺 termina tras utilizar esta skill.", 
+				 type: "restriction", slots: "+2"
+				},				
 			],
 		},
 	},	
@@ -279,68 +267,54 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +1", 
-					description: "Permanent +1 to Max HP"
+					name: "MOV +2", 
 				},
 				{ 
-					name: "HP +1", 
-					description: "Permanent +1 to Max HP"
+					name: "HP +4", 
 				},
 				{ 
-							name: "HP +2", 
-							description: "Permanent +2 to Max HP"
-						},
-						{
-							name: "MOV +1", 
-							description: "Permanent +1 to MOV"
-						},
-						{ 
-							name: "PE +1", 
-							description: "Permanent +1 to Max PE"
+					name: "ATK +1", 
+				},
+				{
+					name: "EP +2", 
+				},
+				{ 
+					name: "DF +1", 
 				}
 			],
 			tier2: [
 				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
+					name: "EP +1", 
 				},
 				{ 
-					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
+					name: "ATK +1", 
 				},
 				{ 
-							name: "MOV +1", 
-							description: "Permanent +1 to MOV"
-						},
-						{
-							name: "HP+3 ", 
-							description: "Permanent +3 to Max HP"
+					name: "MOV +2", 
 				},
-						{ 
-							name: "EP +1", 
-							description: "Permanent +1 to the amount of jobs you can have"
+				{
+					name: "DF +1", 
+				},
+				{ 
+					name: "EQUIP +1", 
 				},
 			],
 			tier3: [
 				{
-					name:"HP +3",
-					description:"No one is going to read this"
+					name:"HP +4",
 				},
 				{
-					name:"EP +1",
-					description:"No one is going to read this"
+					name:"MOV +2",
 				},
 				{ 
-							name: "Stat Up!", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "Stat Up!", 
+					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
 				},
 				{ 
-							name: "MOV +1", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "EP +2", 
 				},
 				{ 
-							name: "EP +2", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "IMPR +1", 
 				},
 			],	
 		},
@@ -416,68 +390,54 @@ const moduleCatalog = {
 		statUpgrades: {
 			tier1: [
 				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
+					name: "HP +6", 
 				},
 				{ 
-					name: "HP +2", 
-					description: "Permanent +1 to Max HP"
+					name: "DM +1", 
 				},
 				{ 
-							name: "HP +3", 
-							description: "Permanent +2 to Max HP"
-						},
-						{
-							name: "EP +1", 
-							description: "Permanent +1 to MOV"
-						},
-						{ 
-							name: "HP +4", 
-							description: "Permanent +1 to Max PE"
+					name: "HP +6", 
+				},
+				{
+					name: "HP +6", 
+				},
+				{ 
+					name: "DMG +2", 
 				}
 			],
 			tier2: [
 				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
+					name: "HP +4", 
 				},
 				{ 
-					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
+					name: "DMG +1", 
 				},
 				{ 
-							name: "EP +1", 
-							description: "Permanent +1 to MOV"
-						},
-						{
-							name: "HP +3", 
-							description: "Permanent +3 to Max HP"
+					name: "MOV +2", 
 				},
-						{ 
-							name: "EP +1", 
-							description: "Permanent +1 to the amount of jobs you can have"
+				{
+					name: "HP +6", 
+				},
+				{ 
+					name: "EP +2", 
 				},
 			],
 			tier3: [
 				{
-					name:"HP +5",
-					description:"No one is going to read this"
+					name:"HP +4",
 				},
 				{
-					name:"EP +1",
-					description:"No one is going to read this"
+					name:"DMG +1",
 				},
 				{ 
-							name: "Stat Up!", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "Stat Up!", 
+					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
 				},
 				{ 
-							name: "MOV +1", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "HP +6", 
 				},
 				{ 
-							name: "EP +2", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
+					name: "DMG +2", 
 				},
 			],	
 		},
@@ -552,55 +512,25 @@ const moduleCatalog = {
 		tier3: [],
 		statUpgrades: {
 			tier1: [
-				{ 
-				name: "HP +2", 
-				},
-				{ 
-				name: "EP +1", 
-				},
-				{ 
-							name: "DMG +1", 
-						},
-						{
-							name: "HP +3", 
-						},
-						{ 
-							name: "EP +1", 
-				}
+				{ name: "EQUIP +1",},
+				{ name: "HP +4",},
+				{ name: "DM +1",},
+				{ name: "EP +2",},
+				{ name: "ATK +2",}
 			],
 			tier2: [
-				{ 
-				name: "HP +5", 
-				},
-				{ 
-				name: "ATK +1", 
-				},
-				{ 
-							name: "EP +2", 
-						},
-						{
-							name: "EQUIP +1 ", 
-						},
-						{ 
-							name: "IMPR +1", 
-				}
+				{ name: "EP +1",},
+				{ name: "ATK +1",},
+				{ name: "IMPR +1",},
+				{ name: "EP +2",},
+				{ name: "DMG +2",}
 			],
 			tier3: [
-				{ 
-				name: "EP +1", 
-				},
-				{ 
-				name: "DMG +2", 
-				},				
-				{ 
-							name: "Stat Up!", 
-						},
-				{
-				name: "HP +7", 
-						},
-						{ 
-							name: "EP +2", 
-				}
+				{ name: "EP +1",},
+				{ name: "DM +1",},
+				{ name: "Stat Up!",},
+				{ name: "EP +2",},
+				{ name: "DMG +2",}
 			],			
 		},
 		perks: {
@@ -677,69 +607,25 @@ const moduleCatalog = {
 		tier3: [],
 		statUpgrades: {
 			tier1: [
-				{ 
-					name: "HP +2", 
-					description: "Permanent +1 to Max HP"
-				},
-				{ 
-					name: "HP +2", 
-					description: "Permanent +2 to Max HP"
-				},
-				{ 
-							name: "EP +1", 
-							description: "Permanent +1 to Max Energy Points"
-						},
-						{
-							name: "HP +3", 
-							description: "Permanent +3 to Max HP"
-						},
-						{ 
-							name: "Job +1", 
-							description: "Permanent +1 to the amount of jobs you can learn"
-				}
+				{ name: "EP +2", },
+				{ name: "ATK +1", },
+				{ name: "Job +1", },
+				{ name: "HP +4", },
+				{ name: "EP +2", }
 			],
 			tier2: [
-				{ 
-					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
-				},
-				{ 
-					name: "HP +5", 
-					description: "Permanent +5 to Max HP"
-				},
-				{ 
-							name: "DF +1", 
-							description: "Permanent +1 to Defense"
-						},
-						{
-							name: "EP+1 ", 
-							description: "Permanent +1 to Max Energy Points"
-						},
-						{ 
-							name: "Oficio +1", 
-				}
+				{ name: "EP +1", },
+				{ name: "DMG +1", },
+				{ name: "MOV +1", },
+				{ name: "EP +2", },
+				{ name: "DMG +2", }
 			],
 			tier3: [
-				{ 
-					name: "HP +4", 
-					description: "Permanent +4 to Max HP"
-				},
-				{ 
-					name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
-				},				
-				{ 
-							name: "Stat Up!", 
-							description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
-						},
-				{
-							name: "HP +4", 
-							description: "Permanent +4 to Max HP"
-						},
-						{ 
-							name: "DF +1", 
-							description: "Permanent +1 to your Defense."
-				}
+				{ name: "EP +1", },
+				{ name: "ATK +1", },
+				{ name: "Stat Up!", description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."},
+				{ name: "HP +6", },
+				{ name: "ATK +2", }
 			],			
 		},
 		perks: {
@@ -798,7 +684,7 @@ const moduleCatalog = {
 				},
 				{ name: "Worker's Wrongs [+3 ☐ ]", 
 				 description: "Este modulo debe incluir una invocacion. Cada vez que una criatura invocada por esta skill es reducida a 0 HP, debes pagar -1 PE. No puedes usar una skill con esta restriccion si tienes 0 PE restante.", 
-				 type: "restriction", slots: "+2"
+				 type: "restriction", slots: "+3"
 				},				
 				{ name: "Maestria 3", 
 				 description: "Ganas maestría en un módulo Tier 3 de Umbra Employment Agency.", 
@@ -813,23 +699,23 @@ const moduleCatalog = {
 		tier3: [],
 		statUpgrades: {
 			tier1: [
-				{ name: "HP +2"},
-				{ name: "DMG +1"},
-				{ name: "HP +2"},
-				{ name: "EP +1"},
-				{ name: "IMPR +1"}
+				{ name: "ATK +1"},
+				{ name: "HP +4"},
+				{ name: "MOV +2"},
+				{ name: "EP +2"},
+				{ name: "DMG +2"}
 			],
 			tier2: [
 				{ name: "HP +4"},
-				{ name: "ATK +1"},
-				{ name: "IMPR +1"},
 				{ name: "DMG +1"},
-				{ name: "EP +2"}],
+				{ name: "IMPR +1"},
+				{ name: "EP +2"},
+				{ name: "ATK +2"}],
 			tier3: [
-				{ name: "HP +6"},
 				{ name: "EP +1"},
+				{ name: "ATK +1"},
 				{ name: "STAT UP!", description: "Aumenta un dado de Stat en un tamaño." },
-				{ name: "EP +1"},
+				{ name: "HP +6"},
 				{ name: "DMG +2"},
 
 			]
@@ -855,6 +741,9 @@ const moduleCatalog = {
 				},
 				{name:"Gimmick Draw", type: "perk", 
 					description: "Ganas una gimmick adicional. <br> Al conseguir esta perk, escoge 1 módulo de efecto y una restricción de tu self core para equipar a la gimmick. Los módulos de efecto de esta gimmick deben ser distintos a los de tus otras gimmicks. <br> Solo puedes activar 1 gimmick por acción."
+				},
+				{name:"Elemental Scorch", type: "perk", 
+					description: `Al aplicar daño elemental ([🔥, ❄️, 🌪️, ⚡ y 🧱] en un rango de Área, puedes pagar +3PE para extender la duración del módulo de daño de “instantáneo” a “escena".`
 				},
 				{name:"Elemental Backslash [+2 ☐ ]",
 					description: "Tras usar esta skill, ganas vulnerabilidad a 1 tipo de daño elemental [🔥, ❄️, 🌪️, ⚡ y 🧱] (definido durante creación) hasta el final de tu siguiente turno.",
@@ -890,69 +779,31 @@ const moduleCatalog = {
 		tier3: [],
 		statUpgrades: {
 			tier1: [
-				{ name: "HP +2", 
-					description: "Permanent +1 to Max HP"
-				},
-				{ name: "ATK +1", 
-					description: "Permanent +2 to Max HP"
-				},
-				{ name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
-				},
-				{
-				name: "HP +3", 
-					description: "Permanent +3 to Max HP"
-				},
-				{ 
-				name: "Job +1", 
-					description: "Permanent +1 to the amount of jobs you can learn"
-				}
+				{ name: "DMG +1"},
+				{ name: "HP +4"},
+				{ name: "EQUIP +1"},
+				{ name: "EP +2"},
+				{ name: "DMG +2"}
 			],
 			tier2: [
-				{ 
-					name: "HP +3", 
-					description: "Permanent +3 to Max HP"
-				},
-				{ 
-					name: "EP +1", 
-				},
-				{ 
-					name: "DM +1", 
-					description: "Permanent +1 to Magical Defense"
-				},
-				{
-					name: "ATK +1 ", 
-				},
-				{ 
-					name: "Oficio +1", 
-				}
-			],
+				{ name: "EP +1"},
+				{ name: "ATK +1"},
+				{ name: "IMPR +1"},
+				{ name: "HP +6"},
+				{ name: "ATK +2"}],
 			tier3: [
-				{ 
-					name: "HP +4", 
-					description: "Permanent +4 to Max HP"
-				},
-				{ 
-					name: "EP +1", 
-					description: "Permanent +1 to Max Energy Points"
-				},				
-				{ 
-					name: "Stat Up!", 
-					description: "Permanently increase the dice size of one Stat of your choice, to a max of 12."
-				},
-				{
-					name: "HP +4", 
-					description: "Permanent +4 to Max HP"
-				},
-				{ 
-					name: "ATK +2"
-				}
-			],			
+				{ name: "HP +4"},
+				{ name: "DMG +1"},
+				{ name: "STAT UP!", description: "Aumenta un dado de Stat en un tamaño." },
+				{ name: "EP +2"},
+				{ name: "ATK +2"},
+
+			]
 		},
 		perks: {
 			tier1: [
 				{ name: "Alquimista Tier 2", 
-				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks deAlquimista.", 
+				 description: "Debes comprar este modulo para ganar acceso al siguiente tier de perks del Alquimista.", 
 				 type: "perk" 
 				},
 				{ name: "Fabricate", 

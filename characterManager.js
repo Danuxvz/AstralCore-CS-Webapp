@@ -74,9 +74,21 @@ async function syncCharacters() {
         const userId = currentUser.id;
         const localCharacters = await getCharacterList();
         console.log("Fetching characters from DB...");
-        const remoteCharacters = await fetchCharactersFromDB(userId);
-        console.log("Characters fetched from DB.");
+        
+        // Fetch remote characters with proper error handling
+        let remoteCharacters;
+        try {
+            remoteCharacters = await fetchCharactersFromDB(userId);
+            console.log("Characters fetched from DB.");
+        } catch (error) {
+            console.error("Failed to fetch characters from DB:", error);
+            // Show error message and log out
+            alert("Sync failed: Network error. Logging out.");
+            await logout();
+            return; // Abort the sync entirely
+        }
 
+        // Rest of your sync logic remains the same...
         const mergedCharacters = { ...localCharacters };
 
         // Build a lookup for remote characters by hash and name
@@ -180,9 +192,10 @@ async function syncCharacters() {
 
         // Update the character selector
         await populateCharacterSelector();
-        
     } catch (error) {
-        console.error("Error syncing characters:", error);
+        console.error("Syncing Failed:", error);
+        // Don't set isSyncing to false here - let the finally block handle it
+        throw error; // Re-throw to prevent further processing
     } finally {
         // Clear sync flag
         isSyncing = false;
@@ -233,8 +246,8 @@ async function loginWithDiscord() {
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "discord",
 		options: {
-			// redirectTo: "http://127.0.0.1:3000/index.html"
-			redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+			redirectTo: "http://127.0.0.1:3000/index.html"
+			// redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 		}
 	});
 
@@ -285,34 +298,35 @@ async function handleAuthChange(session) {
       await syncCharacters();
       const characters = await populateCharacterSelector();
 
-      if (characters && Object.keys(characters).length > 0) {
-        // Try to restore the previous active character if it exists
-        if (previousActiveCharacterId && characters[previousActiveCharacterId]) {
-          await setActiveCharacter(previousActiveCharacterId);
-        } else {
-          // Fallback to the first character if the previous one doesn't exist
-          const firstCharacterId = Object.keys(characters)[0];
-          await setActiveCharacter(firstCharacterId);
-        }
-      }
-    } else {
-      // Session refresh - just update the reference
-      currentUser = user;
+    //   if (characters && Object.keys(characters).length > 0) {
+    //     // Try to restore the previous active character if it exists
+    //     if (previousActiveCharacterId && characters[previousActiveCharacterId]) {
+    //       await setActiveCharacter(previousActiveCharacterId);
+    //     } else {
+    //       // Fallback to the first character if the previous one doesn't exist
+    //       const firstCharacterId = Object.keys(characters)[0];
+    //       await setActiveCharacter(firstCharacterId);
+    //     }
+    //   }
+    } 
+	// else {
+    //   // Session refresh - just update the reference
+    //   currentUser = user;
       
-      // Only sync if we haven't synced recently (within last minute)
-      const lastSync = localStorage.getItem('lastSyncTime');
-      const currentTime = Date.now();
+    //   // Only sync if we haven't synced recently (within last minute)
+    //   const lastSync = localStorage.getItem('lastSyncTime');
+    //   const currentTime = Date.now();
       
-      // Only sync if visible and not just returning from long absence
-      if (document.visibilityState === 'visible' && 
-          (!lastSync || (currentTime - parseInt(lastSync)) > 60000)) {
-        // Use a small delay to avoid race conditions
-        setTimeout(() => {
-          syncCharacters();
-          localStorage.setItem('lastSyncTime', currentTime.toString());
-        }, 2000);
-      }
-    }
+    //   // Only sync if visible and not just returning from long absence
+    //   if (document.visibilityState === 'visible' && 
+    //       (!lastSync || (currentTime - parseInt(lastSync)) > 60000)) {
+    //     // Use a small delay to avoid race conditions
+    //     setTimeout(() => {
+    //       syncCharacters();
+    //       localStorage.setItem('lastSyncTime', currentTime.toString());
+    //     }, 2000);
+    //   }
+    // }
   } else {
     console.log("No active user");
 
@@ -326,13 +340,13 @@ async function handleAuthChange(session) {
       const characters = await populateCharacterSelector();
       
     //   Try to keep the same character active if it exists in local storage
-      if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
-        await setActiveCharacter(currentActiveCharacterId);
-      } else if (Object.keys(characters).length > 0) {
-        // Fallback to the first character if the current one doesn't exist
-        const firstCharacterId = Object.keys(characters)[0];
-        await setActiveCharacter(firstCharacterId);
-      }
+    //   if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
+    //     await setActiveCharacter(currentActiveCharacterId);
+    //   } else if (Object.keys(characters).length > 0) {
+    //     // Fallback to the first character if the current one doesn't exist
+    //     const firstCharacterId = Object.keys(characters)[0];
+    //     await setActiveCharacter(firstCharacterId);
+    //   }
     }
   }
 }
@@ -342,7 +356,7 @@ async function saveCharacterToDB(characterId, characterData) {
     
     // First save to IndexedDB
     try {
-        await saveCharacterToIndexedDB(characterId, characterData);
+        await saveCharacterToLocalDB(characterId, characterData);
     } catch (error) {
         console.error("Error saving to IndexedDB:", error);
     }
@@ -391,7 +405,7 @@ async function saveCharacterToDB(characterId, characterData) {
                     if (error) throw error;
                     
                     // Update IndexedDB to use the new ID
-                    await saveCharacterToIndexedDB(data.id, characterData);
+                    await saveCharacterToLocalDB(data.id, characterData);
                     await deleteCharacterFromLocalDB(characterId);
                     
                     // Update active character ID if needed
@@ -421,26 +435,26 @@ async function saveCharacterToDB(characterId, characterData) {
 }
 
 async function fetchCharactersFromDB(userId) {
-	if (!userId) return {};
+    if (!userId) return {};
 
-	try {
-		const { data, error } = await supabase
-			.from("characters")
-			.select("*")
-			.eq("user_id", userId);
+    try {
+        const { data, error } = await supabase
+            .from("characters")
+            .select("*")
+            .eq("user_id", userId);
 
-		if (error) throw error;
+        if (error) throw error;
 
-		const characters = {};
-		data.forEach(row => {
-			characters[row.id] = row.data;
-		});
-		
-		return characters;
-	} catch (error) {
-		console.error("Error fetching characters from DB:", error);
-		return {};
-	}
+        const characters = {};
+        data.forEach(row => {
+            characters[row.id] = row.data;
+        });
+        
+        return characters;
+    } catch (error) {
+        console.error("Error fetching characters from DB:", error);
+        throw error; // Propagate the error instead of returning empty object
+    }
 }
 
 async function deleteCharacterFromDB(characterId) {
@@ -453,8 +467,6 @@ const { error } = await supabase
 
 if (error) console.error("Error deleting:", error);
 }
-
-
 
 
 
@@ -552,7 +564,7 @@ async function saveActiveCharacter() {
         
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
-            console.log("Character saved to IndexedDB:", currentActiveCharacterId);
+            console.log("Character loaded from IndexedDB:", currentActiveCharacterId);
             resolve(request.result);
         };
     });
@@ -572,7 +584,7 @@ async function deleteCharacterFromLocalDB(id) {
     });
 }
 
-async function saveCharacterToIndexedDB(id, characterData) {
+async function saveCharacterToLocalDB(id, characterData) {
     if (!db) await openLocalDatabase();
     
     return new Promise((resolve, reject) => {
@@ -603,7 +615,7 @@ async function migrateFromLocalStorage() {
             
             // Save each character to IndexedDB
             for (const [id, character] of Object.entries(oldCharacters)) {
-                await saveCharacterToIndexedDB(id, character);
+                await saveCharacterToLocalDB(id, character);
             }
             
             // Remove old data
@@ -645,7 +657,7 @@ async function initializeLocalCharacters() {
         if (Object.keys(characters).length === 0 && !user) {
             const defaultCharacter = createLocalDefaultCharacter();
             const defaultId = "default";
-            await saveCharacterToIndexedDB(defaultId, defaultCharacter);
+            await saveCharacterToLocalDB(defaultId, defaultCharacter);
             
             // Set as active character
             activeCharacter = defaultCharacter;
@@ -653,7 +665,8 @@ async function initializeLocalCharacters() {
         } else if (Object.keys(characters).length > 0) {
             // Load the first character
             const firstCharacterId = Object.keys(characters)[0];
-            await setActiveCharacter(firstCharacterId);
+			console.log("CHANGE ACTIVE CHARACTER BY INITIALIZE!!!!")
+            // await setActiveCharacter(firstCharacterId);
         }
     } catch (error) {
         console.error("Error initializing characters:", error);
@@ -708,11 +721,10 @@ async function setActiveCharacter(characterId, skipSave = false) {
         await saveActiveCharacter();
     }
     
-    // Rest of the function remains the same...
     // If we're in the middle of a sync, wait for it to complete
     if (isSyncing) {
         console.log("Sync in progress, deferring character switch");
-        setTimeout(() => setActiveCharacter(characterId, skipSave), 500);
+        setTimeout(() => setActiveCharacter(characterId, skipSave), 1000);
         return;
     }
     
@@ -953,7 +965,7 @@ document.getElementById("deleteCharacter").addEventListener("click", async () =>
         } else {
             const firstCharacterId = Object.keys(characters)[0];
             characterSelector.value = firstCharacterId;
-            await setActiveCharacter(firstCharacterId, true); // Skip save here
+            await setActiveCharacter(firstCharacterId, true);
         }
         updateImageDisplay();
     } catch (error) {
@@ -1102,6 +1114,10 @@ function gatherCharacterData() {
 // Populate character data from imported JSON
 function populateCharacterData(data) {
 	console.log("Populating character data:", data);
+	if (isSyncing){
+		console.log("Populate stoped because of sync");
+		return;
+	}
 
 	// Set character name
 	const charNameInput = document.getElementById("charName");
@@ -1459,7 +1475,6 @@ function syncOldCharacterData() {
 async function initApp() {
 	try {
 		console.log("initApp start");
-					console.log("Change on selector!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 		initializeLocalCharacters();
 		const characterSelector = document.getElementById("characterSelector");
 
@@ -1472,6 +1487,12 @@ async function initApp() {
 		}
 
 		characterSelector.addEventListener("change", event => {
+			console.log("CHANGE ACTIVE CHARACTER!!!!")
+			if (isSyncing){
+				console.log("Change can't be done while sync");
+				characterSelector.value = firstCharacterId;
+				return
+			}
 			setActiveCharacter(event.target.value);
 		});
 
