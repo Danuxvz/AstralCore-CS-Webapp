@@ -3,6 +3,7 @@ import moduleCatalog from './moduleCatalog.js';
 import { supabase } from "./supabase.js";
 
 //global variables
+const lastSupabaseSave = {};
 let draggedModule = null;
 let currentUser = null;
 let activeCatalog = "";
@@ -64,77 +65,88 @@ function addTimestamps(character) {
 }
 
 async function syncCharacters() {
-    if (!currentUser) return;
-    
-    // Set sync flag
+    if (!currentUser || isSyncing) return;
     isSyncing = true;
     console.log("Sync started");
 
     try {
         const userId = currentUser.id;
         const localCharacters = await getCharacterList();
-        console.log("Fetching characters from DB...");
-        
-        // Fetch remote characters with proper error handling
-        let remoteCharacters;
+        const characterSelector = document.getElementById("characterSelector");
+        const currentActiveIdBeforeSync = currentActiveCharacterId;
+
+        // Fetch only IDs + name + updatedAt from remote
+        let remoteMeta;
         try {
-            remoteCharacters = await fetchCharactersFromDB(userId);
-            console.log("Characters fetched from DB.");
+            remoteMeta = await fetchCharacterMeta(userId); 
+            // returns { [id]: { name, updatedAt } }
+            console.log("Character metadata fetched from DB.");
         } catch (error) {
             console.error("Failed to fetch characters from DB:", error);
-            // Show error message and log out
             alert("Sync failed: Network error. Logging out.");
             await logout();
-            return; // Abort the sync entirely
+            return;
         }
 
-        // Rest of your sync logic remains the same...
-        const mergedCharacters = { ...localCharacters };
-
-        // Build a lookup for remote characters by hash and name
-        const remoteByHash = {};
+        // Track remote characters by name for duplicate detection
         const remoteByName = {};
-        
-        for (const [remoteId, remoteChar] of Object.entries(remoteCharacters)) {
-            addTimestamps(remoteChar);
-            const hash = hashCharacterData(remoteChar);
-            remoteByHash[hash] = { id: remoteId, data: remoteChar };
-            remoteByName[remoteChar.name] = { id: remoteId, data: remoteChar, hash: hash };
-        }
+        Object.entries(remoteMeta).forEach(([id, meta]) => {
+            remoteByName[meta.name] = { id, updatedAt: meta.updatedAt };
+        });
 
         // Process local characters
         for (const [localId, localCharData] of Object.entries(localCharacters)) {
-            // Load the full character data from IndexedDB
             const localChar = await loadCharacter(localId);
             addTimestamps(localChar);
-            const localHash = hashCharacterData(localChar);
 
-            const remoteMatch = remoteByHash[localHash];
+            if (remoteMeta[localId]) {
+                // Remote character exists with same ID
+                const remoteUpdated = remoteMeta[localId].updatedAt || 0;
 
-            if (!remoteMatch) {
-                // Check if a character with the same name exists (even if data is different)
-                const sameNameChar = remoteByName[localChar.name];
-                
-                if (sameNameChar) {
-                    // Character with same name exists but different data
-                    if (localChar.updatedAt > sameNameChar.data.updatedAt) {
-                        console.log(`Updating remote "${sameNameChar.data.name}" with newer local copy`);
-                        localChar.updatedAt = Date.now();
-                        await saveCharacterToDB(sameNameChar.id, localChar);
-                        mergedCharacters[sameNameChar.id] = localChar;
-                        if (localId !== sameNameChar.id) {
-                            await deleteCharacterFromLocalDB(localId);
-                            delete mergedCharacters[localId];
+                if (remoteUpdated > localChar.updatedAt) {
+                    // Remote newer → fetch full data and overwrite local
+                    const { data, error } = await supabase
+                        .from("characters")
+                        .select("data")
+                        .eq("id", localId)
+                        .single();
+                    if (!error && data) {
+                        await saveCharacterToLocalDB(localId, data.data);
+                    }
+                } else if (localChar.updatedAt > remoteUpdated) {
+                    // Local newer → push to Supabase
+                    localChar.updatedAt = Date.now();
+                    await saveCharacterToDB(localId, localChar);
+                }
+            } else {
+                // Remote doesn't have this ID — maybe check by name
+                const remoteSameName = remoteByName[localChar.name];
+                if (remoteSameName) {
+                    // Conflict by name → resolve by updatedAt
+                    if (remoteSameName.updatedAt > localChar.updatedAt) {
+                        // Remote newer → fetch and overwrite local
+                        const { data, error } = await supabase
+                            .from("characters")
+                            .select("data")
+                            .eq("id", remoteSameName.id)
+                            .single();
+                        if (!error && data) {
+                            await saveCharacterToLocalDB(remoteSameName.id, data.data);
+                            if (currentActiveCharacterId === localId) {
+                                currentActiveCharacterId = remoteSameName.id;
+                                await setActiveCharacter(remoteSameName.id, true);
+                            }
+                            if (localId !== remoteSameName.id) {
+                                await deleteCharacterFromLocalDB(localId);
+                            }
                         }
                     } else {
-                        console.log(`Updating local "${localChar.name}" with newer remote copy`);
-                        sameNameChar.data.updatedAt = Date.now();
-                        mergedCharacters[localId] = sameNameChar.data;
-                        await saveCharacterToDB(localId, sameNameChar.data);
+                        // Local newer → push to remote
+                        localChar.updatedAt = Date.now();
+                        await saveCharacterToDB(remoteSameName.id, localChar);
                     }
                 } else {
-                    // Completely new character → upload
-                    console.log(`Uploading new character`, localChar);
+                    // Truly new local character → insert remote
                     localChar.updatedAt = Date.now();
                     const { data, error } = await supabase
                         .from("characters")
@@ -142,64 +154,53 @@ async function syncCharacters() {
                             user_id: userId,
                             name: localChar.name,
                             data: localChar,
-                            discord_id: currentUser?.user_metadata?.provider_id || null 
+                            updatedAt: localChar.updatedAt || new Date().toISOString(), 
+                            discord_id: currentUser?.user_metadata?.provider_id || null
                         })
-                        .select("id, data")
+                        .select("id")
                         .single();
 
-                    if (error) {
-                        console.error("Failed to upload character:", error);
-                    } else if (data) {
-                        mergedCharacters[data.id] = localChar;
-                        if (localId !== data.id) {
-                            await deleteCharacterFromLocalDB(localId);
-                            delete mergedCharacters[localId];
+                    if (!error && data) {
+                        await saveCharacterToLocalDB(data.id, localChar);
+                        if (currentActiveCharacterId === localId) {
+                            currentActiveCharacterId = data.id;
+                            await setActiveCharacter(data.id, true);
                         }
-
-                        const uploadedHash = hashCharacterData(localChar);
-                        remoteByHash[uploadedHash] = { id: data.id, data: localChar };
-                        remoteByName[localChar.name] = { id: data.id, data: localChar, hash: uploadedHash };
+                        await deleteCharacterFromLocalDB(localId);
                     }
-                }
-            } else {
-                // Found an exact match
-                console.log(`Character "${localChar.name}" is already synced.`);
-                // Ensure we're using the remote ID
-                if (localId !== remoteMatch.id) {
-                    mergedCharacters[remoteMatch.id] = localChar;
-                    await deleteCharacterFromLocalDB(localId);
-                    delete mergedCharacters[localId];
                 }
             }
         }
 
         // Process remote-only characters
-        for (const [remoteId, remoteChar] of Object.entries(remoteCharacters)) {
-            const remoteHash = hashCharacterData(remoteChar);
-            const alreadyLocal = Object.entries(mergedCharacters).some(
-                ([localId, c]) => localId === remoteId || hashCharacterData(c) === remoteHash
-            );
-
-            if (!alreadyLocal) {
-                console.log(`Downloading new remote character "${remoteChar.name}"`);
-                remoteChar.updatedAt = Date.now();
-                mergedCharacters[remoteId] = remoteChar;
-                await saveCharacterToDB(remoteId, remoteChar);
+        for (const [remoteId, meta] of Object.entries(remoteMeta)) {
+            const localChar = await loadCharacter(remoteId);
+            if (!localChar) {
+                const { data, error } = await supabase
+                    .from("characters")
+                    .select("data")
+                    .eq("id", remoteId)
+                    .single();
+                if (!error && data) {
+                    const remoteChar = addTimestamps(data.data);
+                    await saveCharacterToLocalDB(remoteId, remoteChar);
+                    await addCharacterToSelector(remoteId, remoteChar);
+                }
             }
         }
 
-        console.log("Sync complete. Local is up-to-date.");
+        // Restore active character if changed
+        if (currentActiveCharacterId !== currentActiveIdBeforeSync) {
+            characterSelector.value = currentActiveCharacterId;
+        }
 
-        // Update the character selector
-        await populateCharacterSelector();
+        console.log("Sync complete");
     } catch (error) {
         console.error("Syncing Failed:", error);
-        // Don't set isSyncing to false here - let the finally block handle it
-        throw error; // Re-throw to prevent further processing
     } finally {
-        // Clear sync flag
         isSyncing = false;
-        console.log("Sync completed");
+        characterSelector.disabled = !!isSyncing;
+        renderSummary();
     }
 }
 
@@ -246,8 +247,8 @@ async function loginWithDiscord() {
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "discord",
 		options: {
-			redirectTo: "http://127.0.0.1:3000/index.html"
-			// redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
+			// redirectTo: "http://127.0.0.1:3000/index.html"
+			redirectTo: "https:/potilandiaheroes-dxhmb6hwhnc4bfhb.canadacentral-01.azurewebsites.net"
 		}
 	});
 
@@ -274,81 +275,43 @@ async function logout() {
 }
 
 async function handleAuthChange(session) {
-  const user = session?.user;
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const userEmail = document.getElementById("userEmail");
+    const user = session?.user;
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userEmail = document.getElementById("userEmail");
 
-  if (user) {
-    console.log("User logged in:", user);
-    console.log("Logged in Discord user ID:", user.user_metadata.provider_id);
+    if (user) {
+        console.log("User logged in:", user);
+        console.log("Logged in Discord user ID:", user.user_metadata.provider_id);
 
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-    userEmail.textContent = user.email || user.user_metadata?.full_name || "";
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userEmail.textContent = user.email || user.user_metadata?.full_name || "";
 
-    // Only do heavy lifting if user actually changed
-    if (!currentUser || currentUser.id !== user.id) {
-      currentUser = user;
+        // Only do heavy lifting if user actually changed
+        if (!currentUser || currentUser.id !== user.id) {
+            currentUser = user;
+            
+            // Perform sync on login
+            await syncCharacters();
+        }
+    } else {
+        console.log("No active user");
 
-      // Store the current active character ID before syncing
-      const previousActiveCharacterId = currentActiveCharacterId;
-
-      // First sync characters, then populate selector
-      await syncCharacters();
-      const characters = await populateCharacterSelector();
-
-    //   if (characters && Object.keys(characters).length > 0) {
-    //     // Try to restore the previous active character if it exists
-    //     if (previousActiveCharacterId && characters[previousActiveCharacterId]) {
-    //       await setActiveCharacter(previousActiveCharacterId);
-    //     } else {
-    //       // Fallback to the first character if the previous one doesn't exist
-    //       const firstCharacterId = Object.keys(characters)[0];
-    //       await setActiveCharacter(firstCharacterId);
-    //     }
-    //   }
-    } 
-	// else {
-    //   // Session refresh - just update the reference
-    //   currentUser = user;
-      
-    //   // Only sync if we haven't synced recently (within last minute)
-    //   const lastSync = localStorage.getItem('lastSyncTime');
-    //   const currentTime = Date.now();
-      
-    //   // Only sync if visible and not just returning from long absence
-    //   if (document.visibilityState === 'visible' && 
-    //       (!lastSync || (currentTime - parseInt(lastSync)) > 60000)) {
-    //     // Use a small delay to avoid race conditions
-    //     setTimeout(() => {
-    //       syncCharacters();
-    //       localStorage.setItem('lastSyncTime', currentTime.toString());
-    //     }, 2000);
-    //   }
-    // }
-  } else {
-    console.log("No active user");
-
-    if (currentUser !== null) {
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-      userEmail.textContent = "";
-
-      currentUser = null;
-
-      const characters = await populateCharacterSelector();
-      
-    //   Try to keep the same character active if it exists in local storage
-    //   if (currentActiveCharacterId && characters[currentActiveCharacterId]) {
-    //     await setActiveCharacter(currentActiveCharacterId);
-    //   } else if (Object.keys(characters).length > 0) {
-    //     // Fallback to the first character if the current one doesn't exist
-    //     const firstCharacterId = Object.keys(characters)[0];
-    //     await setActiveCharacter(firstCharacterId);
-    //   }
+        if (currentUser !== null) {
+            loginBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+            userEmail.textContent = "";
+            currentUser = null;
+            
+            // Reset sync state
+            isSyncing = false;
+            
+            // Just update the selector with local characters
+			console.log("Populating because of handle Auth Change");
+            await populateCharacterSelector();
+        }
     }
-  }
 }
 
 async function saveCharacterToDB(characterId, characterData) {
@@ -397,6 +360,7 @@ async function saveCharacterToDB(characterId, characterData) {
                             user_id: user.id,
                             name: characterData.name,
                             data: characterData,
+							updatedAt: localChar.updatedAt || new Date().toISOString(),
                             discord_id: user.user_metadata?.provider_id || null
                         })
                         .select("id")
@@ -411,6 +375,7 @@ async function saveCharacterToDB(characterId, characterData) {
                     // Update active character ID if needed
                     if (currentActiveCharacterId === characterId) {
                         currentActiveCharacterId = data.id;
+						// await setActiveCharacter(currentActiveCharacterId);
                     }
                 }
             } else {
@@ -433,6 +398,22 @@ async function saveCharacterToDB(characterId, characterData) {
         }
     }
 }
+
+async function fetchCharacterMeta(userId) {
+    const { data, error } = await supabase
+        .from("characters")
+        .select("id, name, updatedAt")
+        .eq("user_id", userId);
+
+    if (error) throw error;
+
+    const meta = {};
+    data.forEach(row => {
+        meta[row.id] = { name: row.name, updatedAt: row.updatedAt };
+    });
+    return meta;
+}
+
 
 async function fetchCharactersFromDB(userId) {
     if (!userId) return {};
@@ -544,6 +525,15 @@ async function loadCharacter(id) {
     });
 }
 
+async function loadLastActiveCharacter() {
+    const lastActiveId = localStorage.getItem('lastActiveCharacterId');
+    if (lastActiveId) {
+        const character = await setActiveCharacter(lastActiveId, true);
+		return true;
+    }
+    return false;
+}
+
 async function saveActiveCharacter() {
     if (!activeCharacter || !currentActiveCharacterId) return;
     
@@ -632,16 +622,6 @@ async function migrateFromLocalStorage() {
 
 
 // Unified function to load characters
-async function loadAllCharacters() {
-	const characters = JSON.parse(localStorage.getItem("characters") || "{}");
-	console.log("Loading all characters...");
-	const user = currentUser;
-	console.log("User:", user);
-	
-	return characters
-	
-}
-
 async function initializeLocalCharacters() {
     try {
         // Open database
@@ -665,8 +645,8 @@ async function initializeLocalCharacters() {
         } else if (Object.keys(characters).length > 0) {
             // Load the first character
             const firstCharacterId = Object.keys(characters)[0];
-			console.log("CHANGE ACTIVE CHARACTER BY INITIALIZE!!!!")
-            // await setActiveCharacter(firstCharacterId);
+			// console.log("CHANGE ACTIVE CHARACTER BY INITIALIZE!!!!")
+            // await setActiveCharacter(activeCharacter);
         }
     } catch (error) {
         console.error("Error initializing characters:", error);
@@ -711,6 +691,10 @@ function createLocalDefaultCharacter() {
 }
 
 async function setActiveCharacter(characterId, skipSave = false) {
+    // Update selector first
+    const characterSelector = document.getElementById("characterSelector");
+    characterSelector.value = characterId;
+    
     if (characterId === currentActiveCharacterId) {
         console.log("Character already active, skipping reload:", characterId);
         return;
@@ -721,10 +705,13 @@ async function setActiveCharacter(characterId, skipSave = false) {
         await saveActiveCharacter();
     }
     
-    // If we're in the middle of a sync, wait for it to complete
-    if (isSyncing) {
+    // Store the active character ID for future sessions
+    localStorage.setItem('lastActiveCharacterId', characterId);
+    
+    // If we're in the middle of a sync and this isn't the initial character, wait
+    if (isSyncing && !isSyncing && currentActiveCharacterId) {
         console.log("Sync in progress, deferring character switch");
-        setTimeout(() => setActiveCharacter(characterId, skipSave), 1000);
+        setTimeout(() => setActiveCharacter(characterId, skipSave), 0);
         return;
     }
     
@@ -738,12 +725,15 @@ async function setActiveCharacter(characterId, skipSave = false) {
         // If character not found in IndexedDB and user is logged in, check DB
         if (!selectedCharacter && user) {
             try {
-                const remoteCharacters = await fetchCharactersFromDB(user.id);
-                selectedCharacter = remoteCharacters[characterId];
-                
-                if (selectedCharacter) {
-                    // Add this character to IndexedDB
-                    await saveCharacterToDB(characterId, selectedCharacter);
+                // Only fetch from DB if sync is complete or this is the initial character
+                if (isSyncing || !currentActiveCharacterId) {
+                    const remoteCharacters = await fetchCharactersFromDB(user.id);
+                    selectedCharacter = remoteCharacters[characterId];
+                    
+                    if (selectedCharacter) {
+                        // Add this character to IndexedDB
+                        await saveCharacterToDB(characterId, selectedCharacter);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching character from DB:", error);
@@ -824,6 +814,7 @@ document.getElementById("newCharacter").addEventListener("click", async () => {
                         user_id: user.id,
                         name: newCharacter.name,
                         data: newCharacter,
+						updatedAt: newCharacter.updatedAt || new Date().toISOString(),
                         discord_id: user.user_metadata?.provider_id || null
                     })
                     .select("id, data")
@@ -890,6 +881,7 @@ document.getElementById("importCharacter").addEventListener("change", async func
                             user_id: user.id,
                             name: migratedCharacter.name,
                             data: migratedCharacter,
+       						updatedAt: new Date().toISOString(),
                             discord_id: user.user_metadata?.provider_id || null
                         })
                         .select("id, data")
@@ -958,11 +950,20 @@ document.getElementById("deleteCharacter").addEventListener("click", async () =>
         // Update selector
         await populateCharacterSelector();
 
-        // Select a new character or create default - use skipSave to prevent saving the deleted character
+        // Select a new character or create default
         const characters = await getCharacterList();
         if (Object.keys(characters).length === 0) {
-            document.getElementById("newCharacter").click();
+            // Create a new default character
+            const defaultCharacter = createLocalDefaultCharacter();
+            const defaultId = "default";
+            await saveCharacterToLocalDB(defaultId, defaultCharacter);
+            
+            // Update selector and set as active
+            await populateCharacterSelector();
+            characterSelector.value = defaultId;
+            await setActiveCharacter(defaultId, true);
         } else {
+            // Select the first available character
             const firstCharacterId = Object.keys(characters)[0];
             characterSelector.value = firstCharacterId;
             await setActiveCharacter(firstCharacterId, true);
@@ -992,15 +993,24 @@ async function saveCharacterData() {
         
         // Sync to Supabase in the background if user is logged in
         if (currentUser) {
-            setTimeout(async () => {
-                try {
-                    await saveCharacterToDB(selectedCharacterId, activeCharacter);
-                    console.log("Character saved to Supabase in background:", selectedCharacterId);
-                } catch (error) {
-                    console.error("Background save error:", error);
-                }
-            }, 0);
-        }
+            const now = Date.now();
+            const lastSave = lastSupabaseSave[selectedCharacterId] || 0;
+            
+            if (now - lastSave >= 5000) {
+                lastSupabaseSave[selectedCharacterId] = now;
+                
+                setTimeout(async () => {
+                    try {
+                        await saveCharacterToDB(selectedCharacterId, activeCharacter);
+                        console.log("Character saved to Supabase in background:", selectedCharacterId);
+                    } catch (error) {
+                        console.error("Background save error:", error);
+                    }
+                }, 0);
+            } else {
+                console.log("Supabase save skipped to avoid frequent updates.");
+            }
+		}
     } catch (error) {
         console.error("Error saving character to IndexedDB:", error);
     }
@@ -1114,10 +1124,6 @@ function gatherCharacterData() {
 // Populate character data from imported JSON
 function populateCharacterData(data) {
 	console.log("Populating character data:", data);
-	if (isSyncing){
-		console.log("Populate stoped because of sync");
-		return;
-	}
 
 	// Set character name
 	const charNameInput = document.getElementById("charName");
@@ -1222,9 +1228,10 @@ function populateCharacterData(data) {
 
 async function populateCharacterSelector() {
     const characterSelector = document.getElementById("characterSelector");
-    const currentSelection = characterSelector.value; // Store current selection
+    const currentSelection = characterSelector.value;
     
     console.log("Loading characters to selector...");
+	characterSelector.disabled = !!isSyncing;
     const characters = await getCharacterList();
     
     // Clear and repopulate
@@ -1250,8 +1257,21 @@ async function populateCharacterSelector() {
     else if (Object.keys(characters).length > 0) {
         characterSelector.value = Object.keys(characters)[0];
     }
-    
+    characterSelector.disabled = !!isSyncing;
     return characters;
+}
+
+async function addCharacterToSelector(characterId, characterData) {
+    const characterSelector = document.getElementById("characterSelector");
+    
+    // Check if option already exists
+    const existingOption = characterSelector.querySelector(`option[value="${characterId}"]`);
+    if (!existingOption) {
+        const option = document.createElement("option");
+        option.value = characterId;
+        option.textContent = characterData.name || "Unnamed Character";
+        characterSelector.appendChild(option);
+    }
 }
 
 
@@ -1473,133 +1493,170 @@ function syncOldCharacterData() {
 }
 
 async function initApp() {
-	try {
-		console.log("initApp start");
-		initializeLocalCharacters();
-		const characterSelector = document.getElementById("characterSelector");
+    try {
+        console.log("initApp start");
+        await initializeLocalCharacters();
+        
+        
+        // Get local characters for selector
+        const characters = await getCharacterList();
+        
+        
+        // Populate selector with local characters first
+        await populateCharacterSelector();
+        
+		const hasLastActive = await loadLastActiveCharacter();
 
-		const characters = await populateCharacterSelector();
+		// Set active character - prefer last active, otherwise first available
+		let activeId = null;
+        if (hasLastActive && currentActiveCharacterId) {
+            activeId = currentActiveCharacterId;
+        } else if (Object.keys(characters).length > 0) {
+            activeId = Object.keys(characters)[0];
+        }
 
-		const firstCharacterId = Object.keys(characters)[0];
-		if (firstCharacterId) {
-			await setActiveCharacter(firstCharacterId);
-			characterSelector.value = firstCharacterId;
-		}
+        // if (activeId) {
+        //     // Set the selector value first
+        //     document.getElementById("characterSelector").value = activeId;
+        //     await setActiveCharacter(activeId, true); // Skip initial save
+        // }
 
-		characterSelector.addEventListener("change", event => {
-			console.log("CHANGE ACTIVE CHARACTER!!!!")
-			if (isSyncing){
-				console.log("Change can't be done while sync");
-				characterSelector.value = firstCharacterId;
-				return
-			}
-			setActiveCharacter(event.target.value);
-		});
+        // Setup event listeners and UI
+        setupEventListeners();
+        setupCharacterImage();
+        calculateAvailableJobs();
+        loadSelfCoreContent();
+        loadOriginPerks();
+        updateSPDisplay();
+		renderSummary();
 
-		function attachSaveListeners(elements, callback) {
-			elements.forEach(id => {
-				const element = document.getElementById(id);
-				if (element) {
-					const eventType = element.tagName === 'SELECT' ? 'change' : 'input';
-					element.addEventListener(eventType, () => {
-						saveCharacterData();
-						populateCharacterData(activeCharacter);
-						console.log("character data populated by initAPP")
-						if (callback) callback();
-					});
-				} else {
-					console.warn(`Element with ID "${id}" not found.`);
-				}
-			});
-		}
-
-		// Character name
-		const charNameInput = document.getElementById("charName");
-		if (charNameInput) attachSaveListeners([charNameInput.id]);
-
-		// Primary stats
-		const stats = ['mig', 'dex', 'wlp', 'int', 'stl'];
-		attachSaveListeners(stats.map(stat => [`${stat}Dice`, `${stat}Temp`]).flat());
-
-		// Secondary stats
-		const secondaryStats = ['hp', 'ep', 'df', 'dm', 'impr', 'mov', 'atk', 'dmg'];
-		attachSaveListeners(secondaryStats.map(stat => [`${stat}`, `${stat}Temp`]).flat());
-
-		// Jobs
-		const addJobButton = document.getElementById("addJob");
-		if (addJobButton) addJobButton.addEventListener("click", addJob);
-
-		// Current HP/EP summary
-		document.getElementById("currentHp").addEventListener("input", renderSummary);
-		document.getElementById("currentEp").addEventListener("input", renderSummary);
-
-		// CE/SP inputs
-		document.querySelectorAll('#ce, #sp, #ceCore, #spSkills').forEach(input => {
-			input.addEventListener("change", () => {
-				activeCharacter.secondaryStats.ce = parseInt(document.getElementById("ce").value) || 0;
-				activeCharacter.secondaryStats.sp = parseInt(document.getElementById("sp").value) || 0;
-				saveCharacterData();
-				syncExperienceInputs();
-				updateCEDisplay();
-				updateSPDisplay();
-			});
-		});
-
-		// Add skill button
-		const addSkillButton = document.getElementById("addSkill");
-		if (addSkillButton) {
-			addSkillButton.addEventListener("click", () => {
-				if (!activeCharacter.skills) activeCharacter.skills = [];
-
-				const newSkill = {
-					name: "",
-					restrictions: [],
-					stats: ["mig", "dex"],
-					description: "",
-					modules: []
-				};
-
-				activeCharacter.skills.push(newSkill);
-				const index = activeCharacter.skills.length - 1;
-				const skillForm = createSkillForm(newSkill, index);
-
-				document.getElementById("skillsList").appendChild(skillForm);
-				renderSkills();
-				saveCharacterData(); // Save after adding new skill
-			});
-		} else {
-			console.warn("Add Skill button not found!");
-		}
-
-
-		// Other setup calls
-		syncOldCharacterData();
-		setupCharacterImage();
-		calculateAvailableJobs();
-		loadSelfCoreContent();
-		loadOriginPerks();
-		updateSPDisplay();
-
-		console.log("initApp finished");
-	} catch (err) {
-		console.error("initApp crashed:", err);
-		activeCharacter = createLocalDefaultCharacter();
-	}
+        console.log("initApp finished");
+        
+        // Perform initial sync if user is logged in
+        if (currentUser) {
+            await syncCharacters();
+            isSyncing = true;
+        }
+    } catch (err) {
+        console.error("initApp crashed:", err);
+        activeCharacter = createLocalDefaultCharacter();
+    }
 }
 
+function setupEventListeners() {
+    const characterSelector = document.getElementById("characterSelector");
+    characterSelector.addEventListener("change", event => {
+        if (isSyncing) {
+            console.log("Change can't be done during initial sync");
+            // Revert to previous value
+            // characterSelector.value = currentActiveCharacterId;
+            return;
+        }
+        setActiveCharacter(event.target.value);
+    });
+
+    // Character name
+    const charNameInput = document.getElementById("charName");
+    if (charNameInput) {
+        charNameInput.addEventListener("input", () => {
+            saveCharacterData();
+            document.getElementById("charNameDisplay").textContent = charNameInput.value;
+        });
+    }
+
+    // Primary stats
+    const stats = ['mig', 'dex', 'wlp', 'int', 'stl'];
+    stats.forEach(stat => {
+        const diceElement = document.getElementById(stat + "Dice");
+        const tempElement = document.getElementById(stat + "Temp");
+        
+        if (diceElement) {
+            diceElement.addEventListener("input", () => {
+                saveCharacterData();
+                populateCharacterData(activeCharacter);
+            });
+        }
+        
+        if (tempElement) {
+            tempElement.addEventListener("input", () => {
+                saveCharacterData();
+                populateCharacterData(activeCharacter);
+            });
+        }
+    });
+
+    // Secondary stats
+    const secondaryStats = ['hp', 'ep', 'df', 'dm', 'impr', 'mov', 'atk', 'dmg'];
+    secondaryStats.forEach(stat => {
+        const tempElement = document.getElementById(stat + "Temp");
+        if (tempElement) {
+            tempElement.addEventListener("input", () => {
+                saveCharacterData();
+                populateCharacterData(activeCharacter);
+            });
+        }
+    });
+
+    // Jobs
+    const addJobButton = document.getElementById("addJob");
+    if (addJobButton) addJobButton.addEventListener("click", addJob);
+
+    // Current HP/EP summary
+    const currentHpInput = document.getElementById("currentHp");
+    const currentEpInput = document.getElementById("currentEp");
+    if (currentHpInput) currentHpInput.addEventListener("input", renderSummary);
+    if (currentEpInput) currentEpInput.addEventListener("input", renderSummary);
+
+    // CE/SP inputs
+    document.querySelectorAll('#ce, #sp, #ceCore, #spSkills').forEach(input => {
+        input.addEventListener("change", () => {
+            activeCharacter.ce = parseInt(document.getElementById("ce").value) || 0;
+            activeCharacter.sp = parseInt(document.getElementById("sp").value) || 0;
+            saveCharacterData();
+            syncExperienceInputs();
+            updateCEDisplay();
+            updateSPDisplay();
+        });
+    });
+
+    // Add skill button
+    const addSkillButton = document.getElementById("addSkill");
+    if (addSkillButton) {
+        addSkillButton.addEventListener("click", () => {
+            if (!activeCharacter.skills) activeCharacter.skills = [];
+
+            const newSkill = {
+                name: "",
+                restrictions: [],
+                stats: ["mig", "dex"],
+                description: "",
+                modules: []
+            };
+
+            activeCharacter.skills.push(newSkill);
+            const index = activeCharacter.skills.length - 1;
+            const skillForm = createSkillForm(newSkill, index);
+
+            document.getElementById("skillsList").appendChild(skillForm);
+            renderSkills();
+            saveCharacterData();
+        });
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", async () => {
-	console.log("DOMContentLoaded");
+    console.log("DOMContentLoaded");
 
-	await openLocalDatabase();
-	const { data: { session } } = await supabase.auth.getSession();
-	supabase.auth.onAuthStateChange((_event, session) => handleAuthChange(session));
+    await openLocalDatabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.onAuthStateChange((_event, session) => handleAuthChange(session));
 
-	document.getElementById("loginBtn").addEventListener("click", loginWithDiscord);
-	document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("loginBtn").addEventListener("click", loginWithDiscord);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
 
-	await initApp();
+    await initApp();
 });
-
 
 function calculateAvailableJobs() {
 	if (!activeCharacter || !activeCharacter.stats) {
@@ -4152,7 +4209,9 @@ function getModuleRestrictions(moduleName) {
 
 //Summary
 function renderSummary() {
+	console.log("rendering sumamry for: ", activeCharacter);
 	if (!activeCharacter) return;
+	console.log("rendering sumamry");
 
 	// Get current HP/EP values from inputs or activeCharacter
 	const currentHpInput = document.getElementById("currentHp");
