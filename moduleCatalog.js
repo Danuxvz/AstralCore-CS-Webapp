@@ -495,7 +495,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Bloody Blade", 
-				 description: "Como acción gratuita al inicio de tu turno de cada uno de tus turnos puedes lanzar tu MIG para recibir daño igual al resultadoComo acción gratuita al inicio de tu turno de cada uno de tus turnos puedes lanzar tu MIG para recibir daño igual al resultado. Hasta el final de tu turno, aumenta tu DMG igual al daño recibido por este Perk.", 
+				 description: "Como acción gratuita al inicio de tu turno de cada uno de tus turnos puedes lanzar tu MIG para recibir daño igual al resultado. Hasta el final de tu turno, aumenta tu DMG igual al daño recibido por esta Perk.", 
 				 type: "perk" 
 				},
 				{ name: "Maestria 3", 
@@ -572,7 +572,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Infusion [+2 ☐ ]", 
-				 description: "Esta skill queda asociada a un objeto a tu elección, y no puede ser activada sin tener el objeto equipado.", 
+				 description: "Esta skill queda imbuida en un objeto a tu elección, y no puede ser activada sin tener el objeto especifico equipado. Si el objeto ya es un equipamiento, debe tener slots para la skill.", 
 				 type: "restriction", slots: "+2"
 				},				
 				{ name: "Maestria 2", 
@@ -679,7 +679,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Avatar", 
-				 description: `Al utilizar el módulo de 🧚, puedes cambiar su duración de "pasiva" a "escena", para invocar al familiar en forma de un Avatar.<br>El Avatar comparte turno contigo, siempre se mantiene a 1 casilla de ti y es inmune a los efectos de área. Al hacer tiradas de Stats, el usuario puede reemplazar una o ambas de sus Stats por las de su Avatar. <br>En combate, el avatar puede utilizar 1 acción durante tu turno para: <br>>- Utilizar una de sus skills. <br>- Utilizar una acción de movimiento para desplazar a su usuario. <br>- Utilizar una secundaria. <br>- Aplicar sus efectos pasivos al usuario hasta el inicio de su siguiente ronda.`, 
+				 description: `Al utilizar el módulo de 🧚, puedes cambiar su duración de "pasiva" a "escena", para invocar al familiar en forma de un Avatar.<br>El Avatar comparte turno contigo, siempre se mantiene a 1 casilla de ti y es inmune a los efectos de área. Al hacer tiradas de Stats, el usuario puede reemplazar una o ambas de sus Stats por las de su Avatar. <br>En combate, el avatar puede utilizar 1 acción durante tu turno para: <br>- Utilizar una de sus skills. <br>- Utilizar una acción de movimiento para desplazar a su usuario. <br>- Utilizar una secundaria. <br>- Aplicar sus efectos pasivos al usuario hasta el inicio de su siguiente ronda.`, 
 				 type: "perk" 
 				},
 				{ name: "Worker's Wrongs [+3 ☐ ]", 

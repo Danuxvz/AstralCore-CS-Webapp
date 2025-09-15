@@ -1,5 +1,5 @@
 const moduleLibrary = [
-	// 1 Skill Point Modules
+	// =====================EFECTOS TIER 1 =====================
 	{
 		name: "Placeholder",
 		category: "Special",
@@ -128,6 +128,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Usas una acción de movimiento como parte de esta skill.",
 		emote: "🚶",
+		restrictions: "Una skill con este modulo debe incluir la stat de DEX.",
 	},
 	{
 		name: "Spiderwalk",
@@ -146,6 +147,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Por el resto de la escena, haces que el objetivo sienta una emoción profundamente (definida durante creación).",
 		emote: "🎭",
+		restrictions: "Una skill con este modulo debe incluir la stat de WLP.",
 	},
 	{
 		name: "Bolsillo Dimensional",
@@ -176,6 +178,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Identificas el nombre y oficios del objetivo. Si el objetivo está afectado por una skill, puedes identificar sus efectos y restricciones.",
 		emote: "📟",
+		restrictions: "Una skill con este modulo debe incluir la stat de INT.",
 	},
 	{
 		name: "Inmovilizar 1",
@@ -204,9 +207,9 @@ const moduleLibrary = [
 	{
 		name: "Buff 1",
 		category: "Efecto",
-		description: "Hasta el final de la escena, el objetivo gana un +1 a sus tiradas de ataque.",
+		description: "Hasta el final de la escena, el objetivo gana un +1 a su ATK.",
 		emote: "👯",
-		restrictions: "+2 EP",
+		restrictions: "+1 EP",
 	},
 	{
 		name: "Ilusión Aromatica",
@@ -221,7 +224,7 @@ const moduleLibrary = [
 		emote: "💆",
 	},
 
-		// Rangos
+	// ============== RANGOS TIER 1 ==================
 	{
 		name: "Toque",
 		category: "Rango",
@@ -301,7 +304,7 @@ const moduleLibrary = [
 		restrictions: "+2 Coste de EP"
 	},
 	
-	// 2 Skill Points Modules
+	// ===================== EFECTOS TIER 2 =====================
 	{
 		name: "Cura 2",
 		category: "Efecto",
@@ -310,41 +313,41 @@ const moduleLibrary = [
 		restrictions: "+2 al coste de EP"
 	},
 	{
-	name: "Prestidigitación 2",
-	category: "Efecto",
-	description: "Al activar este efecto el usuario puede escoger una de las siguientes opciones. Solo puede escoger opciones para los que haya aprendido el módulo relacionado.",
-	emote: "🌈",
-	effects: [
-		{
-			emote: "🔥",
-			description: "Creas un fuego en las casillas objetivo. Una criatura que termine su turno dentro del fuego recibe 5 de daño de fuego."
-		},
-		{
-			emote: "❄️",
-			description: "Hasta el final de la escena, creas una corriente de agua en las casillas objetivo. Una criatura que termine su turno dentro de la corriente es movida por la corriente hasta que salga del rango."
-		},
-		{
-			emote: "🌪️",
-			description: "Hasta el final de la escena, creas un tornado en las casillas objetivo. Una criatura que termina su turno en el tornado es empujada 5 casillas en una dirección a tu elección."
-		},
-		{
-			emote: "⚡",
-			description: "Hasta el final de la escena, creas una tormenta eléctrica en las casillas objetivo. Una criatura que termina su turno en la tormenta recibe 5 de daño eléctrico cada vez que utiliza una skill con requerimiento."
-		},
-		{
-			emote: "🧱",
-			description: "Hasta el final de la escena, creas arena movediza en las casillas objetivo. La arena reduce el Mov de las criaturas que caminan por ella en -3."
-		},
-		{
-			emote: "🌑",
-			description: "Hasta el final de la escena, creas un área de noche mágica en las casillas objetivo."
-		},
-		{
-			emote: "☀️",
-			description: "Hasta el final de la escena, creas un área de día mágico en las casillas objetivo."
-		}
-	]
-},
+		name: "Prestidigitación 2",
+		category: "Efecto",
+		description: "Al activar este efecto el usuario puede escoger una de las siguientes opciones. Solo puede escoger opciones para los que haya aprendido el módulo relacionado.",
+		emote: "🌈",
+		effects: [
+			{
+				emote: "🔥",
+				description: "Creas un fuego en las casillas objetivo. Una criatura que termine su turno dentro del fuego recibe 5 de daño de fuego."
+			},
+			{
+				emote: "❄️",
+				description: "Hasta el final de la escena, creas una corriente de agua en las casillas objetivo. Una criatura que termine su turno dentro de la corriente es movida por la corriente hasta que salga del rango."
+			},
+			{
+				emote: "🌪️",
+				description: "Hasta el final de la escena, creas un tornado en las casillas objetivo. Una criatura que termina su turno en el tornado es empujada 5 casillas en una dirección a tu elección."
+			},
+			{
+				emote: "⚡",
+				description: "Hasta el final de la escena, creas una tormenta eléctrica en las casillas objetivo. Una criatura que termina su turno en la tormenta recibe 5 de daño eléctrico cada vez que utiliza una skill con requerimiento."
+			},
+			{
+				emote: "🧱",
+				description: "Hasta el final de la escena, creas arena movediza en las casillas objetivo. La arena reduce el Mov de las criaturas que caminan por ella en -3."
+			},
+			{
+				emote: "🌑",
+				description: "Hasta el final de la escena, creas un área de noche mágica en las casillas objetivo."
+			},
+			{
+				emote: "☀️",
+				description: "Hasta el final de la escena, creas un área de día mágico en las casillas objetivo."
+			}
+		]
+	},
 	{
 		name: "Oferta de Trabajo",
 		category: "Efecto",
@@ -383,7 +386,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Por el resto de la escena, el objetivo puede realizar una acción de movimiento gratuita adicional una vez por turno.",
 		emote: "🏃‍♂️",
-		restrictions: "El objetivo pierde 2 EP cuando este efecto termina",
+		restrictions: "El objetivo pierde 2 EP cuando este efecto termina, Una skill con este modulo debe incluir la stat de MIG.",
 	},
 	{
 		name: "Mover 2",
@@ -402,6 +405,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Hasta el final de tu turno, cuando uses una acción de movimiento, el objetivo también es desplazado imitando tus movimientos.",
 		emote: "🚂",
+		restrictions: "Una skill con este modulo debe incluir la stat de MIG.",
 	},
 	{
 		name: "Teletransportar 2",
@@ -427,6 +431,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Aprendes la ubicación exacta de todos los objetivos dentro del rango. Si la tirada de ataque de una skill con este módulo falla, aun aprendes la cantidad de objetivos dentro del área afectada.",
 		emote: "🚩",
+		restrictions: "Una skill con este modulo debe incluir la stat de INT.",
 	},
 	{
 		name: "Vínculo Telepático",
@@ -485,7 +490,7 @@ const moduleLibrary = [
 	},
 
 	
-	// Rangos
+	// ===================== RANGOS TIER 2 =====================
 	{
 		name: "Línea 2",
 		category: "Rango",
@@ -575,13 +580,13 @@ const moduleLibrary = [
 	},
 
 
-	// 3 Skill Points Modules
+	// ===================== EFECTOS TIER 3 =====================
 	{
 		name: "Ataque Efectivo",
 		category: "Efecto",
 		description: "Para cálculos de HR en esta skill, puedes sumar el resultado de ambas stats.",
 		emote: "👹",
-		restrictions: "+ 1 EP"
+		restrictions: "+ 1 EP, Una skill con este modulo debe incluir la stat de MIG.",
 	},
 	{
 		name: "DOT 3",
@@ -625,6 +630,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "El objetivo te percibe como un superior de cualquier jerarquía a la que pertenezca. <br>Usando una acción, puedes darle una orden, obligandole a obedecer cualquier comando que coincida con sus motivaciones. Obtienes un +5 a cualquier tirada para convencer o intimidar al objetivo.",
 		emote: "👑",
+		restrictions: "Una skill con este modulo debe incluir la stat de WLP.",
 	},
 	{
 		name: "Recuerdo Falso",
@@ -656,6 +662,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Al hacerlo, escoge una de las siguientes opciones: Descubrir las stats, descubrir un secreto del objetivo, o descubrir las debilidades elementales del objetivo.",
 		emote: "🪪",
+		restrictions: "Una skill con este modulo debe incluir la stat de INT.",
 	},
 	{
 		name: "Ceguera Selectiva",
@@ -668,6 +675,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Expandes tu percepción como si observaras desde el objetivo afectado. Si el objetivo tiene skills, aprendes el nombre y efecto de una de (a elección del objetivo).",
 		emote: "🧿",
+		restrictions: "Una skill con este modulo debe incluir la stat de INT.",
 	},
 	{
 		name: "Levitar",
@@ -687,7 +695,6 @@ const moduleLibrary = [
 		description: "Hasta el final de la escena, mientras utiliza una acción de movimiento, el objetivo no es afectado por áreas de efectos.",
 		emote: "👠",
 	},
-
 	{
 		name: "Invertir Movimiento 3",
 		category: "Efecto",
@@ -709,7 +716,7 @@ const moduleLibrary = [
 	{
 		name: "Aumento de Alcance",
 		category: "Efecto",
-		description: "Aumenta el alcance de uno de rangos de esta skill en 5 casillas. Al afectar los rangos de toque, también puedes interactuar con objetos a mayor distancia de ti. Al afectar áreas, aumentas el radio del área en 1 casilla.",
+		description: "Aumenta el alcance de los rangos de esta skill en 5 casillas. Al afectar los rangos de toque, también puedes interactuar con objetos a mayor distancia de ti. Al afectar áreas, aumentas el radio del área en 1 casilla.",
 		emote: "🦒",
 	},
 	{
@@ -717,12 +724,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Hasta el final de tu siguiente turno, el objetivo se vuelve incapaz de intencionalmente seleccionar a una criatura a tu elección (definida durante creación) como objetivo de sus skills.",
 		emote: "✝️",
-	},
-	{
-		name: "Ininterrumpido",
-		category: "Efecto",
-		description: "Este módulo se mantiene aplicado por una duración indefinida. Cuando una skill del objetivo es interrumpida exitosamente, este puede escoger un nuevo objetivo dentro del rango para su skill, este módulo termina tras ello.",
-		emote: "😮‍💨",
+		restrictions: "Una skill con este modulo debe incluir la stat de WLP.",
 	},
 	{
 		name: "Origen Añadido",
@@ -746,7 +748,7 @@ const moduleLibrary = [
 	},
 
 
-		// Rangos
+		// ===================== RANGOS TIER 3 =====================
 	{
 		name: "Lluvia de Proyectiles",
 		category: "Rango",
@@ -840,6 +842,13 @@ const moduleLibrary = [
 		restrictions: "+ 1 al coste de EP"
 	},
 	{
+		name: "Ininterrumpido",
+		category: "Especial",
+		description: "Cuando una de tus skills es interrumpida por la reacción de otra criatura, puedes activar una skill con este módulo.",
+		emote: "😮‍💨",
+		restrictions: "+ 1 al coste de EP",
+	},
+	{
 		name: "Reflejar",
 		category: "Especial",
 		description: "Puedes reemplazar este módulo con uno de los modulos de la última skill que te haya afectado, o con un modulo que te este afectando actualmente.",
@@ -858,18 +867,20 @@ const moduleLibrary = [
 		emote: "🎯",
 	},
 
-	// 4 Skill Points Modules
+	// ===================== EFECTOS TIER 4 =====================
 	{
 		name: "Acción Forzada",
 		category: "Efecto",
 		description: "El objetivo realiza inmediatamente una acción de movimiento hacia una dirección que tu escojas, o realiza una acción secundaria a tu elección (definida durante creación).",
 		emote: "🧸",
+		restrictions: "Una skill con este modulo debe incluir la stat de WLP.",
 	},
 	{
 		name: "Revivir",
 		category: "Efecto",
 		description: `Anula el estado "Derrotado" sin que el objetivo sufra consecuencias. En caso de que el objetivo tenga 0 HP, aumenta su HP a 1`,
-		emote: "🐦‍🔥", restrictions: "+2 EP"
+		emote: "🐦‍🔥", 
+		restrictions: "+2 EP"
 	},
 	{
 		name: "Restringir 4",
@@ -883,6 +894,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Hasta el final de tu siguiente turno, el objetivo se vuelve invisible. Una criatura invisible gana un bono circunstancial a sus tiradas de sigilo, y solo puede ser seleccionado como objetivo de skills con un rango de área.",
 		emote: "🕵️",
+		restrictions: "Una skill con este modulo debe incluir la stat de DEX.",
 	},
 	{
 		name: "Sacrificio Vital",
@@ -897,7 +909,7 @@ const moduleLibrary = [
 		emote: "📊",
 	},
 	
-	// Rangos
+	// ===================== RANGOS TIER 4 =====================
 	{
 		name: "Aliado como Origen",
 		category: "Rango",
@@ -911,7 +923,7 @@ const moduleLibrary = [
 		emote: "🔖",
 	},
 	
-	// Especiales
+	// ===================== ESPECIALES TIER 4 =====================
 	{
 		name: "Skill Dinámica",
 		category: "Especial",
@@ -925,7 +937,7 @@ const moduleLibrary = [
 		emote: "🗜️",
 	},
 
-	// 5 Skill Points Modules
+	// ===================== EFECTOS TIER 5 =====================
 	{
 		name: "Pregunta",
 		category: "Efecto",
@@ -956,7 +968,7 @@ const moduleLibrary = [
 		description: "El objetivo puede pagar 2 EP para realizar una acción directamente después tras la resolución de una skill con este módulo.",
 		emote: "🦔",
 	},
-		// Rangos
+		// ===================== RANGOS TIER 5 =====================
 	{
 		name: "Área 5",
 		category: "Rango",
@@ -964,7 +976,7 @@ const moduleLibrary = [
 		emote: "🌆",
 	},
 	
-	// Especiales
+	// ===================== ESPECIALES TIER 5 =====================
 	{
 		name: "Reacción 5",
 		category: "Especial",
