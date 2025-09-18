@@ -249,7 +249,7 @@ const moduleLibrary = [
 	{
 		name: "Orbe 1",
 		category: "Rango",
-		description: "Afectas a un área esférica diminuta que se origina flotando a distancia de 2 casillas o menos de ti. El área se mantiene siempre a la misma distancia y posición relativa a ti.",
+		description: "Afectas a un área de 1 casilla que se origina a una distancia de 3 casillas o menos de ti. El área imita tus movimientos, siempre manteniendo la misma distancia y posición relativa a ti.",
 		emote: "🏐",
 		restrictions: "Mágico"
 	},
@@ -591,7 +591,7 @@ const moduleLibrary = [
 	{
 		name: "DOT 3",
 		category: "Effecto",
-		description: "Por el resto de la escena, el objetivo recibe 1 punto de daño al inicio de cada ronda.",
+		description: "Por el resto de la escena, el objetivo recibe 1 punto de daño al inicio de cada ronda. Este efecto es acumulable.",
 		emote: "🌶️", restrictions: "Este efecto puede ser resistido automáticamente, sin necesidad de una tirada enfrentada."
 	},
 	{
@@ -599,6 +599,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Reduce la defensa o defensa mágica del objetivo para aumentar su DMG. <br>Por cada punto que restes a las defensas, aumenta el DMG en +3. Puedes reducir un máximo de -5 entre las 2 defensas. <br>Al final de cada turno del objetivo, este efecto termina si el objetivo no ha hecho una tirada de ataque esta ronda.",
 		emote: "💢",
+		restrictions: "Un objetivo solo puede ser afectado por 1 copia de este modulo a la vez.",
 	},
 	{
 		name: "Buff 3",
@@ -750,18 +751,25 @@ const moduleLibrary = [
 
 		// ===================== RANGOS TIER 3 =====================
 	{
-		name: "Lluvia de Proyectiles",
-		category: "Rango",
-		description: "Disparas 5 proyectiles a distintos objetivos desde el cielo.",
-		emote: "🌧️",
-		restrictions: "Físico"
-	},
-	{
 		name: "Aura",
 		category: "Rango",
 		description: "Afectas a todos los objetivos a rango de toque.",
 		emote: "🌀",
 		restrictions: "Mágico"
+	},
+	{
+		name: "Toque 2",
+		category: "Rango",
+		description: "Haz 2 tiradas de ataque para este rango, afectas un objetivo a distancia de toque por cada ataque, puedes seleccionar al mismo objetivo mas de una vez.",
+		emote: "⚔️",
+		restrictions: "Físico, +1 PE"
+	},
+	{
+		name: "Lluvia de Proyectiles",
+		category: "Rango",
+		description: "Disparas 5 proyectiles a distintos objetivos que puedas ver. Los proyectiles caen desde el cielo y cualquier objetivo bajo techo tiene cobertura total contra ellos.",
+		emote: "🌧️",
+		restrictions: "Físico"
 	},
 	{
 		name: "Área 3",
@@ -826,14 +834,13 @@ const moduleLibrary = [
 	},
 
 
-	// Especiales
+	// ===================== ESPECIALES TIER 3 =====================
 	{
 		name: "Reacción 3",
 		category: "Especial",
 		description: "Una vez por ronda, puedes consumir +2 EP para activar esta skill fuera de tu turno.",
 		emote: "⏲️",
 	},
-
 	{
 		name: "Contraataque",
 		category: "Especial",
@@ -888,7 +895,6 @@ const moduleLibrary = [
 		description: "Escoge una stat (Definida durante creación). El objetivo es incapaz de utilizar cualquier acción que incluya la stat escogida.",
 		emote: "🔒",
 	},
-
 	{
 		name: "Invisibilidad",
 		category: "Efecto",
@@ -900,7 +906,7 @@ const moduleLibrary = [
 		name: "Sacrificio Vital",
 		category: "Efecto",
 		description: "Reduces el coste de energía de esta skill, pero pierdes 5 hp máxima por cada punto de EP que reduzcas (definido durante creación). Al final de la escena recuperas los puntos de golpe máximos (pero no la hp perdida).",
-		emote: "C4",
+		emote: "🩸",
 	},
 	{
 		name: "Balance",
@@ -910,6 +916,13 @@ const moduleLibrary = [
 	},
 	
 	// ===================== RANGOS TIER 4 =====================
+	{
+		name: "Proyectil Doble",
+		category: "Rango",
+		description: "Disparas 2 proyectiles que viajan hasta 15 casillas. Haz una tirada de ataque independiente por cada proyectil, puedes seleccionar al mismo objetivo para este mas de una vez.",
+		emote: "🔫",
+		restrictions: "Físico, +1 PE"
+	},
 	{
 		name: "Aliado como Origen",
 		category: "Rango",
@@ -954,13 +967,15 @@ const moduleLibrary = [
 		name: "Inmunidad a Rango",
 		category: "Efecto",
 		description: "El objetivo no es afectado por 1 módulo de rango (definido durante creación) por el resto de la escena.",
-		emote: "E5",
+		emote: "🤖",
+		restrictions: "+1 EP"
 	},
 	{
 		name: "Supervivencia",
 		category: "Efecto",
 		description: "Cuando el objetivo es reducido a 0 HP, este no es derrotado y en lugar de eso se mantiene con 1 HP, tras ello este efecto termina.",
 		emote: "🧟",
+		restrictions: "Un objetivo con 0 EP no puede ser afectado por este efecto. Cualquier punto de daño que reduzca al objetivo afectado por debajo de 0 HP es reducido de sus EP."
 	},
 	{
 		name: "Acción Adicional",

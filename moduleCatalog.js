@@ -481,7 +481,7 @@ const moduleCatalog = {
 				 type: "restriction", slots: "+2",
 				},
 				{ name: "With Interest [+2 ☐ ]", 
-				 description: "El objetivo debe tener tu Karma Sign, la cual desaparece tras ser afectado por esta skill.", 
+				 description: "El objetivo debe tener tu Marca, la cual desaparece tras ser afectado por esta skill.", 
 				 type: "restriction", slots: "+2",
 				},
 			],
@@ -661,7 +661,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Cut your losses", 
-				 description: "Cuando un ataque contra ti acierta, puedes cambiar el objetivo a una de tus invocaciones a 1 casilla de ti. Una vez activas este perk, no puedes volver a activarlo hasta el inicio de tu siguiente turno.", 
+				 description: "Cuando un ataque contra ti acierta, puedes cambiar el objetivo a una de tus invocaciones distancia de toque. Una vez activas este perk, no puedes volver a activarlo hasta el inicio de tu siguiente turno.", 
 				 type: "perk" 
 				},
 				{ name: "Placeholder", 
