@@ -12,7 +12,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Laboratorio Portátil", 
-				 description: "Siempre que tengas acceso a tus herramientas de trabajo, puedes usar una acción para que tu o un aliado pueda utilizar uno de los siguientes efectos: <br> - Modifica una de sus skills con tus SP disponibles. <br> - Compra 1 módulo con tus CE disponibles. <br> - Escoge 1 Perk de un catálogo y tier disponible. <br> Solo puedes usar esta acción una vez y recuperas el uso tras una escena de descanso.", 
+				 description: "Siempre que tengas acceso a tus herramientas de trabajo, puedes usar una acción para que tu o un aliado pueda utilizar uno de los siguientes efectos: <br> - Modifica o crea una skill con tus SP disponibles. <br> - Compra 1 módulo con tus CE disponibles. <br> - Escoge 1 Perk de un catálogo y tier disponible. <br> Solo puedes usar esta acción una vez y recuperas el uso tras una escena de descanso.", 
 				 type: "perk" 
 				},
 				{ name: "Call of the Hive [+1 ☐ ]", 
@@ -20,7 +20,7 @@ const moduleCatalog = {
 				 type: "restriction",slots:"+1" 
 				},
 				{ name: "Area Instantanea [+1 ☐ ]", 
-				 description: "Una skill con esta restricción debe tener un rango de tipo área. No creas un Área de Efecto al usar esta skill.", 
+				 description: "Una skill con esta restricción debe tener un rango de tipo área. No creas Áreas de Efecto al usar esta skill.", 
 				 type: "restriction", slots:"+1"
 				},
 				{ name: "Maestria 1", 
@@ -38,7 +38,7 @@ const moduleCatalog = {
 				 type: "perk" 
 				},
 				{ name: "Lucky",
-					description: "Una vez por escena, puedes hacer reroll a una de tus tiradas de dado de stat. No puedes activar este perk como reacción a una pifia.",
+					description: "Puedes pagar +1 EP para hacer reroll a una o ambas stats de una tirada, una vez activas este perk, no puedes volver a activarlo hasta el final de tu siguiente ronda. No puedes activar este perk como reacción a una pifia.",
 					type: "perk",
 				},				
 				{ name: "Ineficiente [+2 ☐ ]",
@@ -63,7 +63,7 @@ const moduleCatalog = {
 					description: "Al crear una skill, puedes añadirle hasta 2 restricciones de skill, en vez de solo 1.",
 					type: "perk",
 				},				
-				{ name: "Placeholder [+1 ☐ ]",
+				{ name: "Placeholder [+2 ☐ ]",
 					description: ".",
 					type: "restriction", slots:"+2"
 				},

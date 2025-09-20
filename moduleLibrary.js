@@ -286,7 +286,7 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Creas un objeto que contiene el resto de módulos dentro de este rango. Cualquier criatura puede usar una acción para consumir el objeto creado, y activar esta skill como el usuario.",
 		emote: "🎁",
-		restrictions: "Mágico, 1 EP, el coste de EP aumenta en +1 por cada objeto creado con esta skill que aun no haya sido utilizado."
+		restrictions: "1 EP, el coste de EP aumenta en +1 por cada objeto creado con esta skill que aun no haya sido utilizado."
 	},
 	
 	// Especiales
@@ -403,7 +403,7 @@ const moduleLibrary = [
 	{
 		name: "Desplazar 2",
 		category: "Efecto",
-		description: "Hasta el final de tu turno, cuando uses una acción de movimiento, el objetivo también es desplazado imitando tus movimientos.",
+		description: "Hasta el final de tu turno, cuando uses tu MOV o seas empujado, el objetivo también es desplazado imitando tus movimientos.",
 		emote: "🚂",
 		restrictions: "Una skill con este modulo debe incluir la stat de MIG.",
 	},
@@ -538,6 +538,7 @@ const moduleLibrary = [
 		category: "Rango",
 		description: "Creas 3 objetos pequeños que contienen los modulos anidados dentro de este rango. Cualquier criatura puede usar una acción para consumir estos objetos, y activar la skill.",
 		emote: "🫘",
+		restrictions: "2 EP, el coste de EP aumenta en +1 por cada objeto creado con esta skill que aun no haya sido utilizado."
 	},
 	{
 		name: "Imbuir Criatura",
@@ -586,7 +587,7 @@ const moduleLibrary = [
 		category: "Efecto",
 		description: "Para cálculos de HR en esta skill, puedes sumar el resultado de ambas stats.",
 		emote: "👹",
-		restrictions: "+ 1 EP, Una skill con este modulo debe incluir la stat de MIG.",
+		restrictions: "Una skill con este modulo debe incluir la stat de MIG.",
 	},
 	{
 		name: "DOT 3",
@@ -828,7 +829,7 @@ const moduleLibrary = [
 	{
 		name: "Orden 3",
 		category: "Rango",
-		description: "Escoge una acción secundaria (Definida durante creacion). Todas las criaturas en escena que escuchen tu voz deben utilizar la secundaria escogida antes del final de sus turnos, o ser automáticamente afectados por este rango. Para propósitos de este rango, el HR se considera un 5.",
+		description: "Escoge una acción secundaria (Definida durante creacion). Todas las criaturas en escena que escuchen tu voz deben utilizar la secundaria escogida antes del final de su siguiente turno, o ser automáticamente afectados por este rango. Para propósitos de este rango, el HR se considera un 5.",
 		emote: "🫡",
 		restrictions: "Mágico"
 	},

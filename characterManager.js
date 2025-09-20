@@ -4209,56 +4209,74 @@ function getModuleRestrictions(moduleName) {
 
 //Summary
 function renderSummary() {
-	console.log("rendering sumamry for: ", activeCharacter);
-	if (!activeCharacter) return;
-	console.log("rendering sumamry");
+    console.log("rendering summary for: ", activeCharacter);
+    if (!activeCharacter) return;
+    console.log("rendering summary");
 
-	// Get current HP/EP values from inputs or activeCharacter
-	const currentHpInput = document.getElementById("currentHp");
-	const currentEpInput = document.getElementById("currentEp");
-	
-	// Calculate max values
-	const recalculated = calculateSecondaryStats(
-		activeCharacter.stats,
-		activeCharacter.secondaryStats,
-		activeCharacter.permanentBonuses || {}
-	);
+    const currentHpInput = document.getElementById("currentHp");
+    const currentEpInput = document.getElementById("currentEp");
 
-	const maxHp = recalculated.hp.value + recalculated.hp.temp;
-	const maxEp = recalculated.ep.value + recalculated.ep.temp;
+    // Recalculate secondary stats
+    const recalculated = calculateSecondaryStats(
+        activeCharacter.stats,
+        activeCharacter.secondaryStats,
+        activeCharacter.permanentBonuses || {}
+    );
 
-	// Update activeCharacter with current values
-	if (currentHpInput) {
-		activeCharacter.currentHP = parseInt(currentHpInput.value, 10) || activeCharacter.currentHP || maxHp;
-	}
-	if (currentEpInput) {
-		activeCharacter.currentEP = parseInt(currentEpInput.value, 10) || activeCharacter.currentEP || maxEp;
-	}
-	
-	const currentHp = activeCharacter.currentHP;
-	const currentEp = activeCharacter.currentEP;
+    const maxHp = recalculated.hp.value + recalculated.hp.temp;
+    const maxEp = recalculated.ep.value + recalculated.ep.temp;
 
-	// Calculate percentage
-	const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
-	const epPercent = maxEp ? (currentEp / maxEp) * 100 : 0;
+    // Update activeCharacter with current input values safely
+    if (currentHpInput) {
+        const hpValue = parseInt(currentHpInput.value, 10);
+        if (!Number.isNaN(hpValue)) {
+            activeCharacter.currentHP = hpValue;
+        } else if (activeCharacter.currentHP == null) {
+            activeCharacter.currentHP = maxHp; // default if unset
+        }
+    }
 
-	// Update bar widths
-	const hpBar = document.querySelector(".summary-hp .bar-fill");
-	const epBar = document.querySelector(".summary-ep .bar-fill");
+    if (currentEpInput) {
+        const epValue = parseInt(currentEpInput.value, 10);
+        if (!Number.isNaN(epValue)) {
+            activeCharacter.currentEP = epValue;
+        } else if (activeCharacter.currentEP == null) {
+            activeCharacter.currentEP = maxEp; // default if unset
+        }
+    }
 
-	if (hpBar) hpBar.style.width = hpPercent + "%";
-	if (epBar) epBar.style.width = epPercent + "%";
+    const currentHp = activeCharacter.currentHP;
+    const currentEp = activeCharacter.currentEP;
 
-	// Update input values
-	if (currentHpInput) currentHpInput.value = currentHp;
-	if (currentEpInput) currentEpInput.value = currentEp;
-	
-	// Update skills and perks summaries
-	renderSkillsSummary();
-	renderPerksSummary();
-	
-	// Save changes to Supabase
-	saveCharacterData();
+    // Calculate percentages
+    const hpPercent = maxHp ? (currentHp / maxHp) * 100 : 0;
+    const epPercent = maxEp ? (currentEp / maxEp) * 100 : 0;
+
+    // Update bar widths
+    const hpBar = document.querySelector(".summary-hp .bar-fill");
+    const epBar = document.querySelector(".summary-ep .bar-fill");
+
+    if (hpBar) hpBar.style.width = Math.max(0, Math.min(100, hpPercent)) + "%";
+    if (epBar) epBar.style.width = Math.max(0, Math.min(100, epPercent)) + "%";
+
+    // Only sync inputs if user is NOT actively typing
+    if (currentHpInput && document.activeElement !== currentHpInput) {
+        currentHpInput.value = currentHp;
+    }
+    if (currentEpInput && document.activeElement !== currentEpInput) {
+        currentEpInput.value = currentEp;
+    }
+
+    // Update displays for max values
+    document.getElementById("hpDisplay").textContent = maxHp;
+    document.getElementById("epDisplay").textContent = maxEp;
+
+    // Update skills and perks summaries
+    renderSkillsSummary();
+    renderPerksSummary();
+
+    // Save changes
+    saveCharacterData();
 }
 
 function renderSkillsSummary() {
